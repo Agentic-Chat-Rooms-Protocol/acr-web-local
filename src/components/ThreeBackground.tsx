@@ -217,7 +217,22 @@ const SpatialDust: React.FC = () => {
   );
 };
 
+const isWebGLAvailable = () => {
+  if (typeof window === 'undefined') return false;
+  try {
+    const canvas = document.createElement('canvas');
+    return !!(
+      window.WebGLRenderingContext &&
+      (canvas.getContext('webgl') || canvas.getContext('experimental-webgl'))
+    );
+  } catch {
+    return false;
+  }
+};
+
 export const ThreeBackground: React.FC = () => {
+  const [hasWebGL, setHasWebGL] = React.useState<boolean>(() => isWebGLAvailable());
+
   return (
     <div className="fixed inset-0 pointer-events-none z-0 select-none overflow-hidden bg-[#030305]">
       {/* Resend Top Horizon Glow */}
@@ -226,19 +241,27 @@ export const ThreeBackground: React.FC = () => {
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[22%] h-[1.5px] bg-gradient-to-r from-transparent via-white/50 to-transparent blur-[1px]" />
 
       {/* R3F 3D Canvas with Atmospheric Fog & Defined Spatial Model */}
-      <div className="absolute inset-0">
-        <Canvas
-          camera={{ position: [0, 0, 5.6], fov: 52 }}
-          dpr={[1, 1.5]}
-          gl={{ antialias: true, alpha: true }}
-        >
-          <fog attach="fog" args={['#030305', 3.8, 10.5]} />
-          <ambientLight intensity={0.35} />
-          <CameraRig />
-          <SpatialNexus />
-          <SpatialDust />
-        </Canvas>
-      </div>
+      {hasWebGL && (
+        <div className="absolute inset-0">
+          <Canvas
+            camera={{ position: [0, 0, 5.6], fov: 52 }}
+            dpr={[1, 1.5]}
+            gl={{ antialias: true, alpha: true }}
+            onCreated={({ gl }) => {
+              gl.domElement.addEventListener('webglcontextlost', (e) => {
+                e.preventDefault();
+                setHasWebGL(false);
+              }, false);
+            }}
+          >
+            <fog attach="fog" args={['#030305', 3.8, 10.5]} />
+            <ambientLight intensity={0.35} />
+            <CameraRig />
+            <SpatialNexus />
+            <SpatialDust />
+          </Canvas>
+        </div>
+      )}
 
       {/* Optical Contrast Shield directly behind foreground typography */}
       <div 
