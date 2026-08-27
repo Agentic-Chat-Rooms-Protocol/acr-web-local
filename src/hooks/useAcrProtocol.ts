@@ -439,6 +439,14 @@ export const useAcrProtocol = (defaultRoomId = 'consensus-main') => {
     choice: string,
     rationale = ''
   ) => {
+    const normalized = choice.trim().toUpperCase();
+    if (normalized !== 'APPROVE' && normalized !== 'REJECT' && normalized !== 'DISSENT') {
+      throw new Error(`Invalid vote choice: ${choice}. Must be APPROVE, REJECT, or DISSENT`);
+    }
+    if (normalized === 'DISSENT' && !rationale.trim()) {
+      throw new Error('Rationale is mandatory when voting DISSENT (GAP-08 Invariant)');
+    }
+
     try {
       const res = await fetch(
         `${DAEMON_BASE}/api/v1/proposals/${proposalId}/vote`,
@@ -447,8 +455,8 @@ export const useAcrProtocol = (defaultRoomId = 'consensus-main') => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             voter_did: OPERATOR_DID,
-            choice,
-            rationale,
+            choice: normalized,
+            rationale: rationale.trim(),
           }),
         }
       );
@@ -459,6 +467,46 @@ export const useAcrProtocol = (defaultRoomId = 'consensus-main') => {
       // offline
     }
   };
+
+  const verifyAuditChain = useCallback(async (): Promise<{
+    isValid: boolean;
+    depth: number;
+    headHash?: string;
+    message: string;
+  }> => {
+    try {
+      const res = await fetch(`${DAEMON_BASE}/api/v1/audit/chain`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      const trail: AuditEntry[] = data.trail || [];
+      if (trail.length === 0) {
+        return { isValid: true, depth: 0, message: 'Audit chain is empty (genesis state)' };
+      }
+
+      let prevHash = '';
+      for (let i = 0; i < trail.length; i++) {
+        const entry = trail[i];
+        if (entry.index !== i) {
+          return { isValid: false, depth: trail.length, message: `Index sequence broken at ${i}: got ${entry.index}` };
+        }
+        if (i > 0 && entry.prev_hash !== prevHash) {
+          return { isValid: false, depth: trail.length, message: `Hash link broken at block #${i}` };
+        }
+        if (!entry.state_hash) {
+          return { isValid: false, depth: trail.length, message: `Missing state_hash at block #${i}` };
+        }
+        prevHash = entry.state_hash;
+      }
+      return {
+        isValid: true,
+        depth: trail.length,
+        headHash: prevHash,
+        message: `Cryptographic audit chain verified: ${trail.length} blocks untampered`,
+      };
+    } catch (err) {
+      return { isValid: false, depth: 0, message: `Audit verification failed: ${err}` };
+    }
+  }, []);
 
   const closeProposal = async (proposalId: string) => {
     try {
@@ -518,6 +566,7 @@ export const useAcrProtocol = (defaultRoomId = 'consensus-main') => {
     createProposal,
     castVote,
     closeProposal,
+    verifyAuditChain,
     refreshAll,
   };
 };
