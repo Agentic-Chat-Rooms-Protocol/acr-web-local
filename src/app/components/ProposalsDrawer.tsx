@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
+import { motion } from 'framer-motion';
 import { Vote, X, Plus, Sparkles, CheckCircle2 } from 'lucide-react';
 import { ProposalVotingCard } from './ProposalVotingCard';
 import type { Proposal } from '../../types/protocol';
@@ -29,7 +30,36 @@ export const ProposalsDrawer: React.FC<ProposalsDrawerProps> = ({
   const [newDesc, setNewDesc] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  if (!isOpen) return null;
+  // Helper to determine latest activity timestamp (creation, votes, dissents)
+  const getProposalActivityTime = (p: Proposal): number => {
+    let latest = p.created_at ? new Date(p.created_at).getTime() : 0;
+    if (p.closed_at) {
+      const ct = new Date(p.closed_at).getTime();
+      if (ct > latest) latest = ct;
+    }
+    if (p.dissent_logs && p.dissent_logs.length > 0) {
+      for (const d of p.dissent_logs) {
+        const dt = d.timestamp ? new Date(d.timestamp).getTime() : 0;
+        if (dt > latest) latest = dt;
+      }
+    }
+    if (p.votes) {
+      latest += Object.keys(p.votes).length * 1000;
+    }
+    return latest;
+  };
+
+  const sortedOpenProposals = useMemo(() => {
+    return proposals
+      .filter((p) => p.status === 'open')
+      .sort((a, b) => getProposalActivityTime(b) - getProposalActivityTime(a));
+  }, [proposals]);
+
+  const sortedClosedProposals = useMemo(() => {
+    return proposals
+      .filter((p) => p.status !== 'open')
+      .sort((a, b) => getProposalActivityTime(b) - getProposalActivityTime(a));
+  }, [proposals]);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,8 +75,7 @@ export const ProposalsDrawer: React.FC<ProposalsDrawerProps> = ({
     }
   };
 
-  const openProposals = proposals.filter((p) => p.status === 'open');
-  const closedProposals = proposals.filter((p) => p.status !== 'open');
+  if (!isOpen) return null;
 
   return (
     <div
@@ -134,46 +163,56 @@ export const ProposalsDrawer: React.FC<ProposalsDrawerProps> = ({
             <div className="space-y-3">
               <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-slate-400">
                 <span>Active Proposals</span>
-                <span className="rounded bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 text-[10px] font-mono-code">
-                  {openProposals.length}
+                <span className="rounded bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 text-[10px] font-mono-code font-bold">
+                  {sortedOpenProposals.length}
                 </span>
               </div>
 
-              {openProposals.length === 0 ? (
+              {sortedOpenProposals.length === 0 ? (
                 <div className="rounded-xl border border-white/[0.06] bg-black/30 p-6 text-center text-xs text-slate-500">
                   No open proposals in this room.
                 </div>
               ) : (
-                openProposals.map((prop) => (
-                  <ProposalVotingCard
+                sortedOpenProposals.map((prop) => (
+                  <motion.div
                     key={prop.id}
-                    proposal={prop}
-                    currentVoterDid={currentVoterDid}
-                    onVote={onVote}
-                    onClose={onCloseProposal}
-                  />
+                    layout
+                    transition={{ type: 'spring', stiffness: 400, damping: 35 }}
+                  >
+                    <ProposalVotingCard
+                      proposal={prop}
+                      currentVoterDid={currentVoterDid}
+                      onVote={onVote}
+                      onClose={onCloseProposal}
+                    />
+                  </motion.div>
                 ))
               )}
             </div>
 
             {/* Resolved / Closed Proposals */}
-            {closedProposals.length > 0 && (
+            {sortedClosedProposals.length > 0 && (
               <div className="space-y-3 pt-4 border-t border-white/[0.08]">
                 <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-slate-500">
                   <span>Resolved Ballots</span>
                   <span className="rounded bg-white/[0.04] text-slate-400 px-1.5 py-0.5 text-[10px] font-mono-code">
-                    {closedProposals.length}
+                    {sortedClosedProposals.length}
                   </span>
                 </div>
 
-                {closedProposals.map((prop) => (
-                  <ProposalVotingCard
+                {sortedClosedProposals.map((prop) => (
+                  <motion.div
                     key={prop.id}
-                    proposal={prop}
-                    currentVoterDid={currentVoterDid}
-                    onVote={onVote}
-                    onClose={onCloseProposal}
-                  />
+                    layout
+                    transition={{ type: 'spring', stiffness: 400, damping: 35 }}
+                  >
+                    <ProposalVotingCard
+                      proposal={prop}
+                      currentVoterDid={currentVoterDid}
+                      onVote={onVote}
+                      onClose={onCloseProposal}
+                    />
+                  </motion.div>
                 ))}
               </div>
             )}

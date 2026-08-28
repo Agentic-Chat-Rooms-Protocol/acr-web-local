@@ -1,6 +1,57 @@
 export type AgentStatus = 'online' | 'deliberating' | 'away' | 'escalated' | 'idle' | 'offline';
 export type AgentRole = 'agent' | 'human' | 'sentinel' | 'moderator';
 
+export interface PluginConfigField {
+  key: string;
+  label: string;
+  type: 'string' | 'number' | 'boolean' | 'select' | 'secret';
+  defaultValue: any;
+  options?: string[];
+  description: string;
+  required?: boolean;
+}
+
+export interface UpstreamRepository {
+  id: string;
+  name: string;
+  url: string;
+  provider: 'gitea' | 'github' | 'gitlab' | 'custom';
+  branch: string;
+  status: 'active' | 'synced' | 'unreachable' | 'error';
+  plugin_count: number;
+  last_synced: string;
+  is_default: boolean;
+}
+
+export interface MarketplacePlugin {
+  id: string;
+  name: string;
+  version: string;
+  author: string;
+  description: string;
+  category: string;
+  trust_badge: string;
+  verified: boolean;
+  quality_score: number;
+  tools_count: number;
+  tools?: string[];
+  install_command?: string;
+  content_hash?: string;
+  installed_at?: string;
+  config_schema?: PluginConfigField[];
+  current_config?: Record<string, any>;
+  repository_source?: string;
+  permissions_required?: string[];
+}
+
+export interface RootAdminProfile {
+  name: string;
+  title: string;
+  did: string;
+  avatar: string;
+  isConfigured: boolean;
+}
+
 export interface Agent {
   did: string;
   name: string;
@@ -11,6 +62,12 @@ export interface Agent {
   capabilities: string[];
   verified: boolean;
   last_seen: string;
+  process_path?: string;
+  tags?: string[];
+  description?: string;
+  runtime?: string;
+  installed_plugins?: MarketplacePlugin[];
+  accessible_plugins?: MarketplacePlugin[];
 }
 
 export interface Room {
