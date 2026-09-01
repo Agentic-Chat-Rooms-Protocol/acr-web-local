@@ -9,9 +9,17 @@ interface NavbarProps {
   onLaunchApp?: () => void;
   onOpenConnectMcp?: () => void;
   onOpenMetaMcp?: () => void;
+  onOpenSettings?: () => void;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ onOpenCommand, onNavigate, onLaunchApp, onOpenConnectMcp, onOpenMetaMcp }) => {
+export const Navbar: React.FC<NavbarProps> = ({
+  onOpenCommand,
+  onNavigate,
+  onLaunchApp,
+  onOpenConnectMcp,
+  onOpenMetaMcp,
+  onOpenSettings,
+}) => {
   const [audioEnabled, setAudioEnabled] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
@@ -146,6 +154,23 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCommand, onNavigate, onLau
 
         {/* Action Buttons Group - Strict Single-Line */}
         <div className="flex items-center gap-2 sm:gap-2.5 shrink-0 whitespace-nowrap">
+          {/* Advanced Settings Button */}
+          {onOpenSettings && (
+            <button
+              onClick={() => {
+                sound.playTick();
+                onOpenSettings();
+              }}
+              className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/[0.08] bg-slate-900/60 text-slate-400 hover:text-cyan-300 hover:border-cyan-500/40 hover:bg-cyan-950/30 transition-all cursor-pointer shrink-0"
+              title="Advanced Settings & Port Mappings (Shift+S)"
+            >
+              <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+              </svg>
+            </button>
+          )}
+
           {/* Audio Synthesizer Toggle */}
           <button
             onClick={toggleAudio}

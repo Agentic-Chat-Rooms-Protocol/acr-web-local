@@ -11,12 +11,14 @@ import { TelemetryTicker } from './components/TelemetryTicker';
 import { Footer } from './components/Footer';
 import { ConnectMcpModal } from './components/ConnectMcpModal';
 import { MetaMcpStudio } from './components/MetaMcpStudio';
+import { AdvancedSettingsModal } from './components/AdvancedSettingsModal';
 import { AcrChatApp } from './app/AcrChatApp';
 
 export const App: React.FC = () => {
   const [isCommandOpen, setIsCommandOpen] = useState(false);
   const [isConnectMcpOpen, setIsConnectMcpOpen] = useState(false);
   const [isMetaMcpOpen, setIsMetaMcpOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'showcase' | 'app'>(() => {
     if (typeof window !== 'undefined') {
       const hash = window.location.hash.toLowerCase();
@@ -37,6 +39,21 @@ export const App: React.FC = () => {
 
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
+  useEffect(() => {
+    const handleGlobalKeys = (e: KeyboardEvent) => {
+      // Shift+S triggers Advanced Settings
+      if (e.shiftKey && (e.key === 'S' || e.key === 's') && !e.ctrlKey && !e.metaKey) {
+        const target = e.target as HTMLElement;
+        if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) return;
+        e.preventDefault();
+        setIsSettingsOpen((prev) => !prev);
+      }
+    };
+
+    window.addEventListener('keydown', handleGlobalKeys);
+    return () => window.removeEventListener('keydown', handleGlobalKeys);
   }, []);
 
   const handleNavigate = (sectionId: string) => {
@@ -66,6 +83,8 @@ export const App: React.FC = () => {
       handleLaunchApp();
     } else if (actionId === 'open-meta-mcp') {
       setIsMetaMcpOpen(true);
+    } else if (actionId === 'open-settings') {
+      setIsSettingsOpen(true);
     } else if (actionId === 'jump-simulator' || actionId === 'escalate-test') {
       handleNavigate('simulator');
     } else if (actionId === 'copy-mcp') {
@@ -96,6 +115,7 @@ export const App: React.FC = () => {
           onLaunchApp={handleLaunchApp}
           onOpenConnectMcp={() => setIsConnectMcpOpen(true)}
           onOpenMetaMcp={() => setIsMetaMcpOpen(true)}
+          onOpenSettings={() => setIsSettingsOpen(true)}
         />
 
         {/* Hero Section */}
@@ -137,12 +157,19 @@ export const App: React.FC = () => {
         isOpen={isConnectMcpOpen}
         onClose={() => setIsConnectMcpOpen(false)}
         onLaunchCloudSandbox={handleLaunchApp}
+        onOpenSettings={() => setIsSettingsOpen(true)}
       />
 
       {/* ACR Meta-MCP Forward Proxy & Governance Studio */}
       <MetaMcpStudio
         isOpen={isMetaMcpOpen}
         onClose={() => setIsMetaMcpOpen(false)}
+      />
+
+      {/* ACR Advanced Settings & Port Mapping Modal */}
+      <AdvancedSettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
       />
     </div>
   );

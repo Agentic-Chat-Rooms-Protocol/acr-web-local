@@ -59,6 +59,14 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       badge: 'Port 20445',
     },
     {
+      id: 'open-settings',
+      category: 'Network & Ports',
+      title: 'Advanced Settings & Port Mappings',
+      subtitle: 'Configure runtime port bindings, conflict checks, and .env/JSON exports',
+      icon: Zap,
+      badge: 'Shift+S',
+    },
+    {
       id: 'view-dag',
       category: 'Graphite DAG',
       title: 'View Multi-Agent Task Dependency Tree',

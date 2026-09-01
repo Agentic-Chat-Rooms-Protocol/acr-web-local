@@ -94,6 +94,32 @@ class SoundFX {
       });
     } catch {}
   }
+
+  public playSuccess() {
+    this.playApprovalChime();
+  }
+
+  public playError() {
+    if (!this.enabled) return;
+    this.init();
+    if (!this.ctx) return;
+
+    try {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(220, this.ctx.currentTime); // A3
+      osc.frequency.linearRampToValueAtTime(140, this.ctx.currentTime + 0.12);
+
+      gain.gain.setValueAtTime(0.06, this.ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.12);
+
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start();
+      osc.stop(this.ctx.currentTime + 0.12);
+    } catch {}
+  }
 }
 
 export const sound = new SoundFX();
