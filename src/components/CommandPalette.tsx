@@ -51,6 +51,14 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       badge: 'MCP Stdio/SSE',
     },
     {
+      id: 'open-meta-mcp',
+      category: 'Governance & Proxy',
+      title: 'Open Meta-MCP Governance Studio',
+      subtitle: 'Manage downstream MCP servers, sandboxing, and 3-tier projected catalogs',
+      icon: Shield,
+      badge: 'Port 20445',
+    },
+    {
       id: 'view-dag',
       category: 'Graphite DAG',
       title: 'View Multi-Agent Task Dependency Tree',

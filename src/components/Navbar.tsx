@@ -8,9 +8,10 @@ interface NavbarProps {
   onNavigate: (sectionId: string) => void;
   onLaunchApp?: () => void;
   onOpenConnectMcp?: () => void;
+  onOpenMetaMcp?: () => void;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ onOpenCommand, onNavigate, onLaunchApp, onOpenConnectMcp }) => {
+export const Navbar: React.FC<NavbarProps> = ({ onOpenCommand, onNavigate, onLaunchApp, onOpenConnectMcp, onOpenMetaMcp }) => {
   const [audioEnabled, setAudioEnabled] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
@@ -115,6 +116,16 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCommand, onNavigate, onLau
             className="transition-colors hover:text-white cursor-pointer whitespace-nowrap"
           >
             MCP &amp; SDK
+          </button>
+          <button
+            onClick={() => {
+              sound.playTick();
+              if (onOpenMetaMcp) onOpenMetaMcp();
+            }}
+            className="transition-colors hover:text-cyan-300 text-cyan-400 font-semibold cursor-pointer whitespace-nowrap flex items-center gap-1"
+          >
+            <span>Meta-MCP</span>
+            <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
           </button>
           <button
             onClick={() => handleNavClick('governance')}

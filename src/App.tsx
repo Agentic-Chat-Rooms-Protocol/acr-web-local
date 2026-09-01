@@ -10,11 +10,13 @@ import { ArchitectureGrid } from './components/ArchitectureGrid';
 import { TelemetryTicker } from './components/TelemetryTicker';
 import { Footer } from './components/Footer';
 import { ConnectMcpModal } from './components/ConnectMcpModal';
+import { MetaMcpStudio } from './components/MetaMcpStudio';
 import { AcrChatApp } from './app/AcrChatApp';
 
 export const App: React.FC = () => {
   const [isCommandOpen, setIsCommandOpen] = useState(false);
   const [isConnectMcpOpen, setIsConnectMcpOpen] = useState(false);
+  const [isMetaMcpOpen, setIsMetaMcpOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'showcase' | 'app'>(() => {
     if (typeof window !== 'undefined') {
       const hash = window.location.hash.toLowerCase();
@@ -62,6 +64,8 @@ export const App: React.FC = () => {
 
     if (actionId === 'launch-app') {
       handleLaunchApp();
+    } else if (actionId === 'open-meta-mcp') {
+      setIsMetaMcpOpen(true);
     } else if (actionId === 'jump-simulator' || actionId === 'escalate-test') {
       handleNavigate('simulator');
     } else if (actionId === 'copy-mcp') {
@@ -91,6 +95,7 @@ export const App: React.FC = () => {
           onNavigate={handleNavigate}
           onLaunchApp={handleLaunchApp}
           onOpenConnectMcp={() => setIsConnectMcpOpen(true)}
+          onOpenMetaMcp={() => setIsMetaMcpOpen(true)}
         />
 
         {/* Hero Section */}
@@ -132,6 +137,12 @@ export const App: React.FC = () => {
         isOpen={isConnectMcpOpen}
         onClose={() => setIsConnectMcpOpen(false)}
         onLaunchCloudSandbox={handleLaunchApp}
+      />
+
+      {/* ACR Meta-MCP Forward Proxy & Governance Studio */}
+      <MetaMcpStudio
+        isOpen={isMetaMcpOpen}
+        onClose={() => setIsMetaMcpOpen(false)}
       />
     </div>
   );
