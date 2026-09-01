@@ -47,6 +47,7 @@ import { BlankSlateOnboarding } from './components/BlankSlateOnboarding';
 import { RootAdminProfileModal } from './components/RootAdminProfileModal';
 import { AgentProfileModal } from './components/AgentProfileModal';
 import { SlashCommandMenu, SLASH_COMMANDS, type SlashCommandDef } from './components/SlashCommandMenu';
+import { DirectiveTag } from './components/DirectiveTag';
 import type { Agent, Escalation, FileAttachment, MarketplacePlugin } from '../types/protocol';
 
 interface AcrChatAppProps {
@@ -111,6 +112,7 @@ export const AcrChatApp: React.FC<AcrChatAppProps> = ({ onBackToShowcase }) => {
   const [isRepoModalOpen, setIsRepoModalOpen] = useState(false);
 
   const [inputContent, setInputContent] = useState('');
+  const [activeDirectiveCommand, setActiveDirectiveCommand] = useState<SlashCommandDef | null>(null);
   const [isSlashMenuOpen, setIsSlashMenuOpen] = useState(false);
   const [slashQuery, setSlashQuery] = useState('');
   const [slashSelectedIndex, setSlashSelectedIndex] = useState(0);
@@ -284,20 +286,30 @@ export const AcrChatApp: React.FC<AcrChatAppProps> = ({ onBackToShowcase }) => {
     );
   }, [slashQuery]);
 
+  const handleSelectSlashCommand = useCallback((cmd: SlashCommandDef) => {
+    setIsSlashMenuOpen(false);
+    setActiveDirectiveCommand(cmd);
+
+    // Strip the typed `/...` trigger part from inputContent
+    setInputContent((prev) => {
+      const slashIdx = prev.lastIndexOf('/');
+      if (slashIdx !== -1) {
+        return prev.slice(0, slashIdx).trim();
+      }
+      return '';
+    });
+
+    setTimeout(() => {
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
+    }, 30);
+  }, []);
+
   const executeSlashCommand = useCallback(
     async (cmd: SlashCommandDef, explicitArgs?: string) => {
       setIsSlashMenuOpen(false);
-
-      if (cmd.takesArgs && explicitArgs === undefined) {
-        setInputContent(`/${cmd.name} `);
-        setTimeout(() => {
-          if (inputRef.current) {
-            inputRef.current.focus();
-            inputRef.current.selectionStart = inputRef.current.selectionEnd = inputRef.current.value.length;
-          }
-        }, 50);
-        return;
-      }
+      setActiveDirectiveCommand(null);
 
       const args = explicitArgs || '';
 
@@ -430,9 +442,19 @@ export const AcrChatApp: React.FC<AcrChatAppProps> = ({ onBackToShowcase }) => {
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inputContent.trim() && !attachedFile) return;
-
     const trimmed = inputContent.trim();
+    if (!trimmed && !attachedFile && !activeDirectiveCommand) return;
+
+    if (activeDirectiveCommand) {
+      const cmd = activeDirectiveCommand;
+      setActiveDirectiveCommand(null);
+      setInputContent('');
+      setAttachedFile(null);
+      setIsSlashMenuOpen(false);
+      await executeSlashCommand(cmd, trimmed);
+      return;
+    }
+
     if (trimmed.startsWith('/') && !attachedFile) {
       const match = trimmed.slice(1).match(/^([a-zA-Z0-9-_]+)(?:\s+(.*))?$/);
       if (match) {
@@ -467,7 +489,7 @@ export const AcrChatApp: React.FC<AcrChatAppProps> = ({ onBackToShowcase }) => {
       if (e.key === 'Enter' || e.key === 'Tab') {
         if (filteredSlashCommands.length > 0) {
           e.preventDefault();
-          executeSlashCommand(filteredSlashCommands[slashSelectedIndex] || filteredSlashCommands[0]);
+          handleSelectSlashCommand(filteredSlashCommands[slashSelectedIndex] || filteredSlashCommands[0]);
           return;
         }
       }
@@ -476,6 +498,18 @@ export const AcrChatApp: React.FC<AcrChatAppProps> = ({ onBackToShowcase }) => {
         setIsSlashMenuOpen(false);
         return;
       }
+    }
+
+    if (e.key === 'Backspace' && inputContent === '' && activeDirectiveCommand !== null) {
+      e.preventDefault();
+      setActiveDirectiveCommand(null);
+      return;
+    }
+
+    if (e.key === 'Escape' && activeDirectiveCommand !== null) {
+      e.preventDefault();
+      setActiveDirectiveCommand(null);
+      return;
     }
 
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -1119,7 +1153,7 @@ export const AcrChatApp: React.FC<AcrChatAppProps> = ({ onBackToShowcase }) => {
                 isOpen={isSlashMenuOpen}
                 query={slashQuery}
                 selectedIndex={slashSelectedIndex}
-                onSelect={(cmd) => executeSlashCommand(cmd)}
+                onSelect={(cmd) => handleSelectSlashCommand(cmd)}
                 onHoverIndex={(idx) => setSlashSelectedIndex(idx)}
               />
 
@@ -1143,27 +1177,40 @@ export const AcrChatApp: React.FC<AcrChatAppProps> = ({ onBackToShowcase }) => {
                   <div className="flex items-center gap-1.5">
                     <button
                       type="button"
-                      onClick={() => executeSlashCommand(SLASH_COMMANDS.find((c) => c.id === 'vote')!)}
+                      onClick={() => handleSelectSlashCommand(SLASH_COMMANDS.find((c) => c.id === 'vote')!)}
                       className="px-2 py-0.5 rounded-md bg-white/[0.04] hover:bg-cyan-500/20 text-slate-400 hover:text-cyan-300 border border-white/[0.06] hover:border-cyan-500/30 transition-all cursor-pointer"
                     >
                       /vote
                     </button>
                     <button
                       type="button"
-                      onClick={() => executeSlashCommand(SLASH_COMMANDS.find((c) => c.id === 'ballots')!)}
+                      onClick={() => handleSelectSlashCommand(SLASH_COMMANDS.find((c) => c.id === 'ballots')!)}
                       className="px-2 py-0.5 rounded-md bg-white/[0.04] hover:bg-amber-500/20 text-slate-400 hover:text-amber-300 border border-white/[0.06] hover:border-amber-500/30 transition-all cursor-pointer"
                     >
                       /ballots
                     </button>
                     <button
                       type="button"
-                      onClick={() => executeSlashCommand(SLASH_COMMANDS.find((c) => c.id === 'audit')!)}
+                      onClick={() => handleSelectSlashCommand(SLASH_COMMANDS.find((c) => c.id === 'audit')!)}
                       className="px-2 py-0.5 rounded-md bg-white/[0.04] hover:bg-cyan-500/20 text-slate-400 hover:text-cyan-300 border border-white/[0.06] hover:border-cyan-500/30 transition-all cursor-pointer hidden sm:inline"
                     >
                       /audit
                     </button>
                   </div>
                 </div>
+
+                {/* Active Directive Tag Chip */}
+                {activeDirectiveCommand && (
+                  <div className="flex flex-wrap items-center gap-2 px-3.5 pt-2.5 pb-0.5">
+                    <DirectiveTag
+                      command={activeDirectiveCommand}
+                      onRemove={() => {
+                        setActiveDirectiveCommand(null);
+                        inputRef.current?.focus();
+                      }}
+                    />
+                  </div>
+                )}
 
                 {/* Text Input Area */}
                 <textarea
@@ -1190,9 +1237,15 @@ export const AcrChatApp: React.FC<AcrChatAppProps> = ({ onBackToShowcase }) => {
                     setIsSlashMenuOpen(false);
                   }}
                   onKeyDown={handleKeyDown}
-                  placeholder={`Dispatch operator directive or message into #${displayedActiveRoom.name}... (type / for command shortcuts)`}
+                  placeholder={
+                    activeDirectiveCommand
+                      ? activeDirectiveCommand.argsHint
+                        ? `Enter ${activeDirectiveCommand.argsHint}... (press Enter to dispatch /${activeDirectiveCommand.name})`
+                        : `Press Enter or Send to execute /${activeDirectiveCommand.name} with directive...`
+                      : `Dispatch operator directive or message into #${displayedActiveRoom.name}... (type / for command shortcuts)`
+                  }
                   rows={2}
-                  className="w-full resize-none bg-transparent px-4 py-3 text-xs text-white placeholder:text-slate-500 focus:outline-none font-sans min-h-[56px] max-h-[160px] leading-relaxed"
+                  className="w-full resize-none bg-transparent px-4 py-2.5 text-xs text-white placeholder:text-slate-500 focus:outline-none font-sans min-h-[48px] max-h-[160px] leading-relaxed"
                 />
 
               {/* Bottom Integrated Toolbar */}
