@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, X, Check, Copy, User, Building, Sparkles } from 'lucide-react';
+import { Shield, X, Check, Copy, User, Building, Sparkles, Globe } from 'lucide-react';
 import type { RootAdminProfile } from '../../types/protocol';
 
 interface RootAdminProfileModalProps {
@@ -28,6 +28,8 @@ export const RootAdminProfileModal: React.FC<RootAdminProfileModalProps> = ({
   const [avatar, setAvatar] = useState(profile.avatar);
   const [copiedDid, setCopiedDid] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
+  const [enableCors, setEnableCors] = useState(true);
+  const [enablePna, setEnablePna] = useState(true);
 
   useEffect(() => {
     if (isOpen) {
@@ -35,8 +37,40 @@ export const RootAdminProfileModal: React.FC<RootAdminProfileModalProps> = ({
       setTitle(profile.title);
       setAvatar(profile.avatar);
       setSavedSuccess(false);
+
+      fetch('http://localhost:20443/api/v1/config/security')
+        .then((res) => res.json())
+        .then((data) => {
+          if (data && typeof data.enable_cors === 'boolean') {
+            setEnableCors(data.enable_cors);
+            setEnablePna(data.enable_pna);
+          }
+        })
+        .catch(() => {});
     }
   }, [isOpen, profile]);
+
+  const handleToggleCors = async (enabled: boolean) => {
+    setEnableCors(enabled);
+    try {
+      await fetch('http://localhost:20443/api/v1/config/security', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enable_cors: enabled }),
+      });
+    } catch {}
+  };
+
+  const handleTogglePna = async (enabled: boolean) => {
+    setEnablePna(enabled);
+    try {
+      await fetch('http://localhost:20443/api/v1/config/security', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enable_pna: enabled }),
+      });
+    } catch {}
+  };
 
   if (!isOpen) return null;
 
@@ -190,6 +224,60 @@ export const RootAdminProfileModal: React.FC<RootAdminProfileModalProps> = ({
                   )}
                 </button>
               ))}
+            </div>
+          </div>
+
+          {/* Network & Security Policy (PNA / CORS) */}
+          <div className="space-y-2 p-3.5 rounded-xl border border-white/[0.08] bg-black/40">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-200">
+                <Globe className="h-3.5 w-3.5 text-cyan-400" />
+                <span>Network & Private Access (PNA / CORS)</span>
+              </div>
+              <span className="text-[9px] font-mono-code px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">
+                Daemon Config
+              </span>
+            </div>
+            <p className="text-[10px] text-slate-400">
+              Configure browser network discovery and cross-origin invocation policies for the local daemon.
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+              {/* PNA Toggle */}
+              <div className="flex items-center justify-between p-2 rounded-lg bg-white/[0.02] border border-white/[0.06]">
+                <div>
+                  <div className="text-[11px] font-semibold text-white">Private Network (PNA)</div>
+                  <div className="text-[9px] text-slate-500">Allow HTTPS Vercel discovery</div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleTogglePna(!enablePna)}
+                  className={`flex h-5 w-9 items-center rounded-full p-0.5 transition-colors cursor-pointer ${
+                    enablePna ? 'bg-cyan-500 justify-end' : 'bg-slate-700 justify-start'
+                  }`}
+                  aria-label="Toggle Private Network Access"
+                >
+                  <span className="h-4 w-4 rounded-full bg-white shadow-md transform transition-transform" />
+                </button>
+              </div>
+
+              {/* CORS Toggle */}
+              <div className="flex items-center justify-between p-2 rounded-lg bg-white/[0.02] border border-white/[0.06]">
+                <div>
+                  <div className="text-[11px] font-semibold text-white">CORS Policy</div>
+                  <div className="text-[9px] text-slate-500">Allow cross-origin browser fetch</div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleToggleCors(!enableCors)}
+                  className={`flex h-5 w-9 items-center rounded-full p-0.5 transition-colors cursor-pointer ${
+                    enableCors ? 'bg-indigo-500 justify-end' : 'bg-slate-700 justify-start'
+                  }`}
+                  aria-label="Toggle CORS"
+                >
+                  <span className="h-4 w-4 rounded-full bg-white shadow-md transform transition-transform" />
+                </button>
+              </div>
             </div>
           </div>
 
