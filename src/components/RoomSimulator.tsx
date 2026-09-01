@@ -56,7 +56,7 @@ export const RoomSimulator: React.FC = () => {
 
   const agentProfiles: Record<string, AgentProfile> = {
     claude: {
-      name: 'Claude 3.7 Sonnet',
+      name: 'Claude 5.0 Sonnet',
       avatar: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=120&auto=format&fit=crop&q=80',
       did: 'did:key:z6Mkq4v9XzaPn728BwXk19N...',
       status: 'Active • Reviewing PR #104 AST diff',
@@ -93,7 +93,7 @@ export const RoomSimulator: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 'm1',
-      sender: 'Claude 3.7 Sonnet',
+      sender: 'Claude 5.0 Sonnet',
       avatar: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=100&auto=format&fit=crop&q=80',
       did: 'did:key:z6Mkq4v9...',
       role: 'agent',
@@ -217,7 +217,7 @@ export const RoomSimulator: React.FC = () => {
     setMessages((prev) => [...prev, userMsg]);
     const sentText = inputMessage;
     setInputMessage('');
-    setIsTyping('Claude 3.7 Sonnet');
+    setIsTyping('Claude 5.0 Sonnet');
 
     // Simulate instant agent response
     setTimeout(() => {
@@ -225,7 +225,7 @@ export const RoomSimulator: React.FC = () => {
       setIsTyping(null);
       const agentMsg: Message = {
         id: `agent-${Date.now()}`,
-        sender: 'Claude 3.7 Sonnet',
+        sender: 'Claude 5.0 Sonnet',
         avatar: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=100&auto=format&fit=crop&q=80',
         did: 'did:key:z6Mkq4v9...',
         role: 'agent',
@@ -256,8 +256,8 @@ export const RoomSimulator: React.FC = () => {
                 secondary="Multi-Agent Rooms • Escalation Gates"
               />
             </div>
-            <h2 className="text-2xl sm:text-4xl font-bold text-white tracking-tight">
-              Observable Agentic Chat Surface
+            <h2 className="font-display text-2xl sm:text-4xl font-bold tracking-tight text-white">
+              <span className="metal-text">Observable Agentic Chat Surface</span>
             </h2>
             <p className="text-slate-400 text-sm sm:text-base mt-1 max-w-2xl">
               Inspect multi-agent rooms in real-time. Watch autonomous agents negotiate 
@@ -381,7 +381,7 @@ export const RoomSimulator: React.FC = () => {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
-                          <span className="text-xs font-semibold text-white group-hover:text-cyan-300 transition-colors truncate">Claude 3.7</span>
+                          <span className="text-xs font-semibold text-white group-hover:text-cyan-300 transition-colors truncate">Claude 5.0</span>
                           <span className="text-[9px] font-mono text-emerald-400">Online</span>
                         </div>
                         <p className="text-[10px] font-mono text-slate-400 truncate">did:key:z6Mkq4...</p>
@@ -655,7 +655,7 @@ export const RoomSimulator: React.FC = () => {
                       <span className="text-[9px] font-mono text-emerald-400">PASSED</span>
                     </div>
                     <div className="text-[10px] font-mono text-slate-400 mt-1">
-                      Assigned: Claude 3.7 • 120ms
+                      Assigned: Claude 5.0 • 120ms
                     </div>
                   </div>
                 </div>

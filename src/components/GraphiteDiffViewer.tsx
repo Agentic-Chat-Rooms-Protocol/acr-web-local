@@ -79,6 +79,178 @@ interface ConsensusEnvelope {
   timestamp: string;
 }
 
+// ─── Built-in Default Demo Fallback Data ─────────────────────────────────────
+
+const DEFAULT_DEMO_STACK: Stack = {
+  id: 'stack-vc-gate-082',
+  repo: 'ACR/acr-core',
+  base: 'main',
+  status: 'open',
+  layers: [
+    {
+      index: 0,
+      pr_number: 104,
+      branch: 'agent/claude-vc-gate',
+      title: 'Zero-Trust VC Capability Gate',
+      status: 'open',
+      verdicts: [
+        { agent_did: 'did:key:z6Mkq5Xv...claude', decision: 'APPROVE' },
+        { agent_did: 'did:key:z6Mkp2x1...devin', decision: 'APPROVE' },
+        { agent_did: 'did:key:z6Mkr9a4...sentinel', decision: 'APPROVE' }
+      ]
+    },
+    {
+      index: 1,
+      pr_number: 105,
+      branch: 'agent/devin-jetstream-quorum',
+      title: 'NATS JetStream Raft Quorum Buffer',
+      status: 'open',
+      verdicts: [
+        { agent_did: 'did:key:z6Mkq5Xv...claude', decision: 'APPROVE' }
+      ]
+    },
+    {
+      index: 2,
+      pr_number: 106,
+      branch: 'agent/sentinel-dissent-record',
+      title: 'Cryptographic Dissent Merkle Ledger',
+      status: 'open',
+      verdicts: []
+    }
+  ]
+};
+
+const DEFAULT_DEMO_DIFF: PRDiffResponse = {
+  pr_number: 104,
+  files: [
+    {
+      path: 'pkg/gateway/hub.go',
+      added: 24,
+      removed: 8,
+      hunks: [
+        {
+          kind: 'FunctionChanged',
+          name: 'Hub.FanoutMessage',
+          old_start: 142,
+          old_end: 149,
+          new_start: 142,
+          new_end: 151,
+          old_lines: [
+            { line_num: 142, type: 'context', code: 'func (h *Hub) FanoutMessage(ctx context.Context, msg *Message) error {' },
+            { line_num: 143, type: 'context', code: '\t// Verify agent DID challenge before bus ingress' },
+            { line_num: 144, type: 'del', code: '\tif err := h.legacyAuthCheck(msg.AgentDID); err != nil {' },
+            { line_num: 145, type: 'del', code: '\t\treturn ErrUnauthorized' },
+            { line_num: 146, type: 'del', code: '\t}' },
+          ],
+          new_lines: [
+            { line_num: 142, type: 'context', code: 'func (h *Hub) FanoutMessage(ctx context.Context, msg *Message) error {' },
+            { line_num: 143, type: 'context', code: '\t// Verify agent DID challenge before bus ingress' },
+            { line_num: 144, type: 'add', code: '\tif !h.vcVerifier.ValidateCapability(msg.AgentDID, msg.RequiredScope) {' },
+            { line_num: 145, type: 'add', code: '\t\th.governance.RecordDissent(msg.AgentDID, "CAPABILITY_DENIED")' },
+            { line_num: 146, type: 'add', code: '\t\treturn ErrVCCapabilityScopeExceeded' },
+            { line_num: 147, type: 'add', code: '\t}' },
+          ]
+        },
+        {
+          kind: 'FunctionAdded',
+          name: 'Hub.VerifyCapabilityProof',
+          old_start: 0,
+          old_end: 0,
+          new_start: 178,
+          new_end: 186,
+          old_lines: [],
+          new_lines: [
+            { line_num: 178, type: 'add', code: 'func (h *Hub) VerifyCapabilityProof(proof *CapabilityProof) (bool, error) {' },
+            { line_num: 179, type: 'add', code: '\tdigest := sha256.Sum256(proof.CanonicalPayload())' },
+            { line_num: 180, type: 'add', code: '\treturn ed25519.Verify(proof.PublicKey, digest[:], proof.Signature), nil' },
+            { line_num: 181, type: 'add', code: '}' },
+          ]
+        }
+      ]
+    },
+    {
+      path: 'pkg/store/kv_store.go',
+      added: 8,
+      removed: 3,
+      hunks: [
+        {
+          kind: 'StructChanged',
+          name: 'RedisRoster',
+          old_start: 58,
+          old_end: 62,
+          new_start: 58,
+          new_end: 63,
+          old_lines: [
+            { line_num: 58, type: 'context', code: 'type RedisRoster struct {' },
+            { line_num: 59, type: 'del', code: '\tmu sync.Mutex // legacy single-host locking' },
+            { line_num: 60, type: 'context', code: '}' },
+          ],
+          new_lines: [
+            { line_num: 58, type: 'context', code: 'type RedisRoster struct {' },
+            { line_num: 59, type: 'add', code: '\tcluster *redis.ClusterClient // distributed pub/sub buddy roster' },
+            { line_num: 60, type: 'context', code: '}' },
+          ]
+        }
+      ]
+    },
+    {
+      path: 'pkg/identity/vc_auth.go',
+      added: 6,
+      removed: 1,
+      hunks: [
+        {
+          kind: 'ImportAdded',
+          name: 'golang.org/x/crypto/ed25519',
+          old_start: 4,
+          old_end: 8,
+          new_start: 4,
+          new_end: 9,
+          old_lines: [
+            { line_num: 4, type: 'context', code: 'import (' },
+            { line_num: 5, type: 'context', code: '\t"crypto/sha256"' },
+            { line_num: 6, type: 'context', code: ')' },
+          ],
+          new_lines: [
+            { line_num: 4, type: 'context', code: 'import (' },
+            { line_num: 5, type: 'context', code: '\t"crypto/sha256"' },
+            { line_num: 6, type: 'add', code: '\t"golang.org/x/crypto/ed25519"' },
+            { line_num: 7, type: 'context', code: ')' },
+          ]
+        }
+      ]
+    }
+  ]
+};
+
+const DEFAULT_DEMO_CONSENSUS: ConsensusEnvelope = {
+  stack_id: 'stack-vc-gate-082',
+  repo: 'ACR/acr-core',
+  pr_ids: [104, 105, 106],
+  commit_sha: 'a3f9b1c84e2098d7f',
+  quorum: '3/3',
+  timestamp: '2026-09-01T11:00:00Z',
+  verdicts: [
+    {
+      agent_did: 'did:key:z6Mkq5Xv...claude',
+      decision: 'APPROVE',
+      sig: 'MEUCIQDbK819xZ4w...Ed25519',
+      timestamp: '2026-09-01T10:58:12Z'
+    },
+    {
+      agent_did: 'did:key:z6Mkp2x1...devin',
+      decision: 'APPROVE',
+      sig: 'MEQCIA4k28aL9mN...Ed25519',
+      timestamp: '2026-09-01T10:59:04Z'
+    },
+    {
+      agent_did: 'did:key:z6Mkr9a4...sentinel',
+      decision: 'APPROVE',
+      sig: 'MEQCIB9vN2k8x31...Ed25519',
+      timestamp: '2026-09-01T11:00:00Z'
+    }
+  ]
+};
+
 // ─── Kind Badge ───────────────────────────────────────────────────────────────
 
 const kindColor: Record<string, string> = {
@@ -217,18 +389,18 @@ const ConsensusProofPanel: React.FC<{ envelope: ConsensusEnvelope | null }> = ({
 
 export const GraphiteDiffViewer: React.FC = () => {
   const [viewMode, setViewMode] = useState<'split' | 'unified'>('split');
-  const [diffData, setDiffData] = useState<PRDiffResponse | null>(null);
+  const [diffData, setDiffData] = useState<PRDiffResponse>(DEFAULT_DEMO_DIFF);
   const [selectedFileIdx, setSelectedFileIdx] = useState(0);
-  const [stacks, setStacks] = useState<Stack[]>([]);
-  const [selectedStack, setSelectedStack] = useState<Stack | null>(null);
-  const [selectedPR, setSelectedPR] = useState<number | null>(null);
-  // consensus will be populated via NATS.js subscription in Phase 2
-  const consensus: ConsensusEnvelope | null = null;
-  const [loading, setLoading] = useState(true);
+  const [stacks, setStacks] = useState<Stack[]>([DEFAULT_DEMO_STACK]);
+  const [selectedStack, setSelectedStack] = useState<Stack | null>(DEFAULT_DEMO_STACK);
+  const [selectedPR, setSelectedPR] = useState<number | null>(104);
+  const [consensus] = useState<ConsensusEnvelope | null>(DEFAULT_DEMO_CONSENSUS);
+  const [loading, setLoading] = useState(false);
   const [daemonOnline, setDaemonOnline] = useState(false);
 
-  // Fetch stacks and initial diff on mount
+  // Fetch stacks and initial diff on mount if daemon is accessible
   useEffect(() => {
+    let isMounted = true;
     const load = async () => {
       setLoading(true);
       try {
@@ -236,33 +408,39 @@ export const GraphiteDiffViewer: React.FC = () => {
           fetch(`${DAEMON_URL}/api/v1/stacks?repo=ACR/acr-core`),
           fetch(`${DAEMON_URL}/api/v1/review/diff?pr=104`),
         ]);
-        if (stacksRes.ok) {
+        if (stacksRes.ok && isMounted) {
           const s: StacksResponse = await stacksRes.json();
-          setStacks(s.stacks ?? []);
-          if (s.stacks?.length) {
+          if (s.stacks && s.stacks.length > 0) {
+            setStacks(s.stacks);
             setSelectedStack(s.stacks[0]);
-            setSelectedPR(s.stacks[0].layers?.[0]?.pr_number ?? null);
+            setSelectedPR(s.stacks[0].layers?.[0]?.pr_number ?? 104);
           }
           setDaemonOnline(true);
         }
-        if (diffRes.ok) {
+        if (diffRes.ok && isMounted) {
           const d: PRDiffResponse = await diffRes.json();
-          setDiffData(d);
+          if (d.files && d.files.length > 0) {
+            setDiffData(d);
+          }
         }
       } catch {
-        // Daemon offline — use demo data from response above (server returns demo)
-        try {
-          const diffRes = await fetch(`${DAEMON_URL}/api/v1/review/diff?pr=104`);
-          if (diffRes.ok) setDiffData(await diffRes.json());
-        } catch { /* fully offline */ }
+        // Local daemon is offline; default demo data remains active
+        if (isMounted) {
+          setDaemonOnline(false);
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
     load();
+    return () => { isMounted = false; };
   }, []);
 
-  const selectedFile = diffData?.files?.[selectedFileIdx];
+  const selectedFile = diffData?.files?.[selectedFileIdx] ?? diffData?.files?.[0];
+  const totalAdded = diffData?.files?.reduce((acc, f) => acc + f.added, 0) ?? 38;
+  const totalRemoved = diffData?.files?.reduce((acc, f) => acc + f.removed, 0) ?? 12;
   const approvalCount = stacks.reduce((acc, s) => acc + s.layers.reduce((a, l) => a + l.verdicts.filter(v => v.decision === 'APPROVE').length, 0), 0);
 
   return (
@@ -292,7 +470,7 @@ export const GraphiteDiffViewer: React.FC = () => {
             <div className={`rounded-lg border px-3 py-1.5 flex items-center gap-1.5 font-medium ${
               daemonOnline
                 ? 'border-emerald-500/30 bg-emerald-950/40 text-emerald-300'
-                : 'border-slate-500/30 bg-slate-950/40 text-slate-400'
+                : 'border-cyan-500/30 bg-cyan-950/40 text-cyan-300'
             }`}>
               {daemonOnline ? <CheckCircle2 className="h-3.5 w-3.5" /> : <AlertCircle className="h-3.5 w-3.5" />}
               <span>{daemonOnline ? 'Daemon Live' : 'Demo Mode'}</span>
@@ -325,14 +503,16 @@ export const GraphiteDiffViewer: React.FC = () => {
               <div>
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-bold text-white">
-                    {selectedPR ? `PR #${selectedPR}: Zero-Trust VC Capability Gate` : 'Select a PR'}
+                    {selectedPR ? `PR #${selectedPR}: Zero-Trust VC Capability Gate` : 'PR #104: Zero-Trust VC Capability Gate'}
                   </span>
                   <span className="rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-1.5 py-0.2 text-[10px] font-mono">
                     Open • Consensus Ready
                   </span>
                 </div>
-                <div className="text-[11px] font-mono text-slate-400">
-                  Base: <code>main</code> ← Head: <code>agent/claude-vc-gate</code> (+38 -12)
+                <div className="text-[11px] font-mono text-slate-400 mt-0.5">
+                  Base: <code className="text-slate-200">main</code> ← Head: <code className="text-cyan-300">agent/claude-vc-gate</code> (
+                  <span className="text-red-400 font-semibold font-mono">+{totalAdded}</span>{' '}
+                  <span className="text-emerald-400 font-semibold font-mono">-{totalRemoved}</span>)
                 </div>
               </div>
             </div>
@@ -387,7 +567,7 @@ export const GraphiteDiffViewer: React.FC = () => {
               <div className="mt-4 pt-4 border-t border-white/[0.06] p-2 bg-[#0c0d14] rounded-lg border border-white/[0.04]">
                 <div className="flex items-center gap-2 mb-2">
                   <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
-                  <span className="text-[11px] font-bold text-white">Claude 3.7 Verdict</span>
+                  <span className="text-[11px] font-bold text-white">Claude 5.0 Verdict</span>
                 </div>
                 <p className="text-[10px] text-slate-300 font-sans leading-relaxed">
                   "Replaced ad-hoc DID checks with capability-scoped VC validation.
@@ -419,7 +599,11 @@ export const GraphiteDiffViewer: React.FC = () => {
           <div className="border-t border-white/[0.06] bg-black/40 px-4 py-2 flex items-center justify-between text-[11px] font-mono text-slate-400">
             <div className="flex items-center gap-3">
               <span>Diff Engine: AST Parser (go/ast v2)</span>
-              <span>Awaiting consensus signatures…</span>
+              <span>
+                {consensus?.verdicts?.[0]?.sig
+                  ? `Ed25519 Signed: ${consensus.verdicts[0].sig.slice(0, 16)}…`
+                  : 'Awaiting consensus signatures…'}
+              </span>
             </div>
             <span className="text-emerald-400 flex items-center gap-1">
               <Check className="h-3 w-3" /> Ready to Merge into main

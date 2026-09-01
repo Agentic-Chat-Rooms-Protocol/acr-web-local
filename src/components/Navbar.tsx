@@ -40,14 +40,14 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCommand, onNavigate, onLau
   return (
     <header className="sticky top-0 z-50 w-full px-3 sm:px-6 pointer-events-none">
       <div
-        className={`mx-auto flex items-center justify-between pointer-events-auto transform-gpu will-change-[max-width,transform] transition-[max-width,height,padding,margin,border-radius,background-color,border-color,box-shadow] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+        className={`mx-auto flex flex-nowrap items-center justify-between pointer-events-auto transform-gpu will-change-[max-width,transform] transition-[max-width,height,padding,margin,border-radius,background-color,border-color,box-shadow] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
           isScrolled
-            ? 'mt-3 h-14 max-w-6xl xl:max-w-7xl rounded-full border border-white/[0.14] bg-[#07080e]/92 px-5 sm:px-7 backdrop-blur-2xl shadow-[0_22px_55px_rgba(0,0,0,0.92),0_0_26px_rgba(6,182,212,0.15),inset_0_1px_0_rgba(255,255,255,0.14)]'
+            ? 'mt-3 h-14 max-w-6xl xl:max-w-7xl rounded-full border border-white/[0.14] bg-[#07080e]/92 px-4 sm:px-6 backdrop-blur-2xl shadow-[0_22px_55px_rgba(0,0,0,0.92),0_0_26px_rgba(6,182,212,0.15),inset_0_1px_0_rgba(255,255,255,0.14)] overflow-hidden'
             : 'h-16 max-w-7xl border-b border-white/[0.07] bg-[#050508]/85 px-4 sm:px-6 lg:px-8 backdrop-blur-xl'
         }`}
       >
         {/* Brand Group - Zero Wrap */}
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
           <a
             href="#"
             onClick={(e) => {
@@ -84,14 +84,14 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCommand, onNavigate, onLau
           </a>
 
           {/* Network Health Chip - Strict Single-Line */}
-          <div className="hidden lg:flex items-center gap-2 rounded-full border border-white/[0.08] bg-black/50 px-3 py-1 text-[11px] font-mono-code text-slate-300 shrink-0 whitespace-nowrap">
+          <div className="hidden xl:flex items-center gap-2 rounded-full border border-white/[0.08] bg-black/50 px-3 py-1 text-[11px] font-mono-code text-slate-300 shrink-0 whitespace-nowrap">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
             <span className="whitespace-nowrap">Mesh: 99.99% (0.38ms)</span>
           </div>
         </div>
 
         {/* Navigation Links - Strict Single-Line with Generous Gap */}
-        <nav className="hidden md:flex items-center gap-5 lg:gap-7 xl:gap-8 text-xs font-medium text-slate-300 shrink-0 whitespace-nowrap">
+        <nav className="hidden lg:flex items-center gap-4 xl:gap-6 text-xs font-medium text-slate-300 shrink-0 whitespace-nowrap">
           <button
             onClick={() => handleNavClick('simulator')}
             className="transition-colors hover:text-white cursor-pointer whitespace-nowrap"
@@ -102,7 +102,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCommand, onNavigate, onLau
             onClick={() => handleNavClick('diff-viewer')}
             className="transition-colors hover:text-white cursor-pointer whitespace-nowrap"
           >
-            Graphite Diff
+            Safe Diffs
           </button>
           <button
             onClick={() => handleNavClick('architecture')}
@@ -134,7 +134,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCommand, onNavigate, onLau
         </nav>
 
         {/* Action Buttons Group - Strict Single-Line */}
-        <div className="flex items-center gap-2.5 shrink-0 whitespace-nowrap">
+        <div className="flex items-center gap-2 sm:gap-2.5 shrink-0 whitespace-nowrap">
           {/* Audio Synthesizer Toggle */}
           <button
             onClick={toggleAudio}
@@ -171,7 +171,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCommand, onNavigate, onLau
                 sound.playApprovalChime();
                 onLaunchApp();
               }}
-              className="relative inline-flex items-center gap-1.5 overflow-hidden rounded-full border border-cyan-400/60 bg-gradient-to-r from-cyan-500 via-indigo-500 to-cyan-400 px-3.5 py-1.5 text-xs font-bold text-black shadow-[0_0_20px_rgba(6,182,212,0.4)] transition-all hover:scale-105 active:scale-95 cursor-pointer shrink-0 whitespace-nowrap"
+              className="relative inline-flex items-center gap-1.5 overflow-hidden rounded-full border border-cyan-400/60 bg-gradient-to-r from-cyan-500 via-indigo-500 to-cyan-400 px-3 py-1.5 text-xs font-bold text-black shadow-[0_0_20px_rgba(6,182,212,0.4)] transition-all hover:scale-105 active:scale-95 cursor-pointer shrink-0 whitespace-nowrap"
             >
               <Radio className="h-3.5 w-3.5" />
               <span className="whitespace-nowrap">Launch App</span>
@@ -188,7 +188,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCommand, onNavigate, onLau
                 handleNavClick('sdk');
               }
             }}
-            className="relative inline-flex items-center gap-1.5 overflow-hidden rounded-full border border-cyan-500/40 bg-gradient-to-r from-cyan-500/15 via-indigo-500/15 to-transparent px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm transition-all hover:border-cyan-400 hover:shadow-cyan-500/20 active:scale-98 cursor-pointer shrink-0 whitespace-nowrap"
+            className="relative inline-flex items-center gap-1.5 overflow-hidden rounded-full border border-cyan-500/40 bg-gradient-to-r from-cyan-500/15 via-indigo-500/15 to-transparent px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-all hover:border-cyan-400 hover:shadow-cyan-500/20 active:scale-98 cursor-pointer shrink-0 whitespace-nowrap"
           >
             <Terminal className="h-3.5 w-3.5 text-cyan-400" />
             <span className="whitespace-nowrap">Connect MCP</span>

@@ -62,6 +62,8 @@
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+  padding-bottom: 0.08em;
+  margin-bottom: -0.08em;
 }
 
 .text-gradient-cyan-indigo {
@@ -69,6 +71,8 @@
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+  padding-bottom: 0.08em;
+  margin-bottom: -0.08em;
 }
 
 

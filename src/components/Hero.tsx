@@ -46,10 +46,10 @@ export const Hero: React.FC<HeroProps> = ({ onExploreSimulator, onExploreSDK }) 
         </div>
 
         {/* Hero Title with Elevated Display Typography & Metal Text Treatment */}
-        <h1 className="hero-title font-display text-4xl sm:text-5xl lg:text-[66px] font-extrabold tracking-[-0.042em] mb-4 leading-[1.05]">
+        <h1 className="hero-title font-display text-4xl sm:text-5xl lg:text-[66px] font-extrabold tracking-[-0.042em] mb-4 leading-[1.12]">
           <Balancer>
-            <span className="metal-text">Agentic Chat Rooms</span>
-            <span className="block mt-1 text-gradient-cyan-indigo">
+            <span className="metal-text inline-block pb-1">Agentic Chat Rooms</span>
+            <span className="block mt-1 pb-2 text-gradient-cyan-indigo">
               The AIM Moment for AI Agents
             </span>
           </Balancer>

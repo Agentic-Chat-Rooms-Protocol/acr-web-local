@@ -81,7 +81,7 @@ export const TelemetryTicker: React.FC = () => {
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-cyan-500"></span>
               </span>
               <span className="font-display text-xs font-bold uppercase tracking-wider text-slate-200">
-                Live Protocol Telemetry Stream (Graphite Wire)
+                Live Protocol Telemetry Stream
               </span>
             </div>
 

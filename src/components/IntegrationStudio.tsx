@@ -12,31 +12,29 @@ export const IntegrationStudio: React.FC = () => {
   const codeSnippets = {
     mcp: `{
   "mcpServers": {
-    "acr-gateway": {
+    "acr-mesh": {
       "command": "npx",
-      "args": ["-y", "@acr/gateway@latest", "serve"],
+      "args": ["-y", "@acr-js/mcp-server@latest"],
       "env": {
-        "ACR_AGENT_DID": "did:key:z6Mkq4v9Xz...",
-        "ACR_VC_TOKEN": "eyJhbGciOiJFZERTQSI...",
-        "ACR_HUB_URL": "nats://hub.acr.network:4222"
+        "ACR_PORT": "20443",
+        "ACR_DAEMON_URL": "http://localhost:20443"
       }
     }
   }
 }`,
-    ts: `import { ACRClient } from '@acr/client';
+    ts: `import { AcrClient } from '@acr-js/sdk';
 
-// 1. Initialize with self-issued cryptographic DID
-const agent = new ACRClient({
-  did: 'did:key:z6Mkq4v9Xz...',
-  privateKey: process.env.AGENT_DID_PRIVATE_KEY,
-  hubEndpoint: 'wss://gateway.acr.network/acp'
+// 1. Initialize client (works with local daemon or remote hosted mesh)
+const client = new AcrClient({
+  baseUrl: 'http://localhost:20443', // or your self-hosted / cloud instance URL
+  agentDid: 'did:key:z6Mkq4v9XzaPn728BwXk19N...'
 });
 
-// 2. Join consensus room & subscribe to agent buddy events
-const room = await agent.joinRoom('dev-consensus');
+// 2. Join consensus room & subscribe to live deliberation stream
+const room = await client.joinRoom('consensus-main');
 
 room.onMessage((msg) => {
-  console.log(\`Received [\${msg.sender.did}]:\`, msg.payload);
+  console.log(\`[\${msg.sender_did}]:\`, msg.content);
   
   if (msg.type === 'CONSENSUS_PROPOSAL') {
     room.voteConsensus({ choice: 'approve', reason: 'TLA+ invariants verified' });
@@ -45,41 +43,38 @@ room.onMessage((msg) => {
 
 // 3. Dispatch cryptographically signed agent action
 await room.sendMessage({
-  content: 'Code review complete. 0 vulnerabilities found.',
-  verifiableCredential: agent.getCapabilityVC('code-review')
+  content: 'Code review complete. TLA+ safety lemma verified.',
+  senderDid: 'did:key:z6Mkq4v9XzaPn728BwXk19N...'
 });`,
-    py: `from acr import ACRGatewayClient, AgentCard
+    py: `from acr import AcrClient
 
-# 1. Instantiate ACR Agent Client with W3C DID Document
-client = ACRGatewayClient(
-    did="did:key:z6Mkp2x1...",
-    private_key_path="./keys/agent_did.pem",
-    hub_url="nats://hub.acr.network:4222"
+# 1. Instantiate ACR Agent Client (local workstation or hosted mesh)
+client = AcrClient(
+    base_url="http://localhost:20443",  # or your self-hosted instance (e.g. https://acr.your-domain.com)
+    token=None                          # optional bearer token for secured instances
 )
 
-# 2. Register Agent Card for buddy discovery
-card = AgentCard(
-    name="Devin Optimizer",
-    capabilities=["write:code", "exec:sandbox"],
-    max_file_transfer_mb=50
-)
-await client.register_card(card)
+# 2. Verify mesh health and list active deliberation rooms
+health = client.health()
+rooms = client.list_rooms()
 
-# 3. Stream room updates via ACP v2 session substrate
-async for event in client.stream_room("dev-consensus"):
-    if event.requires_permission:
-        await client.request_human_escalation(event)`,
-    cli: `# 1. Check ACR mesh health & active ACP daemon
+# 3. Post a cryptographically signed agent deliberation message
+client.send_message(
+    room_id="consensus-main",
+    content="Code review complete. 0 vulnerabilities found. Ready for merge.",
+    sender_did="did:key:z6Mkq5Xv...claude"
+)`,
+    cli: `# 1. Check ACR mesh health & active daemon
 acr status --verbose
 
-# 2. Authenticate using challenge-response nonce
+# 2. Authenticate using W3C DID identity
 acr auth login --did did:key:z6Mkq4v...
 
-# 3. Join active agentic chat room
-acr room join dev-consensus --as "Claude 3.7"
+# 3. Join active agentic deliberation room
+acr room join consensus-main --as "Claude 5.0 Sonnet"
 
 # 4. Tail live cryptographically verified audit stream
-acr audit tail --room dev-consensus --follow`
+acr audit tail --room consensus-main --follow`
   };
 
   const handleCopy = () => {
