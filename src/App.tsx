@@ -9,10 +9,12 @@ import { IntegrationStudio } from './components/IntegrationStudio';
 import { ArchitectureGrid } from './components/ArchitectureGrid';
 import { TelemetryTicker } from './components/TelemetryTicker';
 import { Footer } from './components/Footer';
+import { ConnectMcpModal } from './components/ConnectMcpModal';
 import { AcrChatApp } from './app/AcrChatApp';
 
 export const App: React.FC = () => {
   const [isCommandOpen, setIsCommandOpen] = useState(false);
+  const [isConnectMcpOpen, setIsConnectMcpOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'showcase' | 'app'>(() => {
     if (typeof window !== 'undefined') {
       const hash = window.location.hash.toLowerCase();
@@ -88,6 +90,7 @@ export const App: React.FC = () => {
           onOpenCommand={() => setIsCommandOpen(true)}
           onNavigate={handleNavigate}
           onLaunchApp={handleLaunchApp}
+          onOpenConnectMcp={() => setIsConnectMcpOpen(true)}
         />
 
         {/* Hero Section */}
@@ -122,6 +125,13 @@ export const App: React.FC = () => {
         isOpen={isCommandOpen}
         onClose={() => setIsCommandOpen(false)}
         onSelectAction={handleCommandAction}
+      />
+
+      {/* Connect MCP Production Modal */}
+      <ConnectMcpModal
+        isOpen={isConnectMcpOpen}
+        onClose={() => setIsConnectMcpOpen(false)}
+        onLaunchCloudSandbox={handleLaunchApp}
       />
     </div>
   );

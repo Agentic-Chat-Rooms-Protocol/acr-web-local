@@ -7,9 +7,10 @@ interface NavbarProps {
   onOpenCommand: () => void;
   onNavigate: (sectionId: string) => void;
   onLaunchApp?: () => void;
+  onOpenConnectMcp?: () => void;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ onOpenCommand, onNavigate, onLaunchApp }) => {
+export const Navbar: React.FC<NavbarProps> = ({ onOpenCommand, onNavigate, onLaunchApp, onOpenConnectMcp }) => {
   const [audioEnabled, setAudioEnabled] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
@@ -179,7 +180,14 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCommand, onNavigate, onLau
 
           {/* Connect MCP Deploy CTA */}
           <button
-            onClick={() => handleNavClick('sdk')}
+            onClick={() => {
+              sound.playTick();
+              if (onOpenConnectMcp) {
+                onOpenConnectMcp();
+              } else {
+                handleNavClick('sdk');
+              }
+            }}
             className="relative inline-flex items-center gap-1.5 overflow-hidden rounded-full border border-cyan-500/40 bg-gradient-to-r from-cyan-500/15 via-indigo-500/15 to-transparent px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm transition-all hover:border-cyan-400 hover:shadow-cyan-500/20 active:scale-98 cursor-pointer shrink-0 whitespace-nowrap"
           >
             <Terminal className="h-3.5 w-3.5 text-cyan-400" />

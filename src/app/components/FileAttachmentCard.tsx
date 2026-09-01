@@ -14,7 +14,11 @@ export const FileAttachmentCard: React.FC<FileAttachmentCardProps> = ({ attachme
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
-  const fileUrl = `http://localhost:20443${attachment.url}`;
+  const cloudBase = (import.meta as any).env?.VITE_ACR_CLOUD_URL || 'http://143.198.98.229:20443';
+  const daemonBase = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+    ? 'http://localhost:20443'
+    : cloudBase;
+  const fileUrl = attachment.url.startsWith('http') ? attachment.url : `${daemonBase}${attachment.url}`;
 
   return (
     <div className="mt-2 rounded-xl border border-white/[0.1] bg-black/40 p-2.5 max-w-sm space-y-2 backdrop-blur-md">
