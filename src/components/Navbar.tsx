@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Terminal, ChevronRight, Volume2, VolumeX, Radio } from 'lucide-react';
+import { Search, Terminal, ChevronRight, Volume2, VolumeX, Radio, Flame } from 'lucide-react';
 import { sound } from '../utils/sound';
 import { AcrLogo } from './AcrLogo';
 
@@ -140,6 +140,16 @@ export const Navbar: React.FC<NavbarProps> = ({
             className="transition-colors hover:text-white cursor-pointer whitespace-nowrap"
           >
             Governance
+          </button>
+          <button
+            onClick={() => handleNavClick('opsroom')}
+            className="transition-colors hover:text-white cursor-pointer whitespace-nowrap flex items-center gap-1.5"
+          >
+            <Flame className="h-3.5 w-3.5 text-amber-400" />
+            <span className="font-semibold text-slate-200">OpsRoom</span>
+            <span className="rounded-full bg-gradient-to-r from-amber-500/25 to-cyan-500/25 border border-amber-400/60 text-amber-300 text-[9px] font-mono font-bold px-1.5 py-0.2 uppercase shadow-[0_0_8px_rgba(245,158,11,0.3)] animate-pulse">
+              NEW
+            </span>
           </button>
           <a
             href="https://github.com"

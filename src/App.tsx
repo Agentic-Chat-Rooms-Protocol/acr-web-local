@@ -12,6 +12,8 @@ import { Footer } from './components/Footer';
 import { ConnectMcpModal } from './components/ConnectMcpModal';
 import { MetaMcpStudio } from './components/MetaMcpStudio';
 import { AdvancedSettingsModal } from './components/AdvancedSettingsModal';
+import { OpsRoomSection } from './components/opsroom/OpsRoomSection';
+import { OpsRoomModal } from './components/opsroom/OpsRoomModal';
 import { AcrChatApp } from './app/AcrChatApp';
 
 export const App: React.FC = () => {
@@ -19,6 +21,7 @@ export const App: React.FC = () => {
   const [isConnectMcpOpen, setIsConnectMcpOpen] = useState(false);
   const [isMetaMcpOpen, setIsMetaMcpOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isOpsRoomModalOpen, setIsOpsRoomModalOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'showcase' | 'app'>(() => {
     if (typeof window !== 'undefined') {
       const hash = window.location.hash.toLowerCase();
@@ -85,6 +88,10 @@ export const App: React.FC = () => {
       setIsMetaMcpOpen(true);
     } else if (actionId === 'open-settings') {
       setIsSettingsOpen(true);
+    } else if (actionId === 'jump-opsroom' || actionId === 'view-battlecard' || actionId === 'view-atlas2' || actionId === 'calc-roi') {
+      handleNavigate('opsroom');
+    } else if (actionId === 'simulate-incident') {
+      setIsOpsRoomModalOpen(true);
     } else if (actionId === 'jump-simulator' || actionId === 'escalate-test') {
       handleNavigate('simulator');
     } else if (actionId === 'copy-mcp') {
@@ -123,6 +130,13 @@ export const App: React.FC = () => {
           <Hero
             onExploreSimulator={() => handleNavigate('simulator')}
             onExploreSDK={() => handleNavigate('sdk')}
+            onExploreOpsRoom={() => handleNavigate('opsroom')}
+          />
+
+          {/* ACR OpsRoom - Autonomous Enterprise War Room (Beyond Salesforce Agentforce & Slack) */}
+          <OpsRoomSection 
+            id="opsroom"
+            onOpenModal={() => setIsOpsRoomModalOpen(true)}
           />
 
           {/* Intercom + Graphite Live Room Simulator */}
@@ -170,6 +184,12 @@ export const App: React.FC = () => {
       <AdvancedSettingsModal
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
+      />
+
+      {/* ACR OpsRoom Interactive War Room Modal */}
+      <OpsRoomModal
+        isOpen={isOpsRoomModalOpen}
+        onClose={() => setIsOpsRoomModalOpen(false)}
       />
     </div>
   );

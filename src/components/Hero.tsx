@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { ArrowRight, Terminal, Shield, MessageSquare, Cpu, Sparkles, Network } from 'lucide-react';
+import { ArrowRight, Terminal, Shield, MessageSquare, Cpu, Sparkles, Network, Flame } from 'lucide-react';
 import Balancer from 'react-wrap-balancer';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
@@ -11,9 +11,10 @@ gsap.registerPlugin(useGSAP);
 interface HeroProps {
   onExploreSimulator: () => void;
   onExploreSDK: () => void;
+  onExploreOpsRoom?: () => void;
 }
 
-export const Hero: React.FC<HeroProps> = ({ onExploreSimulator, onExploreSDK }) => {
+export const Hero: React.FC<HeroProps> = ({ onExploreSimulator, onExploreSDK, onExploreOpsRoom }) => {
   const heroRef = useRef<HTMLDivElement>(null);
 
   // Awwwards-Tier GSAP fromTo Intro Choreography
@@ -66,6 +67,15 @@ export const Hero: React.FC<HeroProps> = ({ onExploreSimulator, onExploreSDK }) 
 
         {/* CTA Group */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 mb-10">
+          <button
+            onClick={() => { sound.playApprovalChime(); onExploreOpsRoom ? onExploreOpsRoom() : document.getElementById('opsroom')?.scrollIntoView({ behavior: 'smooth' }); }}
+            className="hero-cta-btn group relative flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-400 via-orange-400 to-cyan-400 px-5 py-3 text-sm font-bold text-slate-950 font-display shadow-lg shadow-amber-500/20 transition-all hover:shadow-[0_0_30px_rgba(245,158,11,0.35)] hover:scale-102 active:scale-98 cursor-pointer"
+          >
+            <Flame className="h-4 w-4 text-slate-950 transition-transform group-hover:scale-110" />
+            <span>Explore OpsRoom ⚡</span>
+            <span className="rounded bg-black/20 text-slate-950 text-[10px] font-mono px-1.5 py-0.5 font-black uppercase">NEW</span>
+          </button>
+
           <button
             onClick={() => { sound.playTick(); onExploreSimulator(); }}
             className="hero-cta-btn group relative flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-slate-950 font-display shadow-lg shadow-white/10 transition-all hover:bg-slate-100 hover:shadow-[0_0_25px_rgba(255,255,255,0.25)] active:scale-98 cursor-pointer"

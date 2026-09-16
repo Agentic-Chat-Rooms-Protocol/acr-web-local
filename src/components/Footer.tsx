@@ -47,6 +47,11 @@ export const Footer: React.FC = () => {
                 </a>
               </li>
               <li>
+                <a href="#opsroom" className="text-cyan-400 hover:text-cyan-300 transition-colors font-medium">
+                  ACR OpsRoom (Atlas 2.0 BFT)
+                </a>
+              </li>
+              <li>
                 <a href="#architecture" className="hover:text-white transition-colors">
                   DID / VC Trust Model
                 </a>
@@ -70,6 +75,11 @@ export const Footer: React.FC = () => {
               Ecosystem
             </h4>
             <ul className="space-y-2 text-slate-400">
+              <li>
+                <a href="#opsroom" className="text-amber-400 hover:text-amber-300 transition-colors font-medium">
+                  Autonomous War Room ⚡
+                </a>
+              </li>
               <li>
                 <a href="#sdk" className="hover:text-white transition-colors">
                   Model Context Protocol (MCP)

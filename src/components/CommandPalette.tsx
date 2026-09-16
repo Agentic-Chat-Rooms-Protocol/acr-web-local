@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Hash, Shield, Terminal, ArrowRight, Zap, X, Bot, Activity, Radio } from 'lucide-react';
+import { Search, Hash, Shield, Terminal, ArrowRight, Zap, X, Bot, Activity, Radio, Flame } from 'lucide-react';
 
 
 interface CommandPaletteProps {
@@ -18,6 +18,38 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
 
   const commands = [
+    {
+      id: 'jump-opsroom',
+      category: 'OpsRoom',
+      title: 'ACR OpsRoom Autonomous War Room',
+      subtitle: 'Atlas 2.0 Dynamic DAG & 67% Byzantine Fault-Tolerant Consensus',
+      icon: Flame,
+      badge: 'NEW Feature',
+    },
+    {
+      id: 'simulate-incident',
+      category: 'OpsRoom',
+      title: 'Simulate War Room Incident Response',
+      subtitle: 'Trigger multi-agent incident deliberation, BFT quorum & sandbox execution',
+      icon: Flame,
+      badge: 'Interactive',
+    },
+    {
+      id: 'view-battlecard',
+      category: 'OpsRoom',
+      title: 'Salesforce Agentforce vs OpsRoom Battlecard',
+      subtitle: 'Compare $2/conv incumbent against ACR 100% open-source protocol',
+      icon: Shield,
+      badge: 'Comparison',
+    },
+    {
+      id: 'calc-roi',
+      category: 'OpsRoom',
+      title: 'Enterprise ROI Migration Calculator',
+      subtitle: 'Calculate your annual savings migrating from Salesforce Agentforce',
+      icon: Zap,
+      badge: 'ROI / TCO',
+    },
     {
       id: 'launch-app',
       category: 'Application',
