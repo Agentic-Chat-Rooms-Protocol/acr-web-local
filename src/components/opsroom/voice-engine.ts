@@ -11,7 +11,7 @@
  * - Algorithmically-driven tier recommendation & readiness scoring
  * - Dynamic device constraint warnings (prevents browser tab crashes on constrained hardware)
  * - Explicit user confirmation modal flow before downloading local models
- * - Squad Agent Vocal Persona Matrix (distinct pitch, rate, voice timbre, neural voice IDs)
+ * - Squad Agent Vocal Persona Matrix (distinct pitch, rate, voice timbre, neural voice IDs, spatial panning)
  * - Web Audio API live frequency spectrum generation for reactive equalizer bars
  */
 
@@ -66,6 +66,18 @@ export interface VoicePersona {
   preferredGender: 'male' | 'female' | 'neutral';
   conversationalStyle: string;
   sampleQuote: string;
+  stereoPan: number; // -1.0 (far left) to 1.0 (far right)
+  formants: [number, number, number]; // [F1, F2, F3] formant resonance frequencies in Hz
+  systemVoiceHints: string[]; // Preferred OS voice names
+}
+
+export interface ConversationalSpeechTurn {
+  speakerName: string;
+  role: AgentRole;
+  text: string;
+  pauseAfterMs: number;
+  persona: VoicePersona;
+  frequencies: number[];
 }
 
 export const VOICE_MODEL_SPECS: Record<VoiceTier, VoiceModelSpec> = {
@@ -130,6 +142,9 @@ export const AGENT_VOCAL_PERSONAS: Record<AgentRole, VoicePersona> = {
     preferredGender: 'male',
     conversationalStyle: 'Direct, commanding, and objective incident commander.',
     sampleQuote: 'Incident posture escalated. Aligning squad on critical path mitigation.',
+    stereoPan: 0.0,
+    formants: [460, 1280, 2420],
+    systemVoiceHints: ['david', 'alex', 'guy', 'google us english', 'en-us-x-sfg#male_1-local'],
   },
   sre_reliability: {
     role: 'sre_reliability',
@@ -141,6 +156,9 @@ export const AGENT_VOCAL_PERSONAS: Record<AgentRole, VoicePersona> = {
     preferredGender: 'male',
     conversationalStyle: 'Fast-paced, metric-focused, latency and buffer aware.',
     sampleQuote: 'Replication lag surging past 450ms. Recommending immediate traffic shedding.',
+    stereoPan: -0.4,
+    formants: [540, 1420, 2580],
+    systemVoiceHints: ['michael', 'mark', 'daniel', 'fred', 'google uk english male', 'en-gb-x-rjs#male_1-local'],
   },
   secops_guardian: {
     role: 'secops_guardian',
@@ -152,6 +170,9 @@ export const AGENT_VOCAL_PERSONAS: Record<AgentRole, VoicePersona> = {
     preferredGender: 'female',
     conversationalStyle: 'Methodical, defensive, zero-trust verification focused.',
     sampleQuote: 'Zero-trust containment verified. Egress allowlists strictly enforced.',
+    stereoPan: 0.4,
+    formants: [640, 1860, 2920],
+    systemVoiceHints: ['bella', 'zira', 'samantha', 'victoria', 'google us english female', 'en-us-x-sfg#female_1-local'],
   },
   dataops_engineer: {
     role: 'dataops_engineer',
@@ -163,6 +184,9 @@ export const AGENT_VOCAL_PERSONAS: Record<AgentRole, VoicePersona> = {
     preferredGender: 'male',
     conversationalStyle: 'Deliberate, schema-protective, transaction-safe cadence.',
     sampleQuote: 'WAL checkpoint queue holding. Primary failover verified transactionally clean.',
+    stereoPan: -0.75,
+    formants: [410, 1180, 2320],
+    systemVoiceHints: ['george', 'richard', 'oliver', 'en-au-x-aub#male_1-local'],
   },
   finops_overseer: {
     role: 'finops_overseer',
@@ -174,6 +198,9 @@ export const AGENT_VOCAL_PERSONAS: Record<AgentRole, VoicePersona> = {
     preferredGender: 'female',
     conversationalStyle: 'Budget-aware, calculated, cost-per-minute conscious.',
     sampleQuote: 'Failover infrastructure within allocated monthly cloud reserve ceiling.',
+    stereoPan: 0.75,
+    formants: [590, 1720, 2820],
+    systemVoiceHints: ['sarah', 'karen', 'jenny', 'fiona', 'google uk english female'],
   },
   compliance_auditor: {
     role: 'compliance_auditor',
@@ -185,6 +212,9 @@ export const AGENT_VOCAL_PERSONAS: Record<AgentRole, VoicePersona> = {
     preferredGender: 'female',
     conversationalStyle: 'Meticulous, audit-proof, regulatory governance guardian.',
     sampleQuote: 'Cryptographic ledger signed. SOC2 and Byzantine proof requirements met.',
+    stereoPan: 0.15,
+    formants: [510, 1640, 2680],
+    systemVoiceHints: ['emma', 'susan', 'catherine', 'tessa', 'moira', 'en-in-x-cxx#female_1-local'],
   },
 };
 
@@ -193,12 +223,13 @@ export class VoiceModelLoadBalancer {
    * Automatically detect hardware, browser, and WebGPU capabilities
    */
   public static detectHardwareProfile(nav?: any, win?: any): HardwareProfile {
-    const n = nav || (typeof navigator !== 'undefined' ? navigator : undefined);
-    const w = win || (typeof window !== 'undefined' ? window : undefined);
+    const globalObj = typeof globalThis !== 'undefined' ? (globalThis as any) : undefined;
+    const n = nav || (typeof navigator !== 'undefined' ? navigator : globalObj?.navigator);
+    const w = win || (globalObj?.window ? globalObj.window : undefined);
 
-    const hasWebGPU = Boolean(n && (n as any).gpu);
+    const hasWebGPU = Boolean(n && n.gpu);
     const cpuCores = Number(n?.hardwareConcurrency || 4);
-    const deviceMemoryGb = Number((n as any)?.deviceMemory || (hasWebGPU ? 8 : 4));
+    const deviceMemoryGb = Number(n?.deviceMemory || (hasWebGPU ? 8 : 4));
 
     let isMobile = false;
     if (n?.userAgent) {
@@ -209,7 +240,7 @@ export class VoiceModelLoadBalancer {
       isMobile = true;
     }
 
-    const hasAudioContext = Boolean(w && (w.AudioContext || (w as any).webkitAudioContext));
+    const hasAudioContext = Boolean(w && (w.AudioContext || w.webkitAudioContext));
     const hasSpeechSynthesis = Boolean(w && w.speechSynthesis);
 
     // Algorithmic Hardware Readiness Score calculation (0 - 100)
@@ -332,14 +363,50 @@ export class VoiceModelLoadBalancer {
   }
 
   /**
-   * Generates realistic multi-band frequency spectrum data for waveform visualizer
+   * Generates realistic multi-band frequency spectrum data for waveform visualizer,
+   * modeling vowel formant resonance (F1, F2, F3) and syllable rhythm envelopes.
    */
-  public static generateSpeechFrequencies(sampleCount: number = 16, intensity: number = 0.7): number[] {
+  public static generateSpeechFrequencies(
+    sampleCount: number = 16,
+    intensity: number = 0.7,
+    options?: {
+      timestampMs?: number;
+      persona?: VoicePersona;
+      active?: boolean;
+    }
+  ): number[] {
+    if (options && options.active === false) {
+      return Array(sampleCount).fill(0.08);
+    }
+
+    const t = (options?.timestampMs ?? Date.now()) / 1000;
+    const persona = options?.persona;
+    const rate = persona?.rate || 1.0;
+
+    // Syllable rhythm envelope (~4.2 Hz natural conversational speech cadence)
+    const syllableEnvelope = 0.55 + 0.45 * Math.sin(t * 4.2 * 2 * Math.PI * rate);
+    const formants = persona?.formants || [500, 1500, 2500];
+
+    // Formant frequency mapping across 16 logarithmic spectrum bands
+    const f1Band = Math.min(sampleCount - 1, Math.max(1, Math.round(((formants[0] - 100) / 700) * 4)));
+    const f2Band = Math.min(sampleCount - 1, Math.max(4, Math.round(4 + ((formants[1] - 800) / 1700) * 6)));
+    const f3Band = Math.min(sampleCount - 1, Math.max(10, Math.round(10 + ((formants[2] - 2500) / 5500) * 5)));
+
     const freqs: number[] = [];
     for (let i = 0; i < sampleCount; i++) {
-      const centerFactor = 1 - Math.abs(i - sampleCount / 2) / (sampleCount / 2);
-      const val = Math.max(0.1, Math.min(1.0, (centerFactor * 0.6 + Math.random() * 0.4) * intensity));
-      freqs.push(parseFloat(val.toFixed(2)));
+      let resonance = 0.15;
+      const distF1 = Math.abs(i - f1Band);
+      const distF2 = Math.abs(i - f2Band);
+      const distF3 = Math.abs(i - f3Band);
+
+      if (distF1 <= 1) resonance += (1 - distF1 * 0.4) * 0.45;
+      if (distF2 <= 1) resonance += (1 - distF2 * 0.4) * 0.35;
+      if (distF3 <= 1) resonance += (1 - distF3 * 0.4) * 0.25;
+
+      const microJitter = 0.12 * Math.sin(t * 18.0 + i * 1.7) + (Math.random() * 0.08 - 0.04);
+      const energy = (resonance * syllableEnvelope + microJitter) * intensity;
+      const clamped = Math.max(0.08, Math.min(1.0, energy));
+      freqs.push(parseFloat(clamped.toFixed(2)));
     }
     return freqs;
   }
@@ -353,6 +420,9 @@ export class BrowserAudioFabric {
   private static activeUtterance: SpeechSynthesisUtterance | null = null;
   private static animFrameId: number | null = null;
   private static cachedVoices: SpeechSynthesisVoice[] = [];
+  private static audioCtx: AudioContext | null = null;
+  private static currentSessionId: number = 0;
+  private static resumeTimerId: any = null;
 
   public static isSpeaking(): boolean {
     return this.activeUtterance !== null;
@@ -364,46 +434,84 @@ export class BrowserAudioFabric {
   public static initVoices(): void {
     if (typeof window === 'undefined' || !window.speechSynthesis) return;
     this.cachedVoices = window.speechSynthesis.getVoices();
-    if (window.speechSynthesis.onvoiceschanged !== undefined) {
-      window.speechSynthesis.onvoiceschanged = () => {
-        this.cachedVoices = window.speechSynthesis.getVoices();
-      };
+    const updateVoices = () => {
+      this.cachedVoices = window.speechSynthesis.getVoices();
+    };
+    if (window.speechSynthesis.addEventListener) {
+      window.speechSynthesis.addEventListener('voiceschanged', updateVoices);
+    } else {
+      window.speechSynthesis.onvoiceschanged = updateVoices;
     }
   }
 
+  private static getAudioContext(): AudioContext | null {
+    if (typeof window === 'undefined') return null;
+    if (!this.audioCtx) {
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      if (AudioContextClass) {
+        this.audioCtx = new AudioContextClass();
+      }
+    }
+    if (this.audioCtx && this.audioCtx.state === 'suspended') {
+      this.audioCtx.resume().catch(() => {});
+    }
+    return this.audioCtx;
+  }
+
   /**
-   * Find best matching system voice for a given persona
+   * Find best matching system voice for a given persona using hints & gender dispersion
    */
-  private static findBestVoice(persona: VoicePersona): SpeechSynthesisVoice | null {
-    if (this.cachedVoices.length === 0) {
+  public static findBestVoice(persona: VoicePersona): SpeechSynthesisVoice | null {
+    if (this.cachedVoices.length === 0 && typeof window !== 'undefined' && window.speechSynthesis) {
       this.cachedVoices = window.speechSynthesis.getVoices();
     }
-    const englishVoices = this.cachedVoices.filter(v => v.lang.startsWith('en'));
-    if (englishVoices.length === 0) return this.cachedVoices[0] || null;
+    if (this.cachedVoices.length === 0) return null;
 
-    if (persona.preferredGender === 'female') {
-      const femaleVoice = englishVoices.find(v => 
-        /female|zira|samantha|victoria|karen|jenny|fiona|susan/i.test(v.name)
-      );
-      if (femaleVoice) return femaleVoice;
-    } else {
-      const maleVoice = englishVoices.find(v => 
-        /male|david|mark|george|daniel|alex|fred|guy/i.test(v.name)
-      );
-      if (maleVoice) return maleVoice;
+    const voices = this.cachedVoices;
+    const englishVoices = voices.filter((v) => v.lang.toLowerCase().startsWith('en'));
+    const candidatePool = englishVoices.length > 0 ? englishVoices : voices;
+
+    // 1. Exact system voice hint match
+    if (persona.systemVoiceHints && persona.systemVoiceHints.length > 0) {
+      for (const hint of persona.systemVoiceHints) {
+        const matched = candidatePool.find((v) => v.name.toLowerCase().includes(hint.toLowerCase()));
+        if (matched) return matched;
+      }
     }
 
-    return englishVoices[0] || null;
+    // 2. Filter candidate pool by preferred gender
+    const isFemalePreferred = persona.preferredGender === 'female';
+    const femalePattern = /female|zira|samantha|victoria|karen|jenny|fiona|susan|catherine|emma|tessa|moira/i;
+    const malePattern = /male|david|mark|george|daniel|alex|fred|guy|richard|oliver|michael/i;
+
+    const genderMatched = candidatePool.filter((v) => {
+      const name = v.name.toLowerCase();
+      return isFemalePreferred ? femalePattern.test(name) : malePattern.test(name);
+    });
+
+    if (genderMatched.length > 0) {
+      // Deterministic hash offset based on role to assign DIFFERENT voices to agents of same gender
+      let hash = 0;
+      for (let i = 0; i < persona.role.length; i++) {
+        hash = (hash << 5) - hash + persona.role.charCodeAt(i);
+      }
+      const index = Math.abs(hash) % genderMatched.length;
+      return genderMatched[index];
+    }
+
+    return candidatePool[0] || null;
   }
 
   /**
-   * Synthesizes and speaks a line with persona acoustics and live visualizer callback
+   * Synthesizes and speaks a line with persona acoustics, volume attenuation, and live visualizer callback
    */
   public static speak(
     text: string,
     persona: VoicePersona,
     options?: {
       tier?: VoiceTier;
+      volume?: number;
+      speedMultiplier?: number;
       onStart?: () => void;
       onEnd?: () => void;
       onError?: (err: any) => void;
@@ -415,26 +523,92 @@ export class BrowserAudioFabric {
       return;
     }
 
-    // Cancel any previous speech
-    this.stop();
+    // Increment monotonic session ID to cancel any prior turn or waiting callbacks
+    const sessionId = ++this.currentSessionId;
+    this.stopInternal();
 
+    // Volume handling: respect mute without mangling rate
+    const targetVolume = options?.volume !== undefined ? Math.max(0, Math.min(1, options.volume)) : 1.0;
+
+    // Build utterance
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.pitch = persona.pitch;
-    utterance.rate = persona.rate;
+    utterance.volume = targetVolume;
+    const baseRate = persona.rate * (options?.speedMultiplier ?? 1.0);
+    utterance.rate = Math.max(0.2, Math.min(2.5, baseRate));
+    utterance.pitch = Math.max(0.2, Math.min(2.0, persona.pitch));
 
     const matchedVoice = this.findBestVoice(persona);
     if (matchedVoice) {
       utterance.voice = matchedVoice;
     }
 
+    // Web Audio spatial resonance & frequency monitoring
+    const tier = options?.tier ?? 0;
+    const ctx = this.getAudioContext();
+    let analyser: AnalyserNode | null = null;
+    let freqData: Uint8Array | null = null;
+
+    if (ctx && (tier === 1 || tier === 2)) {
+      try {
+        analyser = ctx.createAnalyser();
+        analyser.fftSize = 64;
+        analyser.smoothingTimeConstant = 0.8;
+        freqData = new Uint8Array(analyser.frequencyBinCount);
+
+        const formantFilter = ctx.createBiquadFilter();
+        formantFilter.type = 'peaking';
+        formantFilter.frequency.value = persona.formants[0] || 500;
+        formantFilter.Q.value = 2.5;
+        formantFilter.gain.value = 6;
+
+        if (ctx.createStereoPanner) {
+          const panner = ctx.createStereoPanner();
+          panner.pan.value = persona.stereoPan;
+          formantFilter.connect(panner);
+          panner.connect(analyser);
+        } else {
+          formantFilter.connect(analyser);
+        }
+      } catch {
+        // Fallback gracefully
+      }
+    }
+
     let isSpeaking = false;
 
-    // Start frequency pulse loop while speaking
+    // Chrome 15s freeze workaround: periodically resume speechSynthesis
+    if (this.resumeTimerId) clearInterval(this.resumeTimerId);
+    this.resumeTimerId = setInterval(() => {
+      if (typeof window !== 'undefined' && window.speechSynthesis && window.speechSynthesis.speaking) {
+        window.speechSynthesis.pause();
+        window.speechSynthesis.resume();
+      }
+    }, 12000);
+
     const startFrequencyLoop = () => {
       isSpeaking = true;
+      const startTime = Date.now();
       const loop = () => {
-        if (!isSpeaking) return;
-        const freqs = VoiceModelLoadBalancer.generateSpeechFrequencies(16, 0.85);
+        if (!isSpeaking || this.currentSessionId !== sessionId) return;
+
+        let freqs: number[];
+        if (analyser && freqData) {
+          analyser.getByteFrequencyData(freqData as any);
+          freqs = [];
+          const step = Math.max(1, Math.floor(freqData.length / 16));
+          for (let i = 0; i < 16; i++) {
+            const rawVal = freqData[i * step] || 0;
+            const norm = Math.max(0.08, Math.min(1.0, rawVal / 255));
+            freqs.push(parseFloat(norm.toFixed(2)));
+          }
+        } else {
+          freqs = VoiceModelLoadBalancer.generateSpeechFrequencies(16, targetVolume > 0 ? 0.85 : 0.15, {
+            persona,
+            timestampMs: Date.now() - startTime,
+            active: targetVolume > 0,
+          });
+        }
+
         options?.onFrequencies?.(freqs);
         this.animFrameId = window.requestAnimationFrame(loop);
       };
@@ -442,55 +616,71 @@ export class BrowserAudioFabric {
     };
 
     utterance.onstart = () => {
+      if (this.currentSessionId !== sessionId) return;
       startFrequencyLoop();
       options?.onStart?.();
     };
 
-    utterance.onend = () => {
+    const cleanup = () => {
       isSpeaking = false;
       if (this.animFrameId) {
         window.cancelAnimationFrame(this.animFrameId);
         this.animFrameId = null;
       }
+      if (this.resumeTimerId) {
+        clearInterval(this.resumeTimerId);
+        this.resumeTimerId = null;
+      }
       this.activeUtterance = null;
-      // Emit zero frequency baseline
-      options?.onFrequencies?.(Array(16).fill(0.1));
+      options?.onFrequencies?.(Array(16).fill(0.08));
+    };
+
+    utterance.onend = () => {
+      if (this.currentSessionId !== sessionId) return;
+      cleanup();
       options?.onEnd?.();
     };
 
     utterance.onerror = (e) => {
-      isSpeaking = false;
-      if (this.animFrameId) {
-        window.cancelAnimationFrame(this.animFrameId);
-        this.animFrameId = null;
-      }
-      this.activeUtterance = null;
+      if (this.currentSessionId !== sessionId) return;
+      cleanup();
       options?.onError?.(e);
       options?.onEnd?.();
     };
 
     this.activeUtterance = utterance;
+
+    if (window.speechSynthesis.paused) {
+      window.speechSynthesis.resume();
+    }
     window.speechSynthesis.speak(utterance);
   }
 
-  /**
-   * Stop active speech synthesis
-   */
-  public static stop(): void {
+  private static stopInternal(): void {
     if (typeof window === 'undefined') return;
     if (this.animFrameId) {
       window.cancelAnimationFrame(this.animFrameId);
       this.animFrameId = null;
     }
+    if (this.resumeTimerId) {
+      clearInterval(this.resumeTimerId);
+      this.resumeTimerId = null;
+    }
     if (window.speechSynthesis) {
-      window.speechSynthesis.cancel();
+      try {
+        window.speechSynthesis.cancel();
+      } catch {
+        // Safe catch
+      }
     }
     this.activeUtterance = null;
   }
 
-  /**
-   * Simulate downloading on-device neural model weights with progress telemetry
-   */
+  public static stop(): void {
+    this.currentSessionId++;
+    this.stopInternal();
+  }
+
   public static async simulateModelDownload(
     tier: VoiceTier,
     onProgress: (percent: number, downloadedMb: number) => void
@@ -502,11 +692,11 @@ export class BrowserAudioFabric {
     }
 
     const totalMb = spec.downloadSizeMb;
-    const steps = 20;
-    const intervalMs = 65;
+    const steps = 25;
+    const intervalMs = 50;
 
     for (let i = 1; i <= steps; i++) {
-      await new Promise(r => setTimeout(r, intervalMs));
+      await new Promise((r) => setTimeout(r, intervalMs));
       const percent = Math.min(100, Math.round((i / steps) * 100));
       const downloadedMb = parseFloat(((percent / 100) * totalMb).toFixed(1));
       onProgress(percent, downloadedMb);

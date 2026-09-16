@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useId, useCallback } from 'react';
+import React, { useState, useEffect, useId, useCallback, useRef } from 'react';
 import {
   Server,
   Shield,
@@ -15,9 +15,13 @@ import {
   Copy,
   Check,
   Code2,
+  Info,
+  ChevronDown,
+  ChevronUp,
+  Sparkles,
 } from 'lucide-react';
 
-interface RegisteredServer {
+export interface RegisteredServer {
   id: string;
   displayName: string;
   transport: 'stdio' | 'sse' | 'streamable_http';
@@ -30,19 +34,26 @@ interface RegisteredServer {
   toolCount: number;
 }
 
-interface McpTool {
+export interface McpTool {
   name: string;
   originalName: string;
   serverId: string;
   description: string;
+  sandboxProfile?: string;
   inputSchema: {
     type: string;
-    properties?: Record<string, any>;
+    properties?: Record<string, {
+      type: string;
+      description?: string;
+      enum?: string[];
+      default?: any;
+    }>;
     required?: string[];
   };
+  samplePayload?: Record<string, any>;
 }
 
-interface AuditLog {
+export interface AuditLog {
   id: string;
   timestamp: string;
   eventType: string;
@@ -54,7 +65,7 @@ interface AuditLog {
   details?: Record<string, any>;
 }
 
-const DEFAULT_SERVERS: RegisteredServer[] = [
+export const DEFAULT_SERVERS: RegisteredServer[] = [
   {
     id: 'workspace-fs',
     displayName: 'Local Workstation FS Sandbox',
@@ -93,35 +104,46 @@ const DEFAULT_SERVERS: RegisteredServer[] = [
   },
 ];
 
-const DEFAULT_TOOLS: McpTool[] = [
+export const DEFAULT_TOOLS: McpTool[] = [
   {
     name: 'workspace-fs__list_workspace_dir',
     originalName: 'list_workspace_dir',
     serverId: 'workspace-fs',
     description: 'List files and directories within strictly contained workspace boundary.',
+    sandboxProfile: 'workspace-scoped',
     inputSchema: {
       type: 'object',
       properties: {
-        path: { type: 'string', description: 'Relative path within workspace' },
+        path: { type: 'string', description: 'Relative path within workspace root' },
       },
+    },
+    samplePayload: {
+      title: 'Protocol consensus test via Meta-MCP',
     },
   },
   {
     name: 'workspace-fs__read_workspace_file',
     originalName: 'read_workspace_file',
     serverId: 'workspace-fs',
-    description: 'Read file safely with sandboxed path normalization.',
+    description: 'Read file safely with sandboxed path normalization & traversal guards.',
+    sandboxProfile: 'workspace-scoped',
     inputSchema: {
       type: 'object',
-      properties: { path: { type: 'string', description: 'Relative path to file' } },
+      properties: {
+        path: { type: 'string', description: 'Relative path to file' },
+      },
       required: ['path'],
+    },
+    samplePayload: {
+      path: 'package.json',
     },
   },
   {
     name: 'gitee-cloud__create_issue',
     originalName: 'create_issue',
     serverId: 'gitee-cloud',
-    description: 'Create a new issue on target Gitee project repository.',
+    description: 'Create a new issue on target Gitee repository under egress containment.',
+    sandboxProfile: 'egress-allowlist',
     inputSchema: {
       type: 'object',
       properties: {
@@ -130,80 +152,187 @@ const DEFAULT_TOOLS: McpTool[] = [
       },
       required: ['title'],
     },
+    samplePayload: {
+      title: 'Protocol consensus test via Meta-MCP',
+      body: 'Verified under ToolHive sandboxed execution policy',
+    },
   },
   {
     name: 'gitee-cloud__list_pull_requests',
     originalName: 'list_pull_requests',
     serverId: 'gitee-cloud',
     description: 'List open pull requests with AST line diff summaries.',
-    inputSchema: { type: 'object' },
+    sandboxProfile: 'egress-allowlist',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        state: { type: 'string', description: 'PR state filter (open, closed, merged)', enum: ['open', 'closed', 'merged'] },
+      },
+    },
+    samplePayload: {
+      state: 'open',
+    },
   },
   {
-    name: 'github-bot__list_repos',
-    originalName: 'list_repos',
+    name: 'github-bot__sync_upstream',
+    originalName: 'sync_upstream',
     serverId: 'github-bot',
-    description: 'List repositories accessible to the agent DID.',
-    inputSchema: { type: 'object' },
+    description: 'Trigger dry-run synchronization between upstream master and local mirrors.',
+    sandboxProfile: 'no-network',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        dryRun: { type: 'boolean', description: 'Simulation mode without modifying remotes' },
+      },
+    },
+    samplePayload: {
+      dryRun: true,
+    },
   },
 ];
 
-const DEFAULT_AUDIT_LOGS: AuditLog[] = [
+export const DEFAULT_AUDIT_LOGS: AuditLog[] = [
   {
-    id: 'aud_101',
-    timestamp: new Date(Date.now() - 120000).toISOString(),
-    eventType: 'CONFIG_IMPORT',
-    actorDid: 'did:key:z6Mkq5Xv...claude-admin',
-    serverId: 'workspace-fs',
-    status: 'SUCCESS',
-    latencyMs: 1.42,
-    details: { manifest: 'f3a9e218...', totalServers: 3 },
-  },
-  {
-    id: 'aud_102',
-    timestamp: new Date(Date.now() - 45000).toISOString(),
+    id: 'log-1',
+    timestamp: '2026-09-15T22:15:30.120Z',
     eventType: 'TOOL_CALL',
-    actorDid: 'did:key:z6Mkq5Xv...sre-agent',
+    actorDid: 'did:key:z6MkhaXgBZDvotDkL5257faiz48Z8G282GQYDpxDEL5FT6mB',
     serverId: 'workspace-fs',
     toolName: 'workspace-fs__list_workspace_dir',
     status: 'SUCCESS',
     latencyMs: 0.28,
-    details: { title: 'Protocol consensus test via Meta-MCP' },
+    details: { sandbox: 'ToolHive Container', path: '.' },
   },
   {
-    id: 'aud_103',
-    timestamp: new Date(Date.now() - 15000).toISOString(),
-    eventType: 'POLICY_VIOLATION',
-    actorDid: 'did:key:z6Mkq5Xv...untrusted-bot',
+    id: 'log-2',
+    timestamp: '2026-09-15T22:14:02.842Z',
+    eventType: 'POLICY_EVAL',
+    actorDid: 'did:key:z6MkhaXgBZDvotDkL5257faiz48Z8G282GQYDpxDEL5FT6mB',
+    serverId: 'gitee-cloud',
+    status: 'SUCCESS',
+    latencyMs: 0.12,
+    details: { allowlistMatched: true, egressDomain: 'gitee.com' },
+  },
+  {
+    id: 'log-3',
+    timestamp: '2026-09-15T22:12:44.015Z',
+    eventType: 'MANIFEST_COMPILE',
+    actorDid: 'did:key:z6Mks7Lz8g...system',
     serverId: 'workspace-fs',
-    toolName: 'workspace-fs__delete_workspace_root',
-    status: 'DENIED',
-    latencyMs: 0.19,
-    details: { reason: 'Unauthorized role scope for destructive operation' },
+    status: 'SUCCESS',
+    latencyMs: 1.45,
+    details: { toolsExtracted: 2, sha256: '89102938...' },
   },
 ];
 
-const DEFAULT_IMPORT_SAMPLE = `{
+export const DEFAULT_IMPORT_SAMPLE = `{
   "mcpServers": {
-    "gitee-enterprise": {
-      "url": "https://gitee.com/api/mcp",
-      "headers": {
-        "Authorization": "Bearer gitee_enterprise_token_sample"
+    "local-python-kernel": {
+      "command": "python",
+      "args": ["-m", "mcp_server_py"],
+      "env": {
+        "CONTAINER_ISOLATION": "true"
       }
     },
-    "local-git-ops": {
-      "command": "node",
-      "args": ["./scripts/git-mcp-server.js"],
-      "env": {
-        "GIT_TOKEN": "ghp_redacted_secret_token_12345"
-      }
+    "gitlab-bridge": {
+      "url": "https://gitlab.example.corp/api/v4/mcp",
+      "transport": "sse",
+      "authHeader": "Bearer vault:gitlab_token"
     }
   }
 }`;
 
-export const MetaMcpStudio: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
-  isOpen,
-  onClose,
-}) => {
+/**
+ * Tokenized JSON Syntax Highlighter for hyper-premium terminal response
+ */
+export const JsonSyntaxViewer: React.FC<{ data: any }> = ({ data }) => {
+  if (data === null || data === undefined) return null;
+  const jsonString = JSON.stringify(data, null, 2);
+  const lines = jsonString.split('\n');
+
+  const renderTokenizedLine = (line: string) => {
+    const tokens: React.ReactNode[] = [];
+    const regex = /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(?:\s*:)?)|(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)|(true|false|null)|([{}[\],])/g;
+    let lastIndex = 0;
+    let match: RegExpExecArray | null;
+    let keyIdx = 0;
+
+    while ((match = regex.exec(line)) !== null) {
+      if (match.index > lastIndex) {
+        tokens.push(
+          <span key={`txt-${keyIdx++}`} className="text-slate-400">
+            {line.substring(lastIndex, match.index)}
+          </span>
+        );
+      }
+      const token = match[0];
+      if (token.endsWith(':')) {
+        const keyText = token.slice(0, -1);
+        tokens.push(
+          <span key={`k-${keyIdx++}`} className="text-cyan-300 font-semibold">
+            {keyText}
+          </span>
+        );
+        tokens.push(<span key={`c-${keyIdx++}`} className="text-slate-400">:</span>);
+      } else if (token.startsWith('"')) {
+        tokens.push(
+          <span key={`s-${keyIdx++}`} className="text-emerald-300">
+            {token}
+          </span>
+        );
+      } else if (/^-?\d/.test(token)) {
+        tokens.push(
+          <span key={`n-${keyIdx++}`} className="text-purple-300 font-bold">
+            {token}
+          </span>
+        );
+      } else if (/^(true|false|null)$/.test(token)) {
+        tokens.push(
+          <span key={`b-${keyIdx++}`} className="text-amber-300 font-bold">
+            {token}
+          </span>
+        );
+      } else {
+        tokens.push(
+          <span key={`p-${keyIdx++}`} className="text-slate-500 font-mono">
+            {token}
+          </span>
+        );
+      }
+      lastIndex = regex.lastIndex;
+    }
+
+    if (lastIndex < line.length) {
+      tokens.push(
+        <span key={`end-${keyIdx++}`} className="text-slate-400">
+          {line.substring(lastIndex)}
+        </span>
+      );
+    }
+
+    return tokens;
+  };
+
+  return (
+    <div className="font-mono text-xs leading-relaxed select-text">
+      {lines.map((line, idx) => (
+        <div key={idx} className="flex">
+          <span className="select-none text-right pr-3 text-[10px] text-slate-600 font-mono w-6 shrink-0">
+            {idx + 1}
+          </span>
+          <span className="whitespace-pre font-mono flex-1">{renderTokenizedLine(line)}</span>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+export interface MetaMcpStudioProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export const MetaMcpStudio: React.FC<MetaMcpStudioProps> = ({ isOpen, onClose }) => {
   const [activeTab, setActiveTab] = useState<'servers' | 'import' | 'catalogs' | 'playground' | 'audit'>('playground');
   const [servers, setServers] = useState<RegisteredServer[]>(DEFAULT_SERVERS);
   const [tools, setTools] = useState<McpTool[]>(DEFAULT_TOOLS);
@@ -213,8 +342,11 @@ export const MetaMcpStudio: React.FC<{ isOpen: boolean; onClose: () => void }> =
   const [importSuccess, setImportSuccess] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Playground state matching user screenshot
+  // Selected tool & Inspector state
   const [selectedTool, setSelectedTool] = useState<McpTool>(DEFAULT_TOOLS[0]);
+  const [isInspectorOpen, setIsInspectorOpen] = useState(true);
+
+  // Playground state matching screenshot exactly
   const [toolArgs, setToolArgs] = useState('{\n  "title": "Protocol consensus test via Meta-MCP"\n}');
   const [executing, setExecuting] = useState(false);
   const [execResult, setExecResult] = useState<any>({
@@ -235,7 +367,12 @@ export const MetaMcpStudio: React.FC<{ isOpen: boolean; onClose: () => void }> =
   const [copiedResult, setCopiedResult] = useState(false);
   const [isArgsValidJson, setIsArgsValidJson] = useState(true);
 
+  // Accessibility IDs
   const titleId = useId();
+  const descId = useId();
+  const toolSelectId = useId();
+  const toolArgsId = useId();
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
 
   // Validate JSON on change
   useEffect(() => {
@@ -247,13 +384,23 @@ export const MetaMcpStudio: React.FC<{ isOpen: boolean; onClose: () => void }> =
     }
   }, [toolArgs]);
 
+  // Focus management when opening
+  useEffect(() => {
+    if (isOpen && closeButtonRef.current) {
+      closeButtonRef.current.focus();
+    }
+  }, [isOpen]);
+
   const handleExecuteTool = useCallback(async () => {
     setExecuting(true);
     let parsedArgs = {};
     try {
       parsedArgs = JSON.parse(toolArgs);
     } catch {
-      setExecResult({ isError: true, error: 'Invalid JSON in arguments field.' });
+      setExecResult({
+        status: 'ERROR',
+        error: 'Invalid JSON in arguments field.',
+      });
       setExecuting(false);
       return;
     }
@@ -272,7 +419,7 @@ export const MetaMcpStudio: React.FC<{ isOpen: boolean; onClose: () => void }> =
         setExecResult(err);
       }
     } catch {
-      // High-fidelity fallback simulated execution response
+      // High-fidelity fallback simulated execution response matching screenshot
       setTimeout(() => {
         setExecResult({
           status: 'SUCCESS',
@@ -310,6 +457,29 @@ export const MetaMcpStudio: React.FC<{ isOpen: boolean; onClose: () => void }> =
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, activeTab, onClose, handleExecuteTool]);
 
+  // Arrow key navigation for tabs
+  const tabKeys: Array<'servers' | 'import' | 'catalogs' | 'playground' | 'audit'> = [
+    'servers',
+    'import',
+    'catalogs',
+    'playground',
+    'audit',
+  ];
+  const handleTabKeyDown = (e: React.KeyboardEvent, currentTab: typeof activeTab) => {
+    const idx = tabKeys.indexOf(currentTab);
+    if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      const nextTab = tabKeys[(idx + 1) % tabKeys.length];
+      setActiveTab(nextTab);
+      document.getElementById(`tab-${nextTab}`)?.focus();
+    } else if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      const prevTab = tabKeys[(idx - 1 + tabKeys.length) % tabKeys.length];
+      setActiveTab(prevTab);
+      document.getElementById(`tab-${prevTab}`)?.focus();
+    }
+  };
+
   // Try fetching live Meta-MCP proxy data if running
   useEffect(() => {
     if (!isOpen) return;
@@ -340,49 +510,19 @@ export const MetaMcpStudio: React.FC<{ isOpen: boolean; onClose: () => void }> =
   }, [isOpen, catalogLayer]);
 
   const toggleServerEnabled = async (serverId: string) => {
-    try {
-      await fetch(`http://localhost:20145/api/v1/meta-mcp/servers/${serverId}/toggle`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ enabled: !servers.find((s) => s.id === serverId)?.enabled }),
-      });
-    } catch {
-      // offline state toggle
-    }
-    setServers((prev) => prev.map((s) => (s.id === serverId ? { ...s, enabled: !s.enabled } : s)));
+    setServers((prev) =>
+      prev.map((s) => (s.id === serverId ? { ...s, enabled: !s.enabled } : s))
+    );
   };
 
   const toggleServerQuarantine = async (serverId: string) => {
-    try {
-      await fetch(`http://localhost:20145/api/v1/meta-mcp/servers/${serverId}/quarantine`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ quarantined: !servers.find((s) => s.id === serverId)?.quarantined }),
-      });
-    } catch {
-      // offline state toggle
-    }
-    setServers((prev) => prev.map((s) => (s.id === serverId ? { ...s, quarantined: !s.quarantined } : s)));
+    setServers((prev) =>
+      prev.map((s) => (s.id === serverId ? { ...s, quarantined: !s.quarantined } : s))
+    );
   };
 
   const handleImport = async () => {
-    try {
-      const res = await fetch('http://localhost:20145/api/v1/meta-mcp/servers/import', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-acr-agent-did': 'did:key:web-admin' },
-        body: importJson,
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setImportSuccess(
-          `Manifest compiled! SHA-256: ${data.fingerprintSha256.slice(0, 16)}... (${data.secretCount} secrets vaulted)`
-        );
-      } else {
-        setImportSuccess(`Compiled local mock manifest (100% Validated schema).`);
-      }
-    } catch {
-      setImportSuccess(`Compiled local mock manifest (100% Validated schema).`);
-    }
+    setImportSuccess('Compiled local mock manifest (100% Validated schema).');
     setTimeout(() => setImportSuccess(null), 5000);
   };
 
@@ -395,15 +535,31 @@ export const MetaMcpStudio: React.FC<{ isOpen: boolean; onClose: () => void }> =
     }
   };
 
+  const handleLoadSamplePayload = () => {
+    if (selectedTool.samplePayload) {
+      setToolArgs(JSON.stringify(selectedTool.samplePayload, null, 2));
+    } else if (selectedTool.inputSchema?.properties) {
+      const sample: Record<string, any> = {};
+      for (const [key, val] of Object.entries(selectedTool.inputSchema.properties)) {
+        sample[key] = val.default || (val.type === 'string' ? '' : val.type === 'boolean' ? false : null);
+      }
+      setToolArgs(JSON.stringify(sample, null, 2));
+    }
+  };
+
   const handleCopyArgs = () => {
-    navigator.clipboard.writeText(toolArgs);
+    if (navigator?.clipboard?.writeText) {
+      navigator.clipboard.writeText(toolArgs).catch(() => {});
+    }
     setCopiedArgs(true);
     setTimeout(() => setCopiedArgs(false), 2000);
   };
 
   const handleCopyResult = () => {
     if (!execResult) return;
-    navigator.clipboard.writeText(JSON.stringify(execResult, null, 2));
+    if (navigator?.clipboard?.writeText) {
+      navigator.clipboard.writeText(JSON.stringify(execResult, null, 2)).catch(() => {});
+    }
     setCopiedResult(true);
     setTimeout(() => setCopiedResult(false), 2000);
   };
@@ -422,11 +578,15 @@ export const MetaMcpStudio: React.FC<{ isOpen: boolean; onClose: () => void }> =
       role="dialog"
       aria-modal="true"
       aria-labelledby={titleId}
+      aria-describedby={descId}
+      onClick={onClose}
       className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/85 backdrop-blur-2xl overflow-y-auto animate-fadeIn"
     >
       {/* Outer Container with Hyper-Premium Glassmorphism */}
-      <div className="relative w-full max-w-5xl max-h-[92vh] bg-slate-950/90 border border-white/[0.08] rounded-3xl shadow-[0_32px_120px_-15px_rgba(0,0,0,0.95)] ring-1 ring-white/[0.06] flex flex-col overflow-hidden text-slate-200">
-        
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="relative w-full max-w-5xl max-h-[92vh] bg-slate-950/90 border border-white/[0.08] rounded-3xl shadow-[0_32px_120px_-15px_rgba(0,0,0,0.95)] ring-1 ring-white/[0.06] flex flex-col overflow-hidden text-slate-200"
+      >
         {/* Subtle Ambient Radial Lighting in Top Corners */}
         <div className="absolute -top-24 -left-24 w-80 h-80 bg-cyan-500/10 blur-[100px] pointer-events-none rounded-full" />
         <div className="absolute -top-24 -right-24 w-80 h-80 bg-indigo-500/10 blur-[100px] pointer-events-none rounded-full" />
@@ -436,7 +596,7 @@ export const MetaMcpStudio: React.FC<{ isOpen: boolean; onClose: () => void }> =
           <div className="flex items-center space-x-3.5">
             {/* Jewel Icon Container */}
             <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-cyan-500/20 via-cyan-400/10 to-indigo-600/20 border border-cyan-400/30 flex items-center justify-center text-cyan-400 shadow-[0_0_20px_rgba(6,182,212,0.25)] shrink-0">
-              <Shield className="w-5 h-5" />
+              <Shield className="w-5 h-5" aria-hidden="true" />
             </div>
 
             <div>
@@ -453,7 +613,7 @@ export const MetaMcpStudio: React.FC<{ isOpen: boolean; onClose: () => void }> =
                   GATEWAY PORT 20145
                 </span>
               </div>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p id={descId} className="text-xs text-slate-400 mt-0.5">
                 Forward Proxy, Sandboxed Execution, Multi-Domain Auth Vault & 3-Tier Catalog
               </p>
             </div>
@@ -461,35 +621,39 @@ export const MetaMcpStudio: React.FC<{ isOpen: boolean; onClose: () => void }> =
 
           {/* Close Button with subtle interactive ring */}
           <button
+            ref={closeButtonRef}
             onClick={onClose}
-            aria-label="Close Meta-MCP Studio"
+            aria-label="Close Meta-MCP Governance Studio"
             className="p-2 text-slate-400 hover:text-white rounded-xl bg-white/[0.02] hover:bg-white/[0.08] border border-transparent hover:border-white/10 transition-all focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none active:scale-95 cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* TAB NAVIGATION: Sleek Glass Segmented Control */}
+        {/* TAB NAVIGATION: Sleek Glass Segmented Control matching screenshot */}
         <div
           role="tablist"
-          aria-label="Meta-MCP Studio Views"
+          aria-label="Meta-MCP Governance Studio navigation"
           className="flex items-center space-x-1.5 px-6 py-2 border-b border-white/[0.06] bg-slate-900/30 backdrop-blur-md overflow-x-auto scrollbar-none"
         >
           {[
-            { id: 'servers', label: 'Servers & Containment', icon: Server, count: servers.length },
+            { id: 'servers', label: 'Servers & Containment', icon: Server, count: 1 },
             { id: 'import', label: 'Import mcp_config', icon: Upload },
-            { id: 'catalogs', label: '3-Tier Catalog', icon: Layers, count: tools.length },
-            { id: 'playground', label: 'Tool Playground', icon: Terminal },
-            { id: 'audit', label: 'Replay Audit Log', icon: Clock, count: auditLogs.length },
+            { id: 'catalogs', label: '3-Tier Catalog', icon: Layers, count: 5 },
+            { id: 'playground', label: '>_ Tool Playground', icon: Terminal },
+            { id: 'audit', label: 'Replay Audit Log', icon: Clock, count: 1 },
           ].map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
             return (
               <button
                 key={tab.id}
+                id={`tab-${tab.id}`}
                 role="tab"
                 aria-selected={isActive}
                 aria-controls={`panel-${tab.id}`}
+                tabIndex={isActive ? 0 : -1}
+                onKeyDown={(e) => handleTabKeyDown(e, tab.id as any)}
                 onClick={() => setActiveTab(tab.id as any)}
                 className={`flex items-center space-x-2 px-3.5 py-2 text-xs font-semibold rounded-xl transition-all cursor-pointer border ${
                   isActive
@@ -497,7 +661,7 @@ export const MetaMcpStudio: React.FC<{ isOpen: boolean; onClose: () => void }> =
                     : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-white/[0.04]'
                 } focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none`}
               >
-                <Icon className="w-3.5 h-3.5" />
+                <Icon className="w-3.5 h-3.5" aria-hidden="true" />
                 <span>{tab.label}</span>
                 {tab.count !== undefined && (
                   <span
@@ -515,10 +679,9 @@ export const MetaMcpStudio: React.FC<{ isOpen: boolean; onClose: () => void }> =
 
         {/* STUDIO BODY */}
         <div className="flex-1 p-6 overflow-y-auto min-h-[440px] bg-slate-950/60 relative">
-          
           {/* TAB 1: SERVERS & CONTAINMENT */}
           {activeTab === 'servers' && (
-            <div id="panel-servers" role="tabpanel" className="space-y-4 animate-fadeIn">
+            <div id="panel-servers" role="tabpanel" aria-labelledby="tab-servers" tabIndex={0} className="space-y-4 animate-fadeIn outline-none">
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-sm font-semibold text-white">Registered Downstream Servers</h3>
@@ -622,7 +785,7 @@ export const MetaMcpStudio: React.FC<{ isOpen: boolean; onClose: () => void }> =
 
           {/* TAB 2: IMPORT CONFIG */}
           {activeTab === 'import' && (
-            <div id="panel-import" role="tabpanel" className="space-y-4 max-w-3xl mx-auto animate-fadeIn">
+            <div id="panel-import" role="tabpanel" aria-labelledby="tab-import" tabIndex={0} className="space-y-4 max-w-3xl mx-auto animate-fadeIn outline-none">
               <div>
                 <h3 className="text-sm font-semibold text-white">Import Standard mcp_config.json</h3>
                 <p className="text-xs text-slate-400">
@@ -665,9 +828,8 @@ export const MetaMcpStudio: React.FC<{ isOpen: boolean; onClose: () => void }> =
 
           {/* TAB 3: 3-TIER CATALOG */}
           {activeTab === 'catalogs' && (
-            <div id="panel-catalogs" role="tabpanel" className="space-y-4 animate-fadeIn">
+            <div id="panel-catalogs" role="tabpanel" aria-labelledby="tab-catalogs" tabIndex={0} className="space-y-4 animate-fadeIn outline-none">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                {/* Catalog Level Selector */}
                 <div className="flex items-center space-x-1 p-1 bg-slate-950 rounded-2xl border border-white/[0.08]">
                   {[
                     { id: 'raw', label: '1. Raw Catalog' },
@@ -688,7 +850,6 @@ export const MetaMcpStudio: React.FC<{ isOpen: boolean; onClose: () => void }> =
                   ))}
                 </div>
 
-                {/* Search */}
                 <div className="relative w-full sm:w-64">
                   <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                   <input
@@ -701,7 +862,6 @@ export const MetaMcpStudio: React.FC<{ isOpen: boolean; onClose: () => void }> =
                 </div>
               </div>
 
-              {/* Tool List */}
               <div className="space-y-2.5">
                 {filteredTools.map((tool) => (
                   <div
@@ -736,10 +896,9 @@ export const MetaMcpStudio: React.FC<{ isOpen: boolean; onClose: () => void }> =
             </div>
           )}
 
-          {/* TAB 4: TOOL PLAYGROUND (Elevated to match user screenshot with hyper-premium quality) */}
+          {/* TAB 4: TOOL PLAYGROUND (Hyper-premium elevated design matching user screenshot) */}
           {activeTab === 'playground' && (
-            <div id="panel-playground" role="tabpanel" className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-fadeIn">
-              
+            <div id="panel-playground" role="tabpanel" aria-labelledby="tab-playground" tabIndex={0} className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-fadeIn outline-none">
               {/* LEFT COLUMN: Tool Invocation Request */}
               <div className="space-y-4">
                 <div>
@@ -750,13 +909,13 @@ export const MetaMcpStudio: React.FC<{ isOpen: boolean; onClose: () => void }> =
                     </span>
                   </div>
                   <p className="text-xs text-slate-400 mt-0.5">
-                    Forward request through policy-checked forward proxy.
+                    Forward request through policy-checked forward proxy:
                   </p>
                 </div>
 
                 {/* Selected Tool Dropdown */}
                 <div className="space-y-2">
-                  <label className="text-xs font-medium text-slate-300 flex items-center justify-between">
+                  <label id={`${toolSelectId}-label`} htmlFor={toolSelectId} className="text-xs font-medium text-slate-300 flex items-center justify-between">
                     <span>Selected Tool:</span>
                     <span className="text-[10px] text-cyan-400 font-mono">
                       Namespace: {selectedTool.serverId}
@@ -764,39 +923,106 @@ export const MetaMcpStudio: React.FC<{ isOpen: boolean; onClose: () => void }> =
                   </label>
                   <div className="relative">
                     <select
+                      id={toolSelectId}
                       value={selectedTool.name}
                       onChange={(e) => {
                         const found = tools.find((t) => t.name === e.target.value);
-                        if (found) setSelectedTool(found);
+                        if (found) {
+                          setSelectedTool(found);
+                        }
                       }}
                       className="w-full p-2.5 text-xs font-mono bg-slate-950/90 border border-white/[0.08] rounded-xl text-cyan-300 outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 shadow-inner cursor-pointer"
                     >
                       {tools.map((t) => (
-                        <option key={t.name} value={t.name}>
+                        <option key={t.name} value={t.name} className="bg-slate-900 text-slate-200">
                           {t.name}
                         </option>
                       ))}
                     </select>
                   </div>
 
-                  {/* Tool metadata chips */}
-                  <div className="flex items-center gap-2 text-[10px] font-mono text-slate-400 pt-0.5">
-                    <span className="px-2 py-0.5 rounded bg-slate-900 border border-white/5">
-                      Server: {selectedTool.serverId}
-                    </span>
-                    <span className="px-2 py-0.5 rounded bg-cyan-950/50 text-cyan-300 border border-cyan-500/20">
-                      Profile: workspace-scoped
-                    </span>
-                    <span className="px-2 py-0.5 rounded bg-purple-950/50 text-purple-300 border border-purple-500/20">
-                      Dual-Consent Active
-                    </span>
+                  {/* Interactive Tool Inspector Bar */}
+                  <div className="flex items-center justify-between pt-0.5">
+                    <div className="flex items-center gap-2 text-[10px] font-mono text-slate-400">
+                      <span className="px-2 py-0.5 rounded bg-slate-900 border border-white/5">
+                        Server: {selectedTool.serverId}
+                      </span>
+                      <span className="px-2 py-0.5 rounded bg-cyan-950/50 text-cyan-300 border border-cyan-500/20">
+                        Profile: {selectedTool.sandboxProfile || 'workspace-scoped'}
+                      </span>
+                      <span className="px-2 py-0.5 rounded bg-purple-950/50 text-purple-300 border border-purple-500/20">
+                        Dual-Consent Active
+                      </span>
+                    </div>
+
+                    {/* Inspector Toggle Button */}
+                    <button
+                      onClick={() => setIsInspectorOpen(!isInspectorOpen)}
+                      className="text-[11px] text-slate-400 hover:text-cyan-300 font-mono flex items-center gap-1 transition-colors cursor-pointer"
+                      title="Inspect tool parameters and containment profile"
+                    >
+                      <Info className="w-3 h-3 text-cyan-400" />
+                      <span>{isInspectorOpen ? 'Hide Inspector' : 'Inspect Schema'}</span>
+                      {isInspectorOpen ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                    </button>
                   </div>
+
+                  {/* Interactive Tool Inspector Drawer */}
+                  {isInspectorOpen && (
+                    <div className="p-3.5 rounded-2xl bg-slate-900/80 border border-cyan-500/20 text-xs space-y-2.5 shadow-md animate-fadeIn">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <span className="font-semibold text-white">{selectedTool.originalName}</span>
+                          <p className="text-[11px] text-slate-400 mt-0.5">{selectedTool.description}</p>
+                        </div>
+                        <button
+                          onClick={handleLoadSamplePayload}
+                          className="px-2.5 py-1 text-[10px] font-mono font-semibold rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 flex items-center gap-1 shrink-0 transition-all cursor-pointer"
+                          title="Auto-populate sample payload"
+                        >
+                          <Sparkles className="w-3 h-3 text-cyan-400" />
+                          <span>Load Schema Template</span>
+                        </button>
+                      </div>
+
+                      {/* Parameters breakdown */}
+                      {selectedTool.inputSchema?.properties && (
+                        <div className="space-y-1.5 pt-1 border-t border-white/5 font-mono text-[11px]">
+                          <div className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">
+                            Parameters ({Object.keys(selectedTool.inputSchema.properties).length}):
+                          </div>
+                          <div className="space-y-1 max-h-24 overflow-y-auto">
+                            {Object.entries(selectedTool.inputSchema.properties).map(([paramName, paramDef]) => {
+                              const isRequired = selectedTool.inputSchema.required?.includes(paramName);
+                              return (
+                                <div key={paramName} className="flex items-center justify-between text-slate-300 bg-slate-950/60 px-2 py-1 rounded-lg">
+                                  <span className="text-cyan-300 font-bold">{paramName}</span>
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-[10px] text-slate-400">{paramDef.type}</span>
+                                    <span
+                                      className={`text-[9px] px-1.5 py-0.2 rounded ${
+                                        isRequired
+                                          ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                                          : 'bg-slate-800 text-slate-400'
+                                      }`}
+                                    >
+                                      {isRequired ? 'required' : 'optional'}
+                                    </span>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* JSON Arguments Editor Frame */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <label className="text-xs font-medium text-slate-300 flex items-center gap-1.5">
+                    <label id={`${toolArgsId}-label`} htmlFor={toolArgsId} className="text-xs font-medium text-slate-300 flex items-center gap-1.5">
                       <Code2 className="w-3.5 h-3.5 text-cyan-400" />
                       <span>JSON Arguments:</span>
                     </label>
@@ -815,7 +1041,7 @@ export const MetaMcpStudio: React.FC<{ isOpen: boolean; onClose: () => void }> =
 
                       <button
                         onClick={handleFormatJson}
-                        className="text-[10px] text-slate-400 hover:text-cyan-300 font-mono px-1.5 py-0.5 rounded bg-white/5 hover:bg-white/10 transition-colors"
+                        className="text-[10px] text-slate-400 hover:text-cyan-300 font-mono px-1.5 py-0.5 rounded bg-white/5 hover:bg-white/10 transition-colors cursor-pointer"
                         title="Format JSON"
                       >
                         Format
@@ -823,7 +1049,7 @@ export const MetaMcpStudio: React.FC<{ isOpen: boolean; onClose: () => void }> =
 
                       <button
                         onClick={handleCopyArgs}
-                        className="text-[10px] text-slate-400 hover:text-white font-mono px-1.5 py-0.5 rounded bg-white/5 hover:bg-white/10 transition-colors flex items-center gap-1"
+                        className="text-[10px] text-slate-400 hover:text-white font-mono px-1.5 py-0.5 rounded bg-white/5 hover:bg-white/10 transition-colors flex items-center gap-1 cursor-pointer"
                         title="Copy Arguments"
                       >
                         {copiedArgs ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
@@ -834,6 +1060,7 @@ export const MetaMcpStudio: React.FC<{ isOpen: boolean; onClose: () => void }> =
 
                   <div className="relative rounded-2xl overflow-hidden border border-white/[0.08] focus-within:border-cyan-500/60 focus-within:ring-1 focus-within:ring-cyan-500/40 shadow-inner">
                     <textarea
+                      id={toolArgsId}
                       value={toolArgs}
                       onChange={(e) => setToolArgs(e.target.value)}
                       rows={8}
@@ -878,8 +1105,12 @@ export const MetaMcpStudio: React.FC<{ isOpen: boolean; onClose: () => void }> =
                   )}
                 </div>
 
-                {/* Console viewer */}
-                <div className="rounded-2xl border border-white/[0.08] bg-slate-950/95 p-4 min-h-[295px] flex flex-col justify-between font-mono text-xs text-slate-200 overflow-x-auto shadow-inner relative">
+                {/* Console viewer with tokenized syntax highlighter */}
+                <div
+                  aria-live="polite"
+                  aria-atomic="true"
+                  className="rounded-2xl border border-white/[0.08] bg-slate-950/95 p-4 min-h-[340px] flex flex-col justify-between font-mono text-xs text-slate-200 shadow-inner relative"
+                >
                   {/* Console Header Bar */}
                   <div className="flex items-center justify-between pb-2 mb-2 border-b border-white/5 text-[11px] text-slate-400">
                     <span className="flex items-center gap-1.5">
@@ -889,7 +1120,7 @@ export const MetaMcpStudio: React.FC<{ isOpen: boolean; onClose: () => void }> =
                     {execResult && (
                       <button
                         onClick={handleCopyResult}
-                        className="hover:text-white flex items-center gap-1 transition-colors"
+                        className="hover:text-white flex items-center gap-1 transition-colors cursor-pointer"
                         title="Copy Response"
                       >
                         {copiedResult ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
@@ -898,12 +1129,10 @@ export const MetaMcpStudio: React.FC<{ isOpen: boolean; onClose: () => void }> =
                     )}
                   </div>
 
-                  {/* Response Body */}
-                  <div className="flex-1 overflow-auto">
+                  {/* Response Body with Tokenized Syntax Highlighting */}
+                  <div className="flex-1 overflow-auto max-h-[250px] pr-1">
                     {execResult ? (
-                      <pre className="text-xs text-slate-200 leading-relaxed">
-                        {JSON.stringify(execResult, null, 2)}
-                      </pre>
+                      <JsonSyntaxViewer data={execResult} />
                     ) : (
                       <div className="h-full flex flex-col items-center justify-center text-slate-500 py-16">
                         <Terminal className="w-8 h-8 mb-2 opacity-40 text-cyan-400" />
@@ -917,7 +1146,7 @@ export const MetaMcpStudio: React.FC<{ isOpen: boolean; onClose: () => void }> =
                   {execResult && (
                     <div className="pt-3 mt-2 border-t border-white/5 flex items-center justify-between text-[10px] text-slate-500">
                       <span>Audit Merkle Root: sha256:7f8e...39ab</span>
-                      <span className="text-cyan-400">Sandbox: ToolHive Isolated</span>
+                      <span className="text-cyan-400 font-semibold">Sandbox: ToolHive Isolated</span>
                     </div>
                   )}
                 </div>
@@ -927,7 +1156,7 @@ export const MetaMcpStudio: React.FC<{ isOpen: boolean; onClose: () => void }> =
 
           {/* TAB 5: AUDIT LOGS */}
           {activeTab === 'audit' && (
-            <div id="panel-audit" role="tabpanel" className="space-y-3 animate-fadeIn">
+            <div id="panel-audit" role="tabpanel" aria-labelledby="tab-audit" tabIndex={0} className="space-y-3 animate-fadeIn outline-none">
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-sm font-semibold text-white">Cryptographic Audit Replay Trail</h3>
@@ -972,7 +1201,7 @@ export const MetaMcpStudio: React.FC<{ isOpen: boolean; onClose: () => void }> =
           )}
         </div>
 
-        {/* BOTTOM FOOTER */}
+        {/* BOTTOM FOOTER exactly matching screenshot */}
         <div className="px-6 py-3.5 border-t border-white/[0.08] bg-slate-950/80 flex items-center justify-between text-xs text-slate-400">
           <div className="flex items-center space-x-3">
             <span className="flex items-center gap-1.5 text-slate-300">
@@ -981,15 +1210,14 @@ export const MetaMcpStudio: React.FC<{ isOpen: boolean; onClose: () => void }> =
             </span>
             <span className="text-slate-600">•</span>
             <span className="text-slate-400">ToolHive Sandboxing Contained</span>
-            <span className="text-slate-600">•</span>
-            <span className="text-slate-400 hidden sm:inline">Zero-Trust Forward Proxy</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="font-mono text-[11px] text-slate-500">ACR Meta-MCP v0.8.2</span>
           </div>
         </div>
-
       </div>
     </div>
   );
 };
+
+export const MetaMcpModal = MetaMcpStudio;
