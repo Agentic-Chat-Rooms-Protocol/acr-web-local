@@ -14,6 +14,7 @@ import { MetaMcpStudio } from './components/MetaMcpStudio';
 import { AdvancedSettingsModal } from './components/AdvancedSettingsModal';
 import { OpsRoomSection } from './components/opsroom/OpsRoomSection';
 import { OpsRoomModal } from './components/opsroom/OpsRoomModal';
+import { OpsRoomPage } from './pages/OpsRoomPage';
 import { AcrChatApp } from './app/AcrChatApp';
 
 export const App: React.FC = () => {
@@ -22,26 +23,35 @@ export const App: React.FC = () => {
   const [isMetaMcpOpen, setIsMetaMcpOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isOpsRoomModalOpen, setIsOpsRoomModalOpen] = useState(false);
-  const [viewMode, setViewMode] = useState<'showcase' | 'app'>(() => {
+
+  const resolveViewMode = (): 'showcase' | 'opsroom' | 'app' => {
     if (typeof window !== 'undefined') {
+      const path = window.location.pathname.toLowerCase();
       const hash = window.location.hash.toLowerCase();
-      if (hash.includes('app')) return 'app';
+      if (path === '/opsroom' || path === '/opsroom/' || hash.includes('opsroom')) {
+        return 'opsroom';
+      }
+      if (path === '/app' || path === '/app/' || hash.includes('app')) {
+        return 'app';
+      }
     }
     return 'showcase';
-  });
+  };
+
+  const [viewMode, setViewMode] = useState<'showcase' | 'opsroom' | 'app'>(resolveViewMode);
 
   useEffect(() => {
-    const handleHashChange = () => {
-      const hash = window.location.hash.toLowerCase();
-      if (hash.includes('app')) {
-        setViewMode('app');
-      } else {
-        setViewMode('showcase');
-      }
+    const handleUrlChange = () => {
+      const mode = resolveViewMode();
+      setViewMode(mode);
     };
 
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
+    window.addEventListener('hashchange', handleUrlChange);
+    window.addEventListener('popstate', handleUrlChange);
+    return () => {
+      window.removeEventListener('hashchange', handleUrlChange);
+      window.removeEventListener('popstate', handleUrlChange);
+    };
   }, []);
 
   useEffect(() => {
@@ -66,14 +76,40 @@ export const App: React.FC = () => {
     }
   };
 
+  const handleOpenOpsRoomPage = () => {
+    setViewMode('opsroom');
+    if (typeof window !== 'undefined') {
+      try {
+        window.history.pushState(null, '', '/opsroom');
+      } catch {
+        window.location.hash = '#/opsroom';
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
   const handleLaunchApp = () => {
     setViewMode('app');
-    window.location.hash = '#/app';
+    if (typeof window !== 'undefined') {
+      try {
+        window.history.pushState(null, '', '/app');
+      } catch {
+        window.location.hash = '#/app';
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
 
   const handleBackToShowcase = () => {
     setViewMode('showcase');
-    window.location.hash = '';
+    if (typeof window !== 'undefined') {
+      try {
+        window.history.pushState(null, '', '/');
+      } catch {
+        window.location.hash = '';
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
 
   const handleCommandAction = (actionId: string) => {
@@ -89,7 +125,7 @@ export const App: React.FC = () => {
     } else if (actionId === 'open-settings') {
       setIsSettingsOpen(true);
     } else if (actionId === 'jump-opsroom' || actionId === 'view-battlecard' || actionId === 'view-atlas2' || actionId === 'calc-roi') {
-      handleNavigate('opsroom');
+      handleOpenOpsRoomPage();
     } else if (actionId === 'simulate-incident') {
       setIsOpsRoomModalOpen(true);
     } else if (actionId === 'jump-simulator' || actionId === 'escalate-test') {
@@ -108,6 +144,16 @@ export const App: React.FC = () => {
     return <AcrChatApp onBackToShowcase={handleBackToShowcase} />;
   }
 
+  // If in dedicated OpsRoom mode, render dedicated OpsRoomPage
+  if (viewMode === 'opsroom') {
+    return (
+      <OpsRoomPage
+        onBackToShowcase={handleBackToShowcase}
+        onLaunchApp={handleLaunchApp}
+      />
+    );
+  }
+
   return (
     <div className="relative min-h-screen bg-[#030305] text-slate-100 selection:bg-cyan-500/20 selection:text-cyan-200 font-sans">
       {/* Hyper-Premium 3D-Animated Spatial Background (Zero Grid, Pure R3F Spatial Core) */}
@@ -123,6 +169,7 @@ export const App: React.FC = () => {
           onOpenConnectMcp={() => setIsConnectMcpOpen(true)}
           onOpenMetaMcp={() => setIsMetaMcpOpen(true)}
           onOpenSettings={() => setIsSettingsOpen(true)}
+          onOpenOpsRoomPage={handleOpenOpsRoomPage}
         />
 
         {/* Hero Section */}
@@ -130,13 +177,14 @@ export const App: React.FC = () => {
           <Hero
             onExploreSimulator={() => handleNavigate('simulator')}
             onExploreSDK={() => handleNavigate('sdk')}
-            onExploreOpsRoom={() => handleNavigate('opsroom')}
+            onExploreOpsRoom={handleOpenOpsRoomPage}
           />
 
           {/* ACR OpsRoom - Autonomous Enterprise War Room (Beyond Salesforce Agentforce & Slack) */}
           <OpsRoomSection 
             id="opsroom"
             onOpenModal={() => setIsOpsRoomModalOpen(true)}
+            onOpenDedicatedPage={handleOpenOpsRoomPage}
           />
 
           {/* Intercom + Graphite Live Room Simulator */}

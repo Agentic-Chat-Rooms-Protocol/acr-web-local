@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Terminal, ChevronRight, Volume2, VolumeX, Radio, Flame } from 'lucide-react';
+import { Search, Terminal, ChevronRight, Volume2, VolumeX, Radio, Flame, Menu, X, GitBranch, ShieldAlert, Layers } from 'lucide-react';
 import { sound } from '../utils/sound';
 import { AcrLogo } from './AcrLogo';
 
@@ -10,6 +10,7 @@ interface NavbarProps {
   onOpenConnectMcp?: () => void;
   onOpenMetaMcp?: () => void;
   onOpenSettings?: () => void;
+  onOpenOpsRoomPage?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -19,9 +20,11 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenConnectMcp,
   onOpenMetaMcp,
   onOpenSettings,
+  onOpenOpsRoomPage,
 }) => {
   const [audioEnabled, setAudioEnabled] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -43,7 +46,12 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   const handleNavClick = (id: string) => {
     sound.playTick();
-    onNavigate(id);
+    setMobileMenuOpen(false);
+    if (id === 'opsroom' && onOpenOpsRoomPage) {
+      onOpenOpsRoomPage();
+    } else {
+      onNavigate(id);
+    }
   };
 
   return (
@@ -51,7 +59,7 @@ export const Navbar: React.FC<NavbarProps> = ({
       <div
         className={`mx-auto flex flex-nowrap items-center justify-between pointer-events-auto transform-gpu will-change-[max-width,transform] transition-[max-width,height,padding,margin,border-radius,background-color,border-color,box-shadow] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
           isScrolled
-            ? 'mt-3 h-14 max-w-6xl xl:max-w-7xl rounded-full border border-white/[0.14] bg-[#07080e]/92 px-4 sm:px-6 backdrop-blur-2xl shadow-[0_22px_55px_rgba(0,0,0,0.92),0_0_26px_rgba(6,182,212,0.15),inset_0_1px_0_rgba(255,255,255,0.14)] overflow-hidden'
+            ? 'mt-3 h-14 max-w-6xl xl:max-w-7xl rounded-full border border-white/[0.14] bg-[#07080e]/92 px-4 sm:px-6 backdrop-blur-2xl shadow-[0_22px_55px_rgba(0,0,0,0.92),0_0_26px_rgba(6,182,212,0.15),inset_0_1px_0_rgba(255,255,255,0.14)]'
             : 'h-16 max-w-7xl border-b border-white/[0.07] bg-[#050508]/85 px-4 sm:px-6 lg:px-8 backdrop-blur-xl'
         }`}
       >
@@ -239,8 +247,94 @@ export const Navbar: React.FC<NavbarProps> = ({
             <Terminal className="h-3.5 w-3.5 text-cyan-400" />
             <span className="whitespace-nowrap">Connect MCP</span>
           </button>
+
+          {/* Mobile Hamburger Toggle Button */}
+          <button
+            onClick={() => {
+              sound.playTick();
+              setMobileMenuOpen(!mobileMenuOpen);
+            }}
+            className="flex lg:hidden h-8 w-8 items-center justify-center rounded-lg border border-white/[0.08] bg-slate-900/60 text-slate-300 hover:text-white hover:border-cyan-500/40 transition-all cursor-pointer shrink-0 ml-1"
+            aria-label={mobileMenuOpen ? 'Close Navigation Menu' : 'Open Navigation Menu'}
+            aria-expanded={mobileMenuOpen}
+          >
+            {mobileMenuOpen ? <X className="h-4 w-4 text-cyan-400" /> : <Menu className="h-4 w-4" />}
+          </button>
         </div>
       </div>
+
+      {/* Mobile Drawer Menu */}
+      {mobileMenuOpen && (
+        <div className="pointer-events-auto mt-2 mx-auto max-w-lg rounded-3xl border border-white/[0.12] bg-[#07080e]/95 p-4 shadow-2xl backdrop-blur-2xl lg:hidden animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="space-y-2">
+            {/* Prominent OpsRoom Button at Top of Mobile Menu */}
+            <button
+              onClick={() => handleNavClick('opsroom')}
+              className="w-full flex items-center justify-between p-3 rounded-2xl bg-gradient-to-r from-amber-500/20 via-orange-500/15 to-cyan-500/20 border border-amber-400/40 text-left transition-all cursor-pointer group"
+            >
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-amber-500/20 text-amber-300">
+                  <Flame className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="font-bold text-white text-sm flex items-center gap-1.5">
+                    <span>ACR OpsRoom</span>
+                    <span className="rounded bg-amber-400 text-slate-950 text-[9px] font-mono font-black px-1.5 py-0.2 uppercase">NEW</span>
+                  </div>
+                  <div className="text-[11px] text-slate-300">Autonomous War Room &amp; BFT Quorum</div>
+                </div>
+              </div>
+              <ChevronRight className="h-4 w-4 text-amber-400 group-hover:translate-x-0.5 transition-transform" />
+            </button>
+
+            <div className="grid grid-cols-2 gap-2 pt-1">
+              <button
+                onClick={() => handleNavClick('simulator')}
+                className="flex items-center gap-2 p-2.5 rounded-xl bg-white/[0.04] border border-white/5 text-xs text-slate-300 hover:text-white hover:bg-white/[0.08] text-left cursor-pointer"
+              >
+                <Radio className="h-4 w-4 text-cyan-400 shrink-0" />
+                <div>
+                  <div className="font-semibold">Live Rooms</div>
+                  <div className="text-[10px] text-slate-400">Multi-agent floor</div>
+                </div>
+              </button>
+
+              <button
+                onClick={() => handleNavClick('diff-viewer')}
+                className="flex items-center gap-2 p-2.5 rounded-xl bg-white/[0.04] border border-white/5 text-xs text-slate-300 hover:text-white hover:bg-white/[0.08] text-left cursor-pointer"
+              >
+                <GitBranch className="h-4 w-4 text-emerald-400 shrink-0" />
+                <div>
+                  <div className="font-semibold">Safe Diffs</div>
+                  <div className="text-[10px] text-slate-400">AST code review</div>
+                </div>
+              </button>
+
+              <button
+                onClick={() => handleNavClick('governance')}
+                className="flex items-center gap-2 p-2.5 rounded-xl bg-white/[0.04] border border-white/5 text-xs text-slate-300 hover:text-white hover:bg-white/[0.08] text-left cursor-pointer"
+              >
+                <ShieldAlert className="h-4 w-4 text-amber-400 shrink-0" />
+                <div>
+                  <div className="font-semibold">Governance</div>
+                  <div className="text-[10px] text-slate-400">Zero-trust ballots</div>
+                </div>
+              </button>
+
+              <button
+                onClick={() => handleNavClick('architecture')}
+                className="flex items-center gap-2 p-2.5 rounded-xl bg-white/[0.04] border border-white/5 text-xs text-slate-300 hover:text-white hover:bg-white/[0.08] text-left cursor-pointer"
+              >
+                <Layers className="h-4 w-4 text-indigo-400 shrink-0" />
+                <div>
+                  <div className="font-semibold">Architecture</div>
+                  <div className="text-[10px] text-slate-400">Protocol blueprint</div>
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 };

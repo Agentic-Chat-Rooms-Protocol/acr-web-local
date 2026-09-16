@@ -50,6 +50,17 @@ export class ByzantineConsensusEngine {
   }
 
   /**
+   * Re-sign a ballot when the operator or agent changes their decision
+   */
+  public static reSignBallot(ballot: ConsensusBallot, agent: AgentProfile, newDecision: VoteDecision): void {
+    ballot.decision = newDecision;
+    ballot.signedAt = Date.now();
+    ballot.justification = `Operator simulation override: ${newDecision === 'approve' ? 'Approved' : 'Rejected'} mitigation plan.`;
+    const payload = `${ballot.ballotId}:${ballot.incidentId}:${ballot.did}:${ballot.decision}:${ballot.confidenceScore}:${ballot.weight}:${ballot.signedAt}`;
+    ballot.signature = signPayloadEd25519(payload, agent.publicKey);
+  }
+
+  /**
    * Mathematically evaluate Byzantine Quorum across squad ballots
    */
   public static evaluateQuorum(

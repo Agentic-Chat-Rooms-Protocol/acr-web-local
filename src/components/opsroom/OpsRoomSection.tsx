@@ -29,14 +29,20 @@ import { ByzantineConsensusEngine } from './consensus';
 import { HuddleManager } from './huddle-manager';
 import { SandboxExecutor } from './sandbox-executor';
 import { CryptographicAuditLedger } from './audit-ledger';
+import { getScenarioForPreset } from './simulation-scenarios';
 import { sound } from '../../utils/sound';
 
 interface OpsRoomSectionProps {
   id?: string;
   onOpenModal?: () => void;
+  onOpenDedicatedPage?: () => void;
 }
 
-export const OpsRoomSection: React.FC<OpsRoomSectionProps> = ({ id = 'opsroom', onOpenModal }) => {
+export const OpsRoomSection: React.FC<OpsRoomSectionProps> = ({ 
+  id = 'opsroom', 
+  onOpenModal,
+  onOpenDedicatedPage,
+}) => {
   const [activeTab, setActiveTab] = useState<'simulator' | 'atlas' | 'battlecard' | 'roi' | 'wcag'>('simulator');
   const [selectedPreset, setSelectedPreset] = useState<IncidentPreset>(INCIDENT_PRESETS[0]);
 
@@ -87,79 +93,33 @@ export const OpsRoomSection: React.FC<OpsRoomSectionProps> = ({ id = 'opsroom', 
     // Step 1: Deliberation phase
     Atlas2Engine.transitionPhase(inc, 'deliberating');
     setCurrentIncident({ ...inc });
-    await new Promise((r) => setTimeout(r, 500));
+    await new Promise((r) => setTimeout(r, 400));
 
-    // Turn 1: SRE Guardian
-    const sreAgent = defaultSquad.agents[1];
-    Atlas2Engine.addDeliberationTurn(
-      inc,
-      sreAgent,
-      `Telemetry divergence verified. Primary buffer degradation breached baseline by ${selectedPreset.telemetry[0].zScore.toFixed(1)}σ. Recommending isolated replica drain and route shift.`,
-      'Primary Replication Lag Spike',
-      [
-        {
-          toolName: 'isolate_failing_node',
-          serverName: 'acr-sre-mcp',
-          parameters: { targetNode: 'db-replica-03', drainGraceSec: 5 },
-          isDryRun: true,
-          riskLevel: 'medium',
-        }
-      ],
-      0.94
-    );
-    HuddleManager.addSpokenLine(
-      huddle,
-      sreAgent,
-      'Replication lag matches WAL saturation signature. Node isolation required before transaction queue blocks.'
-    );
-    sound.playTick();
-    setCurrentIncident({ ...inc });
-    await new Promise((r) => setTimeout(r, 500));
-
-    // Turn 2: SecOps Guardian
-    const secopsAgent = defaultSquad.agents[2];
-    Atlas2Engine.addDeliberationTurn(
-      inc,
-      secopsAgent,
-      'Zero-Trust boundary check complete. No unauthorized token ingress found. Authorizing ToolHive micro-container with egress allowlist locked.',
-      'Safe ToolHive Sandboxing',
-      [],
-      0.96
-    );
-    HuddleManager.addSpokenLine(
-      huddle,
-      secopsAgent,
-      'Zero-trust egress allowlist verified. Proceeding to quorum vote.'
-    );
-    sound.playTick();
-    setCurrentIncident({ ...inc });
-    await new Promise((r) => setTimeout(r, 500));
-
-    // Turn 3: Atlas Orchestrator compiles DAG and triggers quorum
-    const atlasAgent = defaultSquad.agents[0];
-    Atlas2Engine.addDeliberationTurn(
-      inc,
-      atlasAgent,
-      'Atlas 2.0 Goal Decomposition complete. Generated 2-step mitigation DAG with automated rollback step. Initiating Byzantine Quorum ballot.',
-      'DAG Mitigation Plan Compiled',
-      [
-        {
-          toolName: 'activate_secondary_route',
-          serverName: 'acr-mesh-mcp',
-          parameters: { targetRoute: 'read-replica-01' },
-          isDryRun: true,
-          riskLevel: 'low',
-        }
-      ],
-      0.98
-    );
-    sound.playTick();
-    setCurrentIncident({ ...inc });
-    await new Promise((r) => setTimeout(r, 500));
+    // Dynamic scenario turns from simulation engine
+    const scenario = getScenarioForPreset(selectedPreset, defaultSquad, customTitle, customDesc);
+    for (const turnData of scenario.turns) {
+      const agent = defaultSquad.agents[turnData.agentRoleIndex] || defaultSquad.agents[0];
+      Atlas2Engine.addDeliberationTurn(
+        inc,
+        agent,
+        turnData.reasoning,
+        turnData.proposedHypothesis,
+        turnData.proposedActions,
+        turnData.confidence
+      );
+      HuddleManager.addSpokenLine(huddle, agent, turnData.spokenLine);
+      sound.playTick();
+      setCurrentIncident({ ...inc });
+      await new Promise((r) => setTimeout(r, 450));
+    }
 
     // Step 2: Quorum Voting
     Atlas2Engine.transitionPhase(inc, 'awaiting_quorum');
-    const plan = Atlas2Engine.compileExecutionPlan(inc, 'Isolate failing replica and activate healthy secondary route');
+    const plan = Atlas2Engine.compileExecutionPlan(inc, scenario.summary, {
+      affectedNodes: scenario.affectedNodes,
+      expectedLatencyRecoveryMs: scenario.expectedLatencyRecoveryMs,
+      expectedTrafficImpactPercent: scenario.expectedTrafficImpactPercent,
+    });
     Atlas2Engine.simulateDryRun(plan);
 
     const ballots: ConsensusBallot[] = [
@@ -213,7 +173,14 @@ export const OpsRoomSection: React.FC<OpsRoomSectionProps> = ({ id = 'opsroom', 
     const ballot = currentIncident.ballots.find((b) => b.ballotId === ballotId);
     if (!ballot) return;
 
-    ballot.decision = ballot.decision === 'approve' ? 'reject' : 'approve';
+    const agent = defaultSquad.agents.find((a) => a.id === ballot.agentId);
+    const newDecision = ballot.decision === 'approve' ? 'reject' : 'approve';
+    if (agent) {
+      ByzantineConsensusEngine.reSignBallot(ballot, agent, newDecision);
+    } else {
+      ballot.decision = newDecision;
+    }
+
     const newQuorum = ByzantineConsensusEngine.evaluateQuorum(
       currentIncident.id,
       defaultSquad,
@@ -246,8 +213,8 @@ export const OpsRoomSection: React.FC<OpsRoomSectionProps> = ({ id = 'opsroom', 
       aria-label="ACR OpsRoom Autonomous War Room Showcase"
       className="relative py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto overflow-hidden"
     >
-      {/* Hyper-Premium Background Mesh with Slack Aubergine + Cyan Shimmer */}
-      <div className="absolute inset-0 -z-10 rounded-[40px] overflow-hidden pointer-events-none opacity-45">
+      {/* Hyper-Premium Background Mesh with Slack Aubergine + Cyan Shimmer and CSS fallback */}
+      <div className="absolute inset-0 -z-10 rounded-[40px] overflow-hidden pointer-events-none opacity-45 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-purple-950/60 via-slate-950 to-[#030305]">
         <MeshGradient
           colors={['#4a154b', '#07080e', '#032d42', '#1b0a2a']}
           speed={0.03}
@@ -328,13 +295,23 @@ export const OpsRoomSection: React.FC<OpsRoomSectionProps> = ({ id = 'opsroom', 
 
         {/* Action CTAs */}
         <div className="flex flex-wrap items-center justify-center gap-3">
+          {onOpenDedicatedPage && (
+            <button
+              onClick={() => { sound.playApprovalChime(); onOpenDedicatedPage(); }}
+              className="px-5 py-3 rounded-2xl font-bold text-xs flex items-center gap-2 bg-gradient-to-r from-amber-400 via-orange-400 to-cyan-400 text-slate-950 shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40 hover:scale-102 transition-all cursor-pointer active:scale-98"
+            >
+              <Flame className="w-4 h-4 text-slate-950" />
+              <span>Dedicated OpsRoom Page ↗</span>
+            </button>
+          )}
+
           {onOpenModal && (
             <button
               onClick={() => { sound.playApprovalChime(); onOpenModal(); }}
               className="px-5 py-3 rounded-2xl font-bold text-xs flex items-center gap-2 bg-gradient-to-r from-cyan-400 via-indigo-500 to-purple-500 text-white shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40 transition-all cursor-pointer active:scale-98"
             >
               <Maximize2 className="w-4 h-4" />
-              <span>Launch Fullscreen War Room Modal</span>
+              <span>Fullscreen War Room Modal</span>
             </button>
           )}
 

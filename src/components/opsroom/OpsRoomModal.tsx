@@ -16,6 +16,7 @@ import { ByzantineConsensusEngine } from './consensus';
 import { HuddleManager } from './huddle-manager';
 import { SandboxExecutor } from './sandbox-executor';
 import { CryptographicAuditLedger } from './audit-ledger';
+import { getScenarioForPreset } from './simulation-scenarios';
 import { sound } from '../../utils/sound';
 
 interface OpsRoomModalProps {
@@ -83,79 +84,33 @@ export const OpsRoomModal: React.FC<OpsRoomModalProps> = ({ isOpen, onClose }) =
     // Step 1: Deliberation phase
     Atlas2Engine.transitionPhase(inc, 'deliberating');
     setCurrentIncident({ ...inc });
-    await new Promise((r) => setTimeout(r, 500));
+    await new Promise((r) => setTimeout(r, 400));
 
-    // Turn 1: SRE Guardian
-    const sreAgent = defaultSquad.agents[1];
-    Atlas2Engine.addDeliberationTurn(
-      inc,
-      sreAgent,
-      `Telemetry divergence verified. Primary buffer degradation breached baseline by ${selectedPreset.telemetry[0].zScore.toFixed(1)}σ. Recommending isolated replica drain and route shift.`,
-      'Primary Replication Lag Spike',
-      [
-        {
-          toolName: 'isolate_failing_node',
-          serverName: 'acr-sre-mcp',
-          parameters: { targetNode: 'db-replica-03', drainGraceSec: 5 },
-          isDryRun: true,
-          riskLevel: 'medium',
-        }
-      ],
-      0.94
-    );
-    HuddleManager.addSpokenLine(
-      huddle,
-      sreAgent,
-      'Replication lag matches WAL saturation signature. Node isolation required before transaction queue blocks.'
-    );
-    sound.playTick();
-    setCurrentIncident({ ...inc });
-    await new Promise((r) => setTimeout(r, 500));
-
-    // Turn 2: SecOps Guardian
-    const secopsAgent = defaultSquad.agents[2];
-    Atlas2Engine.addDeliberationTurn(
-      inc,
-      secopsAgent,
-      'Zero-Trust boundary check complete. No unauthorized token ingress found. Authorizing ToolHive micro-container with egress allowlist locked.',
-      'Safe ToolHive Sandboxing',
-      [],
-      0.96
-    );
-    HuddleManager.addSpokenLine(
-      huddle,
-      secopsAgent,
-      'Zero-trust egress allowlist verified. Proceeding to quorum vote.'
-    );
-    sound.playTick();
-    setCurrentIncident({ ...inc });
-    await new Promise((r) => setTimeout(r, 500));
-
-    // Turn 3: Atlas Orchestrator compiles DAG and triggers quorum
-    const atlasAgent = defaultSquad.agents[0];
-    Atlas2Engine.addDeliberationTurn(
-      inc,
-      atlasAgent,
-      'Atlas 2.0 Goal Decomposition complete. Generated 2-step mitigation DAG with automated rollback step. Initiating Byzantine Quorum ballot.',
-      'DAG Mitigation Plan Compiled',
-      [
-        {
-          toolName: 'activate_secondary_route',
-          serverName: 'acr-mesh-mcp',
-          parameters: { targetRoute: 'read-replica-01' },
-          isDryRun: true,
-          riskLevel: 'low',
-        }
-      ],
-      0.98
-    );
-    sound.playTick();
-    setCurrentIncident({ ...inc });
-    await new Promise((r) => setTimeout(r, 500));
+    // Dynamic scenario turns from simulation engine
+    const scenario = getScenarioForPreset(selectedPreset, defaultSquad, customTitle, customDesc);
+    for (const turnData of scenario.turns) {
+      const agent = defaultSquad.agents[turnData.agentRoleIndex] || defaultSquad.agents[0];
+      Atlas2Engine.addDeliberationTurn(
+        inc,
+        agent,
+        turnData.reasoning,
+        turnData.proposedHypothesis,
+        turnData.proposedActions,
+        turnData.confidence
+      );
+      HuddleManager.addSpokenLine(huddle, agent, turnData.spokenLine);
+      sound.playTick();
+      setCurrentIncident({ ...inc });
+      await new Promise((r) => setTimeout(r, 450));
+    }
 
     // Step 2: Quorum Voting
     Atlas2Engine.transitionPhase(inc, 'awaiting_quorum');
-    const plan = Atlas2Engine.compileExecutionPlan(inc, 'Isolate failing replica and activate healthy secondary route');
+    const plan = Atlas2Engine.compileExecutionPlan(inc, scenario.summary, {
+      affectedNodes: scenario.affectedNodes,
+      expectedLatencyRecoveryMs: scenario.expectedLatencyRecoveryMs,
+      expectedTrafficImpactPercent: scenario.expectedTrafficImpactPercent,
+    });
     Atlas2Engine.simulateDryRun(plan);
 
     const ballots: ConsensusBallot[] = [
@@ -204,12 +159,19 @@ export const OpsRoomModal: React.FC<OpsRoomModalProps> = ({ isOpen, onClose }) =
     setCurrentIncident({ ...currentIncident });
   }, [currentIncident, humanApproved]);
 
-  // Toggle single ballot decision
+  // Toggle single ballot decision with cryptographic re-signing
   const handleToggleBallotDecision = (ballotId: string) => {
     const ballot = currentIncident.ballots.find((b) => b.ballotId === ballotId);
     if (!ballot) return;
 
-    ballot.decision = ballot.decision === 'approve' ? 'reject' : 'approve';
+    const agent = defaultSquad.agents.find((a) => a.id === ballot.agentId);
+    const newDecision = ballot.decision === 'approve' ? 'reject' : 'approve';
+    if (agent) {
+      ByzantineConsensusEngine.reSignBallot(ballot, agent, newDecision);
+    } else {
+      ballot.decision = newDecision;
+    }
+
     const newQuorum = ByzantineConsensusEngine.evaluateQuorum(
       currentIncident.id,
       defaultSquad,

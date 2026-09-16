@@ -160,7 +160,15 @@ export class Atlas2Engine {
   /**
    * Compile a multi-step execution plan DAG with preflight dry-run validation.
    */
-  public static compileExecutionPlan(incident: OpsIncident, summary: string): ExecutionPlan {
+  public static compileExecutionPlan(
+    incident: OpsIncident, 
+    summary: string,
+    diff?: {
+      affectedNodes: string[];
+      expectedLatencyRecoveryMs: number;
+      expectedTrafficImpactPercent: number;
+    }
+  ): ExecutionPlan {
     const steps: ExecutionStep[] = [];
     let previousStepId: string | undefined = undefined;
 
@@ -168,7 +176,7 @@ export class Atlas2Engine {
       for (const action of turn.proposedActions) {
         const stepId = `step-${action.serverName}-${action.toolName}-${steps.length + 1}`;
         
-        const rollbackStep: ExecutionStep | undefined = action.toolName.includes('isolate') || action.toolName.includes('drain') ? {
+        const rollbackStep: ExecutionStep | undefined = action.toolName.includes('isolate') || action.toolName.includes('drain') || action.toolName.includes('quarantine') ? {
           stepId: `rollback-${stepId}`,
           toolName: `restore_${action.toolName}`,
           serverName: action.serverName,
@@ -198,9 +206,11 @@ export class Atlas2Engine {
       summary,
       steps,
       preflightDryRunSuccess: true,
-      simulatedStateDiff: {
-        affectedNodes: ['db-replica-03'],
-        expectedLatencyRecoveryMs: -8200,
+      simulatedStateDiff: diff || {
+        affectedNodes: steps.length > 0
+          ? steps.map((s) => String(s.parameters?.targetNode || s.parameters?.podName || s.parameters?.target || 'node-01'))
+          : ['system-mesh-node'],
+        expectedLatencyRecoveryMs: -2500,
         expectedTrafficImpactPercent: 0,
       },
       generatedAt: Date.now(),

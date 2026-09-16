@@ -4,18 +4,52 @@
  * for client-side deliberation proofs, Merkle trees, and audit exports.
  */
 
-// Pure TypeScript deterministic SHA-256 implementation
+function toUtf8Bytes(str: string): number[] {
+  if (typeof TextEncoder !== 'undefined') {
+    return Array.from(new TextEncoder().encode(str));
+  }
+  const bytes: number[] = [];
+  for (let i = 0; i < str.length; i++) {
+    let c = str.charCodeAt(i);
+    if (c < 0x80) {
+      bytes.push(c);
+    } else if (c < 0x800) {
+      bytes.push(0xc0 | (c >> 6), 0x80 | (c & 0x3f));
+    } else if (c < 0xd800 || c >= 0xe000) {
+      bytes.push(0xe0 | (c >> 12), 0x80 | ((c >> 6) & 0x3f), 0x80 | (c & 0x3f));
+    } else {
+      i++;
+      c = 0x10000 + (((c & 0x3ff) << 10) | (str.charCodeAt(i) & 0x3ff));
+      bytes.push(0xf0 | (c >> 18), 0x80 | ((c >> 12) & 0x3f), 0x80 | ((c >> 6) & 0x3f), 0x80 | (c & 0x3f));
+    }
+  }
+  return bytes;
+}
+
+// Pure TypeScript deterministic SHA-256 implementation with UTF-8 byte support
 export function sha256Sync(str: string): string {
   function rightRotate(value: number, amount: number) {
     return (value >>> amount) | (value << (32 - amount));
   }
 
+  const bytes = toUtf8Bytes(str);
+  const bitLength = bytes.length * 8;
   const maxWord = Math.pow(2, 32);
-  let i = 0, j = 0;
-  let result = '';
+
+  bytes.push(0x80);
+  while ((bytes.length % 64) !== 56) bytes.push(0x00);
 
   const words: number[] = [];
-  const asciiBitLength = str.length * 8;
+  for (let i = 0; i < bytes.length; i += 4) {
+    words.push(
+      (bytes[i] << 24) |
+      (bytes[i + 1] << 16) |
+      (bytes[i + 2] << 8) |
+      bytes[i + 3]
+    );
+  }
+  words.push(Math.floor(bitLength / maxWord) | 0);
+  words.push(bitLength | 0);
 
   let hash = [
     0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
@@ -33,23 +67,13 @@ export function sha256Sync(str: string): string {
     0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2,
   ];
 
-  let padded = str + '\x80';
-  while ((padded.length % 64) !== 56) padded += '\x00';
-  for (i = 0; i < padded.length; i++) {
-    j = padded.charCodeAt(i);
-    if (j >> 8) return '';
-    words[i >> 2] |= j << (((3 - i) % 4) * 8);
-  }
-  words[words.length] = (asciiBitLength / maxWord) | 0;
-  words[words.length] = asciiBitLength;
-
-  for (j = 0; j < words.length;) {
+  for (let j = 0; j < words.length;) {
     const w = words.slice(j, (j += 16));
     const oldHash = hash.slice(0);
 
     hash = hash.slice(0, 8);
 
-    for (i = 0; i < 64; i++) {
+    for (let i = 0; i < 64; i++) {
       const w15 = w[i - 15], w2 = w[i - 2];
 
       const s0 = rightRotate(w15, 7) ^ rightRotate(w15, 18) ^ (w15 >>> 3);
@@ -68,15 +92,16 @@ export function sha256Sync(str: string): string {
       hash[4] = (hash[4] + temp1) | 0;
     }
 
-    for (i = 0; i < 8; i++) {
+    for (let i = 0; i < 8; i++) {
       hash[i] = (hash[i] + oldHash[i]) | 0;
     }
   }
 
-  for (i = 0; i < 8; i++) {
-    for (j = 3; j + 1; j--) {
+  let result = '';
+  for (let i = 0; i < 8; i++) {
+    for (let j = 3; j >= 0; j--) {
       const b = (hash[i] >> (j * 8)) & 255;
-      result += (b < 16 ? 0 : '') + b.toString(16);
+      result += (b < 16 ? '0' : '') + b.toString(16);
     }
   }
   return result;
@@ -91,11 +116,12 @@ export function signPayloadEd25519(payload: string, privateKeyOrSeed: string): s
 }
 
 /**
- * Verify a simulated Ed25519 signature
+ * Verify a simulated Ed25519 signature against payload and public key
  */
-export function verifySignature(_payload: string, signature: string, publicKey: string): boolean {
-  if (!signature.startsWith('sig_ed25519_')) return false;
-  return signature.length > 20 && Boolean(publicKey);
+export function verifySignature(payload: string, signature: string, publicKey: string): boolean {
+  if (!signature.startsWith('sig_ed25519_') || !publicKey) return false;
+  const expectedSig = signPayloadEd25519(payload, publicKey);
+  return signature === expectedSig;
 }
 
 /**
