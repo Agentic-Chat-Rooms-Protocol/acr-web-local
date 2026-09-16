@@ -150,6 +150,14 @@ export const App: React.FC = () => {
       <OpsRoomPage
         onBackToShowcase={handleBackToShowcase}
         onLaunchApp={handleLaunchApp}
+        onNavigate={(sectionId) => {
+          handleBackToShowcase();
+          setTimeout(() => handleNavigate(sectionId), 60);
+        }}
+        onOpenCommand={() => setIsCommandOpen(true)}
+        onOpenConnectMcp={() => setIsConnectMcpOpen(true)}
+        onOpenMetaMcp={() => setIsMetaMcpOpen(true)}
+        onOpenSettings={() => setIsSettingsOpen(true)}
       />
     );
   }

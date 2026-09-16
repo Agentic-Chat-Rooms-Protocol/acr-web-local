@@ -9,7 +9,6 @@ import {
   ArrowLeft,
   Volume2,
   VolumeX,
-  Radio,
   Sparkles,
   Layers,
   Award
@@ -41,18 +40,29 @@ import { SandboxExecutor } from '../components/opsroom/sandbox-executor';
 import { CryptographicAuditLedger } from '../components/opsroom/audit-ledger';
 import { getScenarioForPreset } from '../components/opsroom/simulation-scenarios';
 import { sound } from '../utils/sound';
-import { AcrLogo } from '../components/AcrLogo';
+import { Navbar } from '../components/Navbar';
+import { Footer } from '../components/Footer';
 
 gsap.registerPlugin(useGSAP);
 
 interface OpsRoomPageProps {
   onBackToShowcase: () => void;
   onLaunchApp?: () => void;
+  onNavigate?: (sectionId: string) => void;
+  onOpenCommand?: () => void;
+  onOpenConnectMcp?: () => void;
+  onOpenMetaMcp?: () => void;
+  onOpenSettings?: () => void;
 }
 
 export const OpsRoomPage: React.FC<OpsRoomPageProps> = ({
   onBackToShowcase,
   onLaunchApp,
+  onNavigate,
+  onOpenCommand,
+  onOpenConnectMcp,
+  onOpenMetaMcp,
+  onOpenSettings,
 }) => {
   const [activeTab, setActiveTab] = useState<'simulator' | 'atlas' | 'battlecard' | 'roi' | 'huddle' | 'wcag'>('simulator');
   const [selectedPreset, setSelectedPreset] = useState<IncidentPreset>(INCIDENT_PRESETS[0]);
@@ -260,10 +270,27 @@ export const OpsRoomPage: React.FC<OpsRoomPageProps> = ({
         </div>
       </div>
 
-      {/* Dedicated OpsRoom Navigation Header */}
-      <header className="sticky top-0 z-50 w-full border-b border-white/[0.09] bg-[#06070d]/85 backdrop-blur-2xl shadow-xl">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          {/* Brand & Back Button */}
+      {/* Matching Global Sticky Header Navigation */}
+      <Navbar
+        onOpenCommand={onOpenCommand || (() => {})}
+        onNavigate={(sectionId) => {
+          if (onNavigate) {
+            onNavigate(sectionId);
+          } else {
+            onBackToShowcase();
+          }
+        }}
+        onLaunchApp={onLaunchApp || (() => {})}
+        onOpenConnectMcp={onOpenConnectMcp || (() => {})}
+        onOpenMetaMcp={onOpenMetaMcp || (() => {})}
+        onOpenSettings={onOpenSettings}
+        onOpenOpsRoomPage={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+      />
+
+      {/* Sleek Secondary OpsRoom Control & Breadcrumb Sub-Bar */}
+      <div className="sticky top-14 sm:top-16 z-40 w-full border-b border-white/[0.08] bg-[#07080e]/92 px-4 sm:px-6 lg:px-8 py-2.5 backdrop-blur-2xl shadow-lg">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 flex-wrap">
+          {/* Breadcrumb / Back */}
           <div className="flex items-center gap-3">
             <button
               onClick={() => { sound.playTick(); onBackToShowcase(); }}
@@ -271,60 +298,104 @@ export const OpsRoomPage: React.FC<OpsRoomPageProps> = ({
               title="Return to ACR Protocol Overview"
             >
               <ArrowLeft className="w-3.5 h-3.5 text-cyan-400" />
-              <span>Back to Protocol</span>
+              <span>Back to Showcase</span>
             </button>
 
-            <div className="h-4 w-px bg-white/15 mx-1" />
+            <div className="h-4 w-px bg-white/15" />
 
             <div className="flex items-center gap-2">
-              <AcrLogo className="w-6 h-6 text-amber-400" />
-              <span className="font-display font-bold text-white text-base">OpsRoom</span>
-              <span className="rounded-full bg-gradient-to-r from-amber-500/20 to-cyan-500/20 border border-amber-400/40 text-amber-300 text-[10px] font-mono px-2 py-0.5 font-bold uppercase">
-                v1.0.0
+              <Flame className="w-4 h-4 text-amber-400" />
+              <span className="font-bold text-xs text-white">ACR OpsRoom</span>
+              <span className="rounded-full bg-gradient-to-r from-amber-500/20 to-cyan-500/20 border border-amber-400/40 text-amber-300 text-[10px] font-mono px-2 py-0.5 uppercase font-bold">
+                BFT Quorum
               </span>
             </div>
           </div>
 
-          {/* Center Mesh Status Pill */}
-          <div className="hidden md:flex items-center gap-2 px-3 py-1 rounded-full border border-emerald-500/30 bg-slate-950/70 text-[11px] font-mono text-slate-300">
-            <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
-            <span>67% BFT Quorum Consensus • Mesh: 99.99%</span>
+          {/* Quick Subnav Tabs */}
+          <div className="flex items-center gap-1.5 overflow-x-auto py-1 text-xs">
+            <button
+              onClick={() => { sound.playTick(); setActiveTab('simulator'); }}
+              className={`px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${
+                activeTab === 'simulator'
+                  ? 'bg-amber-500/25 text-amber-300 border border-amber-400/50 shadow-[0_0_12px_rgba(245,158,11,0.2)]'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+              }`}
+            >
+              Simulator
+            </button>
+            <button
+              onClick={() => { sound.playTick(); setActiveTab('atlas'); }}
+              className={`px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${
+                activeTab === 'atlas'
+                  ? 'bg-cyan-500/25 text-cyan-300 border border-cyan-400/50 shadow-[0_0_12px_rgba(6,182,212,0.2)]'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+              }`}
+            >
+              Atlas 2.0 DAG
+            </button>
+            <button
+              onClick={() => { sound.playTick(); setActiveTab('battlecard'); }}
+              className={`px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${
+                activeTab === 'battlecard'
+                  ? 'bg-purple-500/25 text-purple-300 border border-purple-400/50 shadow-[0_0_12px_rgba(168,85,247,0.2)]'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+              }`}
+            >
+              vs Agentforce
+            </button>
+            <button
+              onClick={() => { sound.playTick(); setActiveTab('roi'); }}
+              className={`px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${
+                activeTab === 'roi'
+                  ? 'bg-emerald-500/25 text-emerald-300 border border-emerald-400/50 shadow-[0_0_12px_rgba(16,185,129,0.2)]'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+              }`}
+            >
+              ROI Calculator
+            </button>
+            <button
+              onClick={() => { sound.playTick(); setActiveTab('huddle'); }}
+              className={`px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${
+                activeTab === 'huddle'
+                  ? 'bg-indigo-500/25 text-indigo-300 border border-indigo-400/50 shadow-[0_0_12px_rgba(99,102,241,0.2)]'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+              }`}
+            >
+              Synthetic Huddle
+            </button>
+            <button
+              onClick={() => { sound.playTick(); setActiveTab('wcag'); }}
+              className={`px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${
+                activeTab === 'wcag'
+                  ? 'bg-rose-500/25 text-rose-300 border border-rose-400/50 shadow-[0_0_12px_rgba(244,63,94,0.2)]'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+              }`}
+            >
+              WCAG 2.2 AAA
+            </button>
           </div>
 
-          {/* Action Tools */}
-          <div className="flex items-center gap-2.5">
+          {/* Quick Controls */}
+          <div className="flex items-center gap-2">
             <button
               onClick={toggleAudio}
-              className={`flex h-8 w-8 items-center justify-center rounded-lg border transition-all cursor-pointer ${
-                audioEnabled
-                  ? 'border-cyan-500/40 bg-cyan-500/15 text-cyan-300 shadow-sm shadow-cyan-500/20'
-                  : 'border-white/[0.08] bg-slate-900/60 text-slate-400 hover:text-slate-200'
-              }`}
-              title={audioEnabled ? 'Futuristic sound enabled (click to mute)' : 'Enable futuristic sound cues'}
+              className="p-1.5 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white transition-all cursor-pointer"
+              title={audioEnabled ? 'Mute Audio Chimes' : 'Enable Audio Chimes'}
             >
-              {audioEnabled ? <Volume2 className="h-3.5 w-3.5" /> : <VolumeX className="h-3.5 w-3.5" />}
+              {audioEnabled ? <Volume2 className="w-3.5 h-3.5 text-cyan-400" /> : <VolumeX className="w-3.5 h-3.5 text-slate-500" />}
             </button>
-
             <button
               onClick={() => { sound.playApprovalChime(); setIsModalOpen(true); }}
-              className="hidden sm:flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 text-slate-950 font-bold text-xs shadow-md shadow-amber-500/20 hover:shadow-amber-500/40 transition-all cursor-pointer active:scale-98"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-cyan-500/30 to-purple-500/30 border border-cyan-400/40 text-xs font-bold text-cyan-200 hover:text-white transition-all cursor-pointer active:scale-98"
+              title="Launch Fullscreen War Room HUD"
             >
-              <Maximize2 className="w-3.5 h-3.5" />
-              <span>Fullscreen Modal</span>
+              <Maximize2 className="w-3 h-3" />
+              <span className="hidden sm:inline">Fullscreen HUD</span>
             </button>
-
-            {onLaunchApp && (
-              <button
-                onClick={() => { sound.playApprovalChime(); onLaunchApp(); }}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-cyan-500/40 bg-cyan-500/15 text-white font-bold text-xs shadow-md shadow-cyan-500/20 hover:bg-cyan-500/25 transition-all cursor-pointer active:scale-98"
-              >
-                <Radio className="w-3.5 h-3.5 text-cyan-400" />
-                <span>Launch App</span>
-              </button>
-            )}
           </div>
         </div>
-      </header>
+      </div>
 
       {/* Main Page Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -553,6 +624,9 @@ export const OpsRoomPage: React.FC<OpsRoomPageProps> = ({
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
       />
+
+      {/* Matching Global Footer */}
+      <Footer />
     </div>
   );
 };
