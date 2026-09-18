@@ -35,11 +35,19 @@ export const OpsRoomModal: React.FC<OpsRoomModalProps> = ({ isOpen, onClose }) =
   };
 
   const [currentIncident, setCurrentIncident] = useState<OpsIncident>(() => {
-    return Atlas2Engine.createIncident(
+    const inc = Atlas2Engine.createIncident(
       INCIDENT_PRESETS[0].title,
       INCIDENT_PRESETS[0].description,
       defaultSquad
     );
+    const huddle = HuddleManager.startHuddle(inc.id, defaultSquad.agents);
+    const scenario = getScenarioForPreset(INCIDENT_PRESETS[0], defaultSquad);
+    for (const turnData of scenario.turns) {
+      const agent = defaultSquad.agents[turnData.agentRoleIndex] || defaultSquad.agents[0];
+      HuddleManager.addSpokenLine(huddle, agent, turnData.spokenLine);
+    }
+    inc.huddle = huddle;
+    return inc;
   });
 
   const [isRunning, setIsRunning] = useState(false);
@@ -61,6 +69,13 @@ export const OpsRoomModal: React.FC<OpsRoomModalProps> = ({ isOpen, onClose }) =
   const handleReset = useCallback(() => {
     const inc = Atlas2Engine.createIncident(selectedPreset.title, selectedPreset.description, defaultSquad);
     inc.severity = selectedPreset.severity;
+    const huddle = HuddleManager.startHuddle(inc.id, defaultSquad.agents);
+    const scenario = getScenarioForPreset(selectedPreset, defaultSquad);
+    for (const turnData of scenario.turns) {
+      const agent = defaultSquad.agents[turnData.agentRoleIndex] || defaultSquad.agents[0];
+      HuddleManager.addSpokenLine(huddle, agent, turnData.spokenLine);
+    }
+    inc.huddle = huddle;
     setCurrentIncident(inc);
     setIsRunning(false);
     setHumanApproved(false);
@@ -134,30 +149,44 @@ export const OpsRoomModal: React.FC<OpsRoomModalProps> = ({ isOpen, onClose }) =
 
   // Execute sandboxed plan
   const handleExecutePlan = useCallback(async () => {
-    if (!currentIncident.executionPlan) return;
+    if (!currentIncident.executionPlan || isExecuting) return;
 
     setIsExecuting(true);
-    Atlas2Engine.transitionPhase(currentIncident, 'executing');
-    setCurrentIncident({ ...currentIncident });
+    try {
+      Atlas2Engine.transitionPhase(currentIncident, 'executing');
+      setCurrentIncident({ ...currentIncident });
 
-    const executor = new SandboxExecutor();
-    const result = await executor.executePlan(currentIncident.executionPlan, humanApproved);
+      const executor = new SandboxExecutor();
+      const result = await executor.executePlan(currentIncident.executionPlan, humanApproved);
 
-    if (result.allSucceeded) {
-      Atlas2Engine.transitionPhase(currentIncident, 'resolved');
-      currentIncident.resolvedAt = Date.now();
-      currentIncident.canvas.liveFields.trafficImpactPercent = 0;
-      currentIncident.canvas.liveFields.errorRateSpike = 0.01;
+      if (result.allSucceeded) {
+        Atlas2Engine.transitionPhase(currentIncident, 'verifying');
+        setCurrentIncident({ ...currentIncident });
+        await new Promise((r) => setTimeout(r, 400));
 
-      for (const item of currentIncident.canvas.actionItems) {
-        item.status = 'verified';
+        Atlas2Engine.transitionPhase(currentIncident, 'resolved');
+        currentIncident.resolvedAt = Date.now();
+        currentIncident.canvas.liveFields.trafficImpactPercent = 0;
+        currentIncident.canvas.liveFields.errorRateSpike = 0.01;
+
+        for (const item of currentIncident.canvas.actionItems) {
+          item.status = 'verified';
+        }
+        sound.playSuccess();
+      } else {
+        Atlas2Engine.transitionPhase(currentIncident, 'escalated_human');
+        sound.playAlert();
       }
-      sound.playSuccess();
+    } catch (err) {
+      console.error('Failed executing sandboxed mitigation plan:', err);
+      try {
+        Atlas2Engine.transitionPhase(currentIncident, 'escalated_human');
+      } catch {}
+    } finally {
+      setIsExecuting(false);
+      setCurrentIncident({ ...currentIncident });
     }
-
-    setIsExecuting(false);
-    setCurrentIncident({ ...currentIncident });
-  }, [currentIncident, humanApproved]);
+  }, [currentIncident, humanApproved, isExecuting]);
 
   // Toggle single ballot decision with cryptographic re-signing
   const handleToggleBallotDecision = (ballotId: string) => {
@@ -265,6 +294,7 @@ export const OpsRoomModal: React.FC<OpsRoomModalProps> = ({ isOpen, onClose }) =
               onExecutePlan={handleExecutePlan}
               isExecuting={isExecuting}
               onToggleBallotDecision={handleToggleBallotDecision}
+              incidentStatus={currentIncident.status}
             />
           </div>
 

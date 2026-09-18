@@ -120,6 +120,10 @@ class SoundFX {
       osc.stop(this.ctx.currentTime + 0.12);
     } catch {}
   }
+
+  public playAlert() {
+    this.playError();
+  }
 }
 
 export const sound = new SoundFX();

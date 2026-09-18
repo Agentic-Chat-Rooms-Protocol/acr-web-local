@@ -51,7 +51,13 @@ export class HuddleManager {
     huddle.executiveBrief = brief;
     huddle.isStreaming = false;
 
-    canvas.summaryMarkdown += `\n\n### 🎙️ Synthetic Huddle Executive Summary\n${brief}`;
+    const briefSection = `### 🎙️ Synthetic Huddle Executive Summary\n${brief}`;
+    const headerRegex = /### 🎙️ Synthetic Huddle Executive Summary[\s\S]*?(?=\n###|\n##|$)/;
+    if (headerRegex.test(canvas.summaryMarkdown)) {
+      canvas.summaryMarkdown = canvas.summaryMarkdown.replace(headerRegex, briefSection);
+    } else {
+      canvas.summaryMarkdown += `\n\n${briefSection}`;
+    }
     canvas.version += 1;
     canvas.lastUpdated = Date.now();
 

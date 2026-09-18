@@ -78,16 +78,20 @@ export class Atlas2Engine {
    * Execute an atomic state transition with validation.
    */
   public static transitionPhase(incident: OpsIncident, toStatus: IncidentStatus): void {
+    if (incident.status === toStatus) {
+      return;
+    }
+
     const validTransitions: Record<IncidentStatus, IncidentStatus[]> = {
-      detecting: ['deliberating', 'aborted'],
-      deliberating: ['awaiting_quorum', 'deliberating', 'escalated_human', 'aborted'],
-      awaiting_quorum: ['executing', 'escalated_human', 'deliberating', 'aborted'],
-      executing: ['verifying', 'escalated_human', 'aborted'],
-      verifying: ['resolved', 'mitigated', 'deliberating', 'escalated_human'],
-      resolved: [],
-      mitigated: ['deliberating', 'resolved'],
-      escalated_human: ['deliberating', 'executing', 'aborted', 'resolved'],
-      aborted: [],
+      detecting: ['detecting', 'deliberating', 'awaiting_quorum', 'escalated_human', 'aborted'],
+      deliberating: ['deliberating', 'awaiting_quorum', 'executing', 'escalated_human', 'aborted'],
+      awaiting_quorum: ['awaiting_quorum', 'executing', 'escalated_human', 'deliberating', 'aborted'],
+      executing: ['executing', 'verifying', 'resolved', 'mitigated', 'escalated_human', 'aborted'],
+      verifying: ['verifying', 'resolved', 'mitigated', 'deliberating', 'escalated_human', 'aborted'],
+      resolved: ['resolved', 'detecting', 'deliberating', 'aborted'],
+      mitigated: ['mitigated', 'deliberating', 'resolved', 'verifying', 'aborted'],
+      escalated_human: ['escalated_human', 'deliberating', 'awaiting_quorum', 'executing', 'aborted', 'resolved'],
+      aborted: ['aborted', 'detecting', 'deliberating'],
     };
 
     const allowed = validTransitions[incident.status];

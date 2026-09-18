@@ -1,5 +1,5 @@
 import { CheckCircle, XCircle, UserCheck, ShieldCheck, Play, Loader2 } from 'lucide-react';
-import type { ConsensusBallot, QuorumEvaluation } from './types';
+import type { ConsensusBallot, QuorumEvaluation, IncidentStatus } from './types';
 import { sound } from '../../utils/sound';
 
 interface ConsensusBallotBoxProps {
@@ -10,6 +10,7 @@ interface ConsensusBallotBoxProps {
   onExecutePlan: () => void;
   isExecuting: boolean;
   onToggleBallotDecision?: (ballotId: string) => void;
+  incidentStatus?: IncidentStatus;
 }
 
 export const ConsensusBallotBox: React.FC<ConsensusBallotBoxProps> = ({
@@ -20,6 +21,7 @@ export const ConsensusBallotBox: React.FC<ConsensusBallotBoxProps> = ({
   onExecutePlan,
   isExecuting,
   onToggleBallotDecision,
+  incidentStatus,
 }) => {
   const approvalPercent = quorum ? Math.round(quorum.weightedApprovalRatio * 100) : 0;
   const thresholdPercent = quorum ? Math.round(quorum.weightedQuorumTarget * 100) : 67;
@@ -158,12 +160,30 @@ export const ConsensusBallotBox: React.FC<ConsensusBallotBoxProps> = ({
 
         <button
           onClick={() => { sound.playApprovalChime(); onExecutePlan(); }}
-          disabled={!isQuorumMet || isExecuting}
-          className="w-full py-3 px-4 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-lg disabled:opacity-40 disabled:cursor-not-allowed bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 text-slate-950 hover:shadow-cyan-500/25 active:scale-98"
+          disabled={!isQuorumMet || isExecuting || incidentStatus === 'resolved'}
+          className={`w-full py-3 px-4 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-lg disabled:opacity-40 disabled:cursor-not-allowed ${
+            incidentStatus === 'resolved'
+              ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 cursor-default'
+              : isExecuting
+              ? 'bg-cyan-500/30 text-cyan-200 border border-cyan-400 animate-pulse'
+              : isQuorumMet 
+              ? 'bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 text-slate-950 hover:shadow-cyan-500/25 active:scale-98'
+              : 'bg-slate-800 text-slate-500 cursor-not-allowed border border-white/5'
+          }`}
         >
-          {isExecuting ? (
+          {incidentStatus === 'resolved' ? (
             <>
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <CheckCircle className="w-4 h-4 text-emerald-400" aria-hidden="true" />
+              <span>Mitigation Plan Executed &amp; Verified</span>
+            </>
+          ) : incidentStatus === 'verifying' ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+              <span>Verifying Telemetry &amp; Action Items...</span>
+            </>
+          ) : isExecuting ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
               <span>Executing Inside ToolHive Sandbox...</span>
             </>
           ) : (

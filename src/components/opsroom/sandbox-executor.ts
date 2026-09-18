@@ -30,7 +30,7 @@ export class SandboxExecutor {
       await new Promise((r) => setTimeout(r, 350));
 
       // Security check: High risk requires HITL approval
-      if (step.toolName.includes('drop') || step.toolName.includes('truncate') || step.toolName.includes('isolate')) {
+      if (step.toolName.includes('drop') || step.toolName.includes('truncate') || step.toolName.includes('isolate') || step.toolName.includes('quarantine')) {
         if (!humanApproved) {
           step.status = 'failed';
           outputLog.push(`[Security] Step ${step.stepId} requires Human-in-the-Loop dual consent. Execution paused.`);
