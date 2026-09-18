@@ -43,8 +43,24 @@ export const OpsRoomSection: React.FC<OpsRoomSectionProps> = ({
   onOpenModal,
   onOpenDedicatedPage,
 }) => {
-  const [activeTab, setActiveTab] = useState<'simulator' | 'atlas' | 'battlecard' | 'roi' | 'wcag'>('simulator');
+  const [activeTab, setActiveTab] = useState<'simulator' | 'battlecard' | 'atlas' | 'roi' | 'wcag'>('simulator');
   const [selectedPreset, setSelectedPreset] = useState<IncidentPreset>(INCIDENT_PRESETS[0]);
+
+  const handleTabSwitch = (tab: typeof activeTab) => {
+    sound.playTick();
+    setActiveTab(tab);
+    requestAnimationFrame(() => {
+      const contentEl = document.getElementById('opsroom-section-tab-content');
+      if (contentEl) {
+        const navOffset = 110;
+        const rect = contentEl.getBoundingClientRect();
+        if (rect.top > 250 || rect.top < 0) {
+          const scrollTarget = window.pageYOffset + rect.top - navOffset;
+          window.scrollTo({ top: Math.max(0, scrollTarget), behavior: 'smooth' });
+        }
+      }
+    });
+  };
 
   const isExecutingRef = useRef(false);
 
@@ -354,7 +370,7 @@ export const OpsRoomSection: React.FC<OpsRoomSectionProps> = ({
           )}
 
           <button
-            onClick={() => { sound.playTick(); setActiveTab('simulator'); }}
+            onClick={() => handleTabSwitch('simulator')}
             className={`px-4 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer border ${
               activeTab === 'simulator'
                 ? 'bg-white text-slate-950 border-white shadow-md'
@@ -365,7 +381,7 @@ export const OpsRoomSection: React.FC<OpsRoomSectionProps> = ({
           </button>
 
           <button
-            onClick={() => { sound.playTick(); setActiveTab('battlecard'); }}
+            onClick={() => handleTabSwitch('battlecard')}
             className={`px-4 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer border ${
               activeTab === 'battlecard'
                 ? 'bg-white text-slate-950 border-white shadow-md'
@@ -376,7 +392,7 @@ export const OpsRoomSection: React.FC<OpsRoomSectionProps> = ({
           </button>
 
           <button
-            onClick={() => { sound.playTick(); setActiveTab('atlas'); }}
+            onClick={() => handleTabSwitch('atlas')}
             className={`px-4 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer border ${
               activeTab === 'atlas'
                 ? 'bg-white text-slate-950 border-white shadow-md'
@@ -387,7 +403,7 @@ export const OpsRoomSection: React.FC<OpsRoomSectionProps> = ({
           </button>
 
           <button
-            onClick={() => { sound.playTick(); setActiveTab('roi'); }}
+            onClick={() => handleTabSwitch('roi')}
             className={`px-4 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer border ${
               activeTab === 'roi'
                 ? 'bg-white text-slate-950 border-white shadow-md'
@@ -398,7 +414,7 @@ export const OpsRoomSection: React.FC<OpsRoomSectionProps> = ({
           </button>
 
           <button
-            onClick={() => { sound.playTick(); setActiveTab('wcag'); }}
+            onClick={() => handleTabSwitch('wcag')}
             className={`px-4 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer border ${
               activeTab === 'wcag'
                 ? 'bg-white text-slate-950 border-white shadow-md'
@@ -411,7 +427,7 @@ export const OpsRoomSection: React.FC<OpsRoomSectionProps> = ({
       </div>
 
       {/* Dynamic Tab Content Display */}
-      <div className="mt-8 transition-all">
+      <div id="opsroom-section-tab-content" className="mt-8 transition-all scroll-mt-28">
         {activeTab === 'simulator' && (
           <div className="space-y-6">
             <IncidentCommander

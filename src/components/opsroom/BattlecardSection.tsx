@@ -14,17 +14,22 @@ export const BattlecardSection: React.FC = () => {
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (prefersReducedMotion) return;
 
-    gsap.from('.battlecard-row', {
-      scrollTrigger: {
-        trigger: tableRef.current,
-        start: 'top 85%',
-      },
-      opacity: 0,
-      x: -20,
-      stagger: 0.08,
-      duration: 0.6,
-      ease: 'power2.out',
-    });
+    gsap.fromTo(
+      '.battlecard-row',
+      { opacity: 0, x: -20 },
+      {
+        scrollTrigger: {
+          trigger: tableRef.current,
+          start: 'top 85%',
+        },
+        opacity: 1,
+        x: 0,
+        stagger: 0.08,
+        duration: 0.6,
+        ease: 'power2.out',
+        clearProps: 'all',
+      }
+    );
   }, { scope: tableRef });
 
   return (

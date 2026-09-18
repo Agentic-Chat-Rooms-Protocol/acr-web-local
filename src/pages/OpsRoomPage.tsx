@@ -122,6 +122,22 @@ export const OpsRoomPage: React.FC<OpsRoomPageProps> = ({
     setAudioEnabled(isNowOn);
   };
 
+  const handleTabSwitch = (tab: typeof activeTab) => {
+    sound.playTick();
+    setActiveTab(tab);
+    requestAnimationFrame(() => {
+      const contentEl = document.getElementById('opsroom-tab-content');
+      if (contentEl) {
+        const navOffset = 110;
+        const rect = contentEl.getBoundingClientRect();
+        if (rect.top > 250 || rect.top < 0) {
+          const scrollTarget = window.pageYOffset + rect.top - navOffset;
+          window.scrollTo({ top: Math.max(0, scrollTarget), behavior: 'smooth' });
+        }
+      }
+    });
+  };
+
   // Reset incident state
   const handleReset = useCallback((overridePreset?: IncidentPreset) => {
     const targetPreset = overridePreset || selectedPreset;
@@ -356,7 +372,7 @@ export const OpsRoomPage: React.FC<OpsRoomPageProps> = ({
           {/* Quick Subnav Tabs */}
           <div className="flex items-center gap-1.5 overflow-x-auto py-1 text-xs">
             <button
-              onClick={() => { sound.playTick(); setActiveTab('simulator'); }}
+              onClick={() => handleTabSwitch('simulator')}
               className={`px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${
                 activeTab === 'simulator'
                   ? 'bg-amber-500/25 text-amber-300 border border-amber-400/50 shadow-[0_0_12px_rgba(245,158,11,0.2)]'
@@ -366,7 +382,7 @@ export const OpsRoomPage: React.FC<OpsRoomPageProps> = ({
               Simulator
             </button>
             <button
-              onClick={() => { sound.playTick(); setActiveTab('atlas'); }}
+              onClick={() => handleTabSwitch('atlas')}
               className={`px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${
                 activeTab === 'atlas'
                   ? 'bg-cyan-500/25 text-cyan-300 border border-cyan-400/50 shadow-[0_0_12px_rgba(6,182,212,0.2)]'
@@ -376,7 +392,7 @@ export const OpsRoomPage: React.FC<OpsRoomPageProps> = ({
               Atlas 2.0 DAG
             </button>
             <button
-              onClick={() => { sound.playTick(); setActiveTab('battlecard'); }}
+              onClick={() => handleTabSwitch('battlecard')}
               className={`px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${
                 activeTab === 'battlecard'
                   ? 'bg-purple-500/25 text-purple-300 border border-purple-400/50 shadow-[0_0_12px_rgba(168,85,247,0.2)]'
@@ -386,7 +402,7 @@ export const OpsRoomPage: React.FC<OpsRoomPageProps> = ({
               vs Agentforce
             </button>
             <button
-              onClick={() => { sound.playTick(); setActiveTab('roi'); }}
+              onClick={() => handleTabSwitch('roi')}
               className={`px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${
                 activeTab === 'roi'
                   ? 'bg-emerald-500/25 text-emerald-300 border border-emerald-400/50 shadow-[0_0_12px_rgba(16,185,129,0.2)]'
@@ -396,7 +412,7 @@ export const OpsRoomPage: React.FC<OpsRoomPageProps> = ({
               ROI Calculator
             </button>
             <button
-              onClick={() => { sound.playTick(); setActiveTab('huddle'); }}
+              onClick={() => handleTabSwitch('huddle')}
               className={`px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${
                 activeTab === 'huddle'
                   ? 'bg-indigo-500/25 text-indigo-300 border border-indigo-400/50 shadow-[0_0_12px_rgba(99,102,241,0.2)]'
@@ -406,7 +422,7 @@ export const OpsRoomPage: React.FC<OpsRoomPageProps> = ({
               Synthetic Huddle
             </button>
             <button
-              onClick={() => { sound.playTick(); setActiveTab('wcag'); }}
+              onClick={() => handleTabSwitch('wcag')}
               className={`px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${
                 activeTab === 'wcag'
                   ? 'bg-rose-500/25 text-rose-300 border border-rose-400/50 shadow-[0_0_12px_rgba(244,63,94,0.2)]'
@@ -508,7 +524,7 @@ export const OpsRoomPage: React.FC<OpsRoomPageProps> = ({
           {/* Interactive Navigation Tabs */}
           <div className="flex flex-wrap items-center justify-center gap-2">
             <button
-              onClick={() => { sound.playTick(); setActiveTab('simulator'); }}
+              onClick={() => handleTabSwitch('simulator')}
               className={`ops-nav-pill px-4 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer border flex items-center gap-1.5 ${
                 activeTab === 'simulator'
                   ? 'bg-white text-slate-950 border-white shadow-md'
@@ -520,7 +536,7 @@ export const OpsRoomPage: React.FC<OpsRoomPageProps> = ({
             </button>
 
             <button
-              onClick={() => { sound.playTick(); setActiveTab('atlas'); }}
+              onClick={() => handleTabSwitch('atlas')}
               className={`ops-nav-pill px-4 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer border flex items-center gap-1.5 ${
                 activeTab === 'atlas'
                   ? 'bg-white text-slate-950 border-white shadow-md'
@@ -532,7 +548,7 @@ export const OpsRoomPage: React.FC<OpsRoomPageProps> = ({
             </button>
 
             <button
-              onClick={() => { sound.playTick(); setActiveTab('battlecard'); }}
+              onClick={() => handleTabSwitch('battlecard')}
               className={`ops-nav-pill px-4 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer border flex items-center gap-1.5 ${
                 activeTab === 'battlecard'
                   ? 'bg-white text-slate-950 border-white shadow-md'
@@ -544,7 +560,7 @@ export const OpsRoomPage: React.FC<OpsRoomPageProps> = ({
             </button>
 
             <button
-              onClick={() => { sound.playTick(); setActiveTab('roi'); }}
+              onClick={() => handleTabSwitch('roi')}
               className={`ops-nav-pill px-4 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer border flex items-center gap-1.5 ${
                 activeTab === 'roi'
                   ? 'bg-white text-slate-950 border-white shadow-md'
@@ -556,7 +572,7 @@ export const OpsRoomPage: React.FC<OpsRoomPageProps> = ({
             </button>
 
             <button
-              onClick={() => { sound.playTick(); setActiveTab('huddle'); }}
+              onClick={() => handleTabSwitch('huddle')}
               className={`ops-nav-pill px-4 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer border flex items-center gap-1.5 ${
                 activeTab === 'huddle'
                   ? 'bg-white text-slate-950 border-white shadow-md'
@@ -568,7 +584,7 @@ export const OpsRoomPage: React.FC<OpsRoomPageProps> = ({
             </button>
 
             <button
-              onClick={() => { sound.playTick(); setActiveTab('wcag'); }}
+              onClick={() => handleTabSwitch('wcag')}
               className={`ops-nav-pill px-4 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer border flex items-center gap-1.5 ${
                 activeTab === 'wcag'
                   ? 'bg-white text-slate-950 border-white shadow-md'
@@ -582,7 +598,7 @@ export const OpsRoomPage: React.FC<OpsRoomPageProps> = ({
         </div>
 
         {/* Tab Displays */}
-        <div className="mt-8 transition-all">
+        <div id="opsroom-tab-content" className="mt-8 transition-all scroll-mt-28">
           {activeTab === 'simulator' && (
             <div className="space-y-6">
               <IncidentCommander

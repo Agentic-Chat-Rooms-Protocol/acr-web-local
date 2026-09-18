@@ -4,6 +4,8 @@ import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { sound } from '../../utils/sound';
 
+gsap.registerPlugin(useGSAP);
+
 export const AtlasVisualizer: React.FC = () => {
   const [selectedArch, setSelectedArch] = useState<'atlas2' | 'atlas1'>('atlas2');
   const [activePhaseIndex, setActivePhaseIndex] = useState(0);
@@ -13,13 +15,18 @@ export const AtlasVisualizer: React.FC = () => {
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (prefersReducedMotion) return;
 
-    gsap.from('.atlas-card', {
-      opacity: 0,
-      y: 18,
-      stagger: 0.06,
-      duration: 0.5,
-      ease: 'power2.out',
-    });
+    gsap.fromTo(
+      '.atlas-card',
+      { opacity: 0, y: 16 },
+      {
+        opacity: 1,
+        y: 0,
+        stagger: 0.05,
+        duration: 0.45,
+        ease: 'power2.out',
+        clearProps: 'all',
+      }
+    );
   }, { scope: containerRef, dependencies: [selectedArch] });
 
   const atlas2Phases = [
@@ -101,10 +108,19 @@ export const AtlasVisualizer: React.FC = () => {
         </div>
 
         {/* Architecture Toggle Tabs */}
-        <div className="flex items-center gap-1.5 bg-slate-900/90 p-1.5 rounded-2xl border border-white/10 shrink-0">
+        <div 
+          role="tablist"
+          aria-label="Architecture Comparison"
+          className="flex items-center gap-1.5 bg-slate-900/90 p-1.5 rounded-2xl border border-white/10 shrink-0"
+        >
           <button
+            role="tab"
+            id="arch-tab-atlas2"
+            aria-selected={selectedArch === 'atlas2'}
+            aria-controls="arch-panel-atlas2"
+            tabIndex={selectedArch === 'atlas2' ? 0 : -1}
             onClick={() => { sound.playTick(); setSelectedArch('atlas2'); }}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 ${
               selectedArch === 'atlas2'
                 ? 'bg-gradient-to-r from-cyan-400 to-indigo-500 text-slate-950 shadow-lg shadow-cyan-500/25'
                 : 'text-slate-400 hover:text-white hover:bg-white/5'
@@ -113,8 +129,13 @@ export const AtlasVisualizer: React.FC = () => {
             ACR Atlas 2.0 (The Evolution)
           </button>
           <button
+            role="tab"
+            id="arch-tab-atlas1"
+            aria-selected={selectedArch === 'atlas1'}
+            aria-controls="arch-panel-atlas1"
+            tabIndex={selectedArch === 'atlas1' ? 0 : -1}
             onClick={() => { sound.playTick(); setSelectedArch('atlas1'); }}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 ${
               selectedArch === 'atlas1'
                 ? 'bg-gradient-to-r from-amber-400 to-red-500 text-slate-950 shadow-lg shadow-amber-500/25'
                 : 'text-slate-400 hover:text-white hover:bg-white/5'
@@ -126,34 +147,71 @@ export const AtlasVisualizer: React.FC = () => {
       </div>
 
       {selectedArch === 'atlas2' ? (
-        <div>
+        <div role="tabpanel" id="arch-panel-atlas2" aria-labelledby="arch-tab-atlas2">
           {/* 6-Phase Interactive Step Timeline */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2.5 mb-6">
+          <div 
+            role="tablist"
+            aria-label="Atlas 2.0 Architecture Phases"
+            className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6"
+          >
             {atlas2Phases.map((phase, idx) => {
               const Icon = phase.icon;
               const isSelected = activePhaseIndex === idx;
               return (
                 <button
                   key={idx}
+                  role="tab"
+                  id={`phase-tab-${idx}`}
+                  aria-selected={isSelected}
+                  aria-controls={`phase-panel-${idx}`}
+                  tabIndex={isSelected ? 0 : -1}
+                  onKeyDown={(e) => {
+                    if (e.key === 'ArrowRight') {
+                      e.preventDefault();
+                      const next = (idx + 1) % atlas2Phases.length;
+                      setActivePhaseIndex(next);
+                      document.getElementById(`phase-tab-${next}`)?.focus();
+                      sound.playTick();
+                    } else if (e.key === 'ArrowLeft') {
+                      e.preventDefault();
+                      const prev = (idx - 1 + atlas2Phases.length) % atlas2Phases.length;
+                      setActivePhaseIndex(prev);
+                      document.getElementById(`phase-tab-${prev}`)?.focus();
+                      sound.playTick();
+                    } else if (e.key === 'Home') {
+                      e.preventDefault();
+                      setActivePhaseIndex(0);
+                      document.getElementById('phase-tab-0')?.focus();
+                      sound.playTick();
+                    } else if (e.key === 'End') {
+                      e.preventDefault();
+                      const last = atlas2Phases.length - 1;
+                      setActivePhaseIndex(last);
+                      document.getElementById(`phase-tab-${last}`)?.focus();
+                      sound.playTick();
+                    }
+                  }}
                   onClick={() => { sound.playTick(); setActivePhaseIndex(idx); }}
-                  className={`atlas-card text-left p-3.5 rounded-2xl border transition-all cursor-pointer relative overflow-hidden group ${
+                  className={`atlas-card text-left p-3.5 rounded-2xl border transition-all cursor-pointer relative overflow-hidden group flex flex-col justify-between h-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 ${
                     isSelected
                       ? 'bg-gradient-to-b from-cyan-950/60 to-slate-900 border-cyan-400/80 shadow-lg shadow-cyan-500/20'
                       : 'bg-slate-900/50 border-white/10 hover:border-white/20 hover:bg-slate-900/80'
                   }`}
                 >
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-[10px] font-mono font-bold text-cyan-400 uppercase tracking-wider">
-                      {phase.step}
-                    </span>
-                    <Icon className={`w-3.5 h-3.5 ${isSelected ? 'text-cyan-300' : 'text-slate-500'}`} />
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-[10px] font-mono font-bold text-cyan-400 uppercase tracking-wider">
+                        {phase.step}
+                      </span>
+                      <Icon className={`w-3.5 h-3.5 ${isSelected ? 'text-cyan-300' : 'text-slate-500'}`} />
+                    </div>
+                    <div className="text-xs font-bold text-white mb-1 group-hover:text-cyan-200 transition-colors">
+                      {phase.title}
+                    </div>
+                    <p className="text-[11px] text-slate-400 line-clamp-2 leading-relaxed">
+                      {phase.subtitle}
+                    </p>
                   </div>
-                  <div className="text-xs font-bold text-white mb-1 group-hover:text-cyan-200 transition-colors">
-                    {phase.title}
-                  </div>
-                  <p className="text-[11px] text-slate-400 line-clamp-2 leading-relaxed">
-                    {phase.subtitle}
-                  </p>
                   {isSelected && (
                     <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-cyan-400 to-indigo-400" />
                   )}
@@ -163,7 +221,13 @@ export const AtlasVisualizer: React.FC = () => {
           </div>
 
           {/* Active Phase Deep Dive Card */}
-          <div className="p-5 rounded-2xl bg-gradient-to-r from-cyan-950/30 via-slate-900/70 to-indigo-950/30 border border-cyan-500/30 text-xs text-slate-300 mb-6">
+          <div 
+            role="tabpanel"
+            id={`phase-panel-${activePhaseIndex}`}
+            aria-labelledby={`phase-tab-${activePhaseIndex}`}
+            tabIndex={0}
+            className="p-5 rounded-2xl bg-gradient-to-r from-cyan-950/30 via-slate-900/70 to-indigo-950/30 border border-cyan-500/30 text-xs text-slate-300 mb-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/50"
+          >
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
               <div className="flex items-center gap-2">
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-cyan-500/20 border border-cyan-400/40 text-[10px] font-mono font-bold text-cyan-300">
@@ -195,9 +259,9 @@ export const AtlasVisualizer: React.FC = () => {
           </div>
         </div>
       ) : (
-        <div>
+        <div role="tabpanel" id="arch-panel-atlas1" aria-labelledby="arch-tab-atlas1">
           {/* Salesforce Atlas 1.0 Flawed Sequential Chain */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3.5 mb-6">
             <div className="atlas-card p-4 rounded-2xl bg-slate-900/60 border border-amber-500/30">
               <span className="text-[10px] font-mono text-amber-400 uppercase font-bold tracking-wider">Step 1</span>
               <h4 className="text-xs font-bold text-white mt-1.5">Static Topic Selection</h4>
