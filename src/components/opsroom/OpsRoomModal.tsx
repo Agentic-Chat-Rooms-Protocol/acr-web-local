@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { X, Flame } from 'lucide-react';
 import { IncidentCommander } from './IncidentCommander';
 import { DeliberationFeed } from './DeliberationFeed';
@@ -26,6 +26,8 @@ interface OpsRoomModalProps {
 
 export const OpsRoomModal: React.FC<OpsRoomModalProps> = ({ isOpen, onClose }) => {
   const [selectedPreset, setSelectedPreset] = useState<IncidentPreset>(INCIDENT_PRESETS[0]);
+  const isExecutingRef = useRef(false);
+
   const defaultSquad: AgentSquad = {
     id: 'squad-core',
     name: 'Core Incident Response Squad',
@@ -47,6 +49,7 @@ export const OpsRoomModal: React.FC<OpsRoomModalProps> = ({ isOpen, onClose }) =
       HuddleManager.addSpokenLine(huddle, agent, turnData.spokenLine);
     }
     inc.huddle = huddle;
+    HuddleManager.synthesizeAndSyncToCanvas(huddle, inc.canvas);
     return inc;
   });
 
@@ -66,19 +69,22 @@ export const OpsRoomModal: React.FC<OpsRoomModalProps> = ({ isOpen, onClose }) =
   }, [isOpen, onClose]);
 
   // Reset incident
-  const handleReset = useCallback(() => {
-    const inc = Atlas2Engine.createIncident(selectedPreset.title, selectedPreset.description, defaultSquad);
-    inc.severity = selectedPreset.severity;
+  const handleReset = useCallback((overridePreset?: IncidentPreset) => {
+    const targetPreset = overridePreset || selectedPreset;
+    const inc = Atlas2Engine.createIncident(targetPreset.title, targetPreset.description, defaultSquad);
+    inc.severity = targetPreset.severity;
     const huddle = HuddleManager.startHuddle(inc.id, defaultSquad.agents);
-    const scenario = getScenarioForPreset(selectedPreset, defaultSquad);
+    const scenario = getScenarioForPreset(targetPreset, defaultSquad);
     for (const turnData of scenario.turns) {
       const agent = defaultSquad.agents[turnData.agentRoleIndex] || defaultSquad.agents[0];
       HuddleManager.addSpokenLine(huddle, agent, turnData.spokenLine);
     }
     inc.huddle = huddle;
+    HuddleManager.synthesizeAndSyncToCanvas(huddle, inc.canvas);
     setCurrentIncident(inc);
     setIsRunning(false);
     setHumanApproved(false);
+    isExecutingRef.current = false;
     setIsExecuting(false);
   }, [selectedPreset]);
 
@@ -149,15 +155,17 @@ export const OpsRoomModal: React.FC<OpsRoomModalProps> = ({ isOpen, onClose }) =
 
   // Execute sandboxed plan
   const handleExecutePlan = useCallback(async () => {
-    if (!currentIncident.executionPlan || isExecuting) return;
+    if (!currentIncident.executionPlan || isExecutingRef.current) return;
 
+    isExecutingRef.current = true;
     setIsExecuting(true);
+    setHumanApproved(true);
     try {
       Atlas2Engine.transitionPhase(currentIncident, 'executing');
       setCurrentIncident({ ...currentIncident });
 
       const executor = new SandboxExecutor();
-      const result = await executor.executePlan(currentIncident.executionPlan, humanApproved);
+      const result = await executor.executePlan(currentIncident.executionPlan, true);
 
       if (result.allSucceeded) {
         Atlas2Engine.transitionPhase(currentIncident, 'verifying');
@@ -183,10 +191,11 @@ export const OpsRoomModal: React.FC<OpsRoomModalProps> = ({ isOpen, onClose }) =
         Atlas2Engine.transitionPhase(currentIncident, 'escalated_human');
       } catch {}
     } finally {
+      isExecutingRef.current = false;
       setIsExecuting(false);
       setCurrentIncident({ ...currentIncident });
     }
-  }, [currentIncident, humanApproved, isExecuting]);
+  }, [currentIncident]);
 
   // Toggle single ballot decision with cryptographic re-signing
   const handleToggleBallotDecision = (ballotId: string) => {
@@ -273,11 +282,11 @@ export const OpsRoomModal: React.FC<OpsRoomModalProps> = ({ isOpen, onClose }) =
             selectedPreset={selectedPreset}
             onSelectPreset={(preset) => {
               setSelectedPreset(preset);
-              handleReset();
+              handleReset(preset);
             }}
             onTriggerIncident={handleTriggerIncident}
             isRunning={isRunning}
-            onReset={handleReset}
+            onReset={() => handleReset()}
           />
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

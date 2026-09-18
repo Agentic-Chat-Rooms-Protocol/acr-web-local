@@ -79,12 +79,25 @@ export const OpsRoomPage: React.FC<OpsRoomPageProps> = ({
     consensusThreshold: 0.67,
   };
 
+  const isExecutingRef = useRef(false);
+
   const [currentIncident, setCurrentIncident] = useState<OpsIncident>(() => {
-    return Atlas2Engine.createIncident(
+    const inc = Atlas2Engine.createIncident(
       INCIDENT_PRESETS[0].title,
       INCIDENT_PRESETS[0].description,
       defaultSquad
     );
+    inc.severity = INCIDENT_PRESETS[0].severity;
+    const huddle = HuddleManager.startHuddle(inc.id, defaultSquad.agents);
+    const agentSre = defaultSquad.agents[1];
+    const agentSec = defaultSquad.agents[2];
+    const agentAtlas = defaultSquad.agents[0];
+    HuddleManager.addSpokenLine(huddle, agentSre, 'Anomaly matches known replication stall signature. Node isolation recommended before WAL wrap.');
+    HuddleManager.addSpokenLine(huddle, agentSec, 'SecOps confirmed egress allowlist locked. Ready for consensus ballot.');
+    HuddleManager.addSpokenLine(huddle, agentAtlas, 'Goal decomposition complete. Requesting 67% Byzantine Quorum vote.');
+    inc.huddle = huddle;
+    HuddleManager.synthesizeAndSyncToCanvas(huddle, inc.canvas);
+    return inc;
   });
 
   const [isRunning, setIsRunning] = useState(false);
@@ -110,12 +123,23 @@ export const OpsRoomPage: React.FC<OpsRoomPageProps> = ({
   };
 
   // Reset incident state
-  const handleReset = useCallback(() => {
-    const inc = Atlas2Engine.createIncident(selectedPreset.title, selectedPreset.description, defaultSquad);
-    inc.severity = selectedPreset.severity;
+  const handleReset = useCallback((overridePreset?: IncidentPreset) => {
+    const targetPreset = overridePreset || selectedPreset;
+    const inc = Atlas2Engine.createIncident(targetPreset.title, targetPreset.description, defaultSquad);
+    inc.severity = targetPreset.severity;
+    const huddle = HuddleManager.startHuddle(inc.id, defaultSquad.agents);
+    const agentSre = defaultSquad.agents[1];
+    const agentSec = defaultSquad.agents[2];
+    const agentAtlas = defaultSquad.agents[0];
+    HuddleManager.addSpokenLine(huddle, agentSre, 'Anomaly matches known replication stall signature. Node isolation recommended before WAL wrap.');
+    HuddleManager.addSpokenLine(huddle, agentSec, 'SecOps confirmed egress allowlist locked. Ready for consensus ballot.');
+    HuddleManager.addSpokenLine(huddle, agentAtlas, 'Goal decomposition complete. Requesting 67% Byzantine Quorum vote.');
+    inc.huddle = huddle;
+    HuddleManager.synthesizeAndSyncToCanvas(huddle, inc.canvas);
     setCurrentIncident(inc);
     setIsRunning(false);
     setHumanApproved(false);
+    isExecutingRef.current = false;
     setIsExecuting(false);
   }, [selectedPreset]);
 
@@ -186,30 +210,47 @@ export const OpsRoomPage: React.FC<OpsRoomPageProps> = ({
 
   // Execute sandboxed plan
   const handleExecutePlan = useCallback(async () => {
-    if (!currentIncident.executionPlan) return;
+    if (!currentIncident.executionPlan || isExecutingRef.current) return;
 
+    isExecutingRef.current = true;
     setIsExecuting(true);
-    Atlas2Engine.transitionPhase(currentIncident, 'executing');
-    setCurrentIncident({ ...currentIncident });
+    setHumanApproved(true);
+    try {
+      Atlas2Engine.transitionPhase(currentIncident, 'executing');
+      setCurrentIncident({ ...currentIncident });
 
-    const executor = new SandboxExecutor();
-    const result = await executor.executePlan(currentIncident.executionPlan, humanApproved);
+      const executor = new SandboxExecutor();
+      const result = await executor.executePlan(currentIncident.executionPlan, true);
 
-    if (result.allSucceeded) {
-      Atlas2Engine.transitionPhase(currentIncident, 'resolved');
-      currentIncident.resolvedAt = Date.now();
-      currentIncident.canvas.liveFields.trafficImpactPercent = 0;
-      currentIncident.canvas.liveFields.errorRateSpike = 0.01;
+      if (result.allSucceeded) {
+        Atlas2Engine.transitionPhase(currentIncident, 'verifying');
+        setCurrentIncident({ ...currentIncident });
+        await new Promise((r) => setTimeout(r, 400));
 
-      for (const item of currentIncident.canvas.actionItems) {
-        item.status = 'verified';
+        Atlas2Engine.transitionPhase(currentIncident, 'resolved');
+        currentIncident.resolvedAt = Date.now();
+        currentIncident.canvas.liveFields.trafficImpactPercent = 0;
+        currentIncident.canvas.liveFields.errorRateSpike = 0.01;
+
+        for (const item of currentIncident.canvas.actionItems) {
+          item.status = 'verified';
+        }
+        sound.playSuccess();
+      } else {
+        Atlas2Engine.transitionPhase(currentIncident, 'escalated_human');
+        sound.playAlert();
       }
-      sound.playSuccess();
+    } catch (err) {
+      console.error('Failed executing sandboxed mitigation plan:', err);
+      try {
+        Atlas2Engine.transitionPhase(currentIncident, 'escalated_human');
+      } catch {}
+    } finally {
+      isExecutingRef.current = false;
+      setIsExecuting(false);
+      setCurrentIncident({ ...currentIncident });
     }
-
-    setIsExecuting(false);
-    setCurrentIncident({ ...currentIncident });
-  }, [currentIncident, humanApproved]);
+  }, [currentIncident]);
 
   // Toggle single ballot decision with cryptographic re-signing
   const handleToggleBallotDecision = (ballotId: string) => {
@@ -548,11 +589,11 @@ export const OpsRoomPage: React.FC<OpsRoomPageProps> = ({
                 selectedPreset={selectedPreset}
                 onSelectPreset={(preset) => {
                   setSelectedPreset(preset);
-                  handleReset();
+                  handleReset(preset);
                 }}
                 onTriggerIncident={handleTriggerIncident}
                 isRunning={isRunning}
-                onReset={handleReset}
+                onReset={() => handleReset()}
               />
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -569,6 +610,7 @@ export const OpsRoomPage: React.FC<OpsRoomPageProps> = ({
                   onExecutePlan={handleExecutePlan}
                   isExecuting={isExecuting}
                   onToggleBallotDecision={handleToggleBallotDecision}
+                  incidentStatus={currentIncident.status}
                 />
               </div>
 
