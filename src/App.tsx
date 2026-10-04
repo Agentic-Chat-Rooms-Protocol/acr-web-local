@@ -92,6 +92,18 @@ export const App: React.FC = () => {
     }
   };
 
+  const handleOpenWorkspacePage = () => {
+    setViewMode('workspace');
+    if (typeof window !== 'undefined') {
+      try {
+        window.history.pushState(null, '', '/workspace');
+      } catch {
+        window.location.hash = '#/workspace';
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
   const handleLaunchApp = () => {
     setViewMode('app');
     if (typeof window !== 'undefined') {
@@ -124,6 +136,8 @@ export const App: React.FC = () => {
 
     if (actionId === 'launch-app') {
       handleLaunchApp();
+    } else if (actionId === 'jump-workspace' || actionId === 'open-workspace') {
+      handleOpenWorkspacePage();
     } else if (actionId === 'open-meta-mcp') {
       setIsMetaMcpOpen(true);
     } else if (actionId === 'open-settings') {

@@ -19,6 +19,14 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
 
   const commands = [
     {
+      id: 'jump-workspace',
+      category: 'Workspace',
+      title: '3-Pane Deliberation Workspace',
+      subtitle: 'Responsive WCAG 2.2 AAA dual-layout, Agent Battle arena & drafts queue',
+      icon: Terminal,
+      badge: 'Dual-Layout',
+    },
+    {
       id: 'jump-opsroom',
       category: 'OpsRoom',
       title: 'ACR OpsRoom Autonomous War Room',

@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+@theme {
+  --font-mono: 'Atkinson Hyperlegible Mono', 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
 @layer base {
   :root {
     --bg-primary: #050508;
@@ -141,7 +145,8 @@
 
 /* Monospace font standard */
 .font-mono-code {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-family: 'Atkinson Hyperlegible Mono', 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-feature-settings: "tnum", "zero", "calt";
 }
 
 /* Gradient text animations */

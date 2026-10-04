@@ -120,6 +120,10 @@ export const ThreePaneWorkspace: React.FC<ThreePaneWorkspaceProps> = ({
   const [centerMode, setCenterMode] = useState<'STREAM' | 'BATTLE'>('STREAM');
   const [directiveInput, setDirectiveInput] = useState<string>('');
   const [isMobile, setIsMobile] = useState<boolean>(false);
+  const [milestones, setMilestones] = useState<ProcessMilestone[]>([
+    SAMPLE_MILESTONE,
+    SAMPLE_ACTIVE_MILESTONE,
+  ]);
 
   useEffect(() => {
     const checkWidth = () => {
@@ -130,8 +134,65 @@ export const ThreePaneWorkspace: React.FC<ThreePaneWorkspaceProps> = ({
     return () => window.removeEventListener('resize', checkWidth);
   }, []);
 
+  const handleApproveDraft = (draft: { id: string; blake3Hash: string }) => {
+    setMilestones((prev) =>
+      prev.map((m) => {
+        if (m.id === 'ms-02') {
+          return {
+            ...m,
+            status: 'COMPLETED',
+            summary: `Gate authorized and signed by operator. PR #104 merged to target. BLAKE3: ${draft.blake3Hash.slice(0, 16)}...`,
+            steps: m.steps.map((s) =>
+              s.id === 'step-2-2'
+                ? {
+                    ...s,
+                    status: 'PASS',
+                    notes: `Approved & Signed: ${draft.blake3Hash.slice(0, 16)}...`,
+                  }
+                : s
+            ),
+          };
+        }
+        return m;
+      })
+    );
+  };
+
+  const handleVetoDraft = (draft: { id: string }) => {
+    setMilestones((prev) =>
+      prev.map((m) => {
+        if (m.id === 'ms-02') {
+          return {
+            ...m,
+            status: 'FAILED',
+            summary: `Gate vetoed by human operator. Execution halted immediately with fail-closed semantics.`,
+            steps: m.steps.map((s) =>
+              s.id === 'step-2-2'
+                ? {
+                    ...s,
+                    status: 'FAIL',
+                    notes: `VETO_HALTED: Action rejected by decider (${draft.id})`,
+                  }
+                : s
+            ),
+          };
+        }
+        return m;
+      })
+    );
+  };
+
   const handleDispatch = () => {
-    if (!directiveInput.trim()) return;
+    const trimmed = directiveInput.trim();
+    if (!trimmed) return;
+    if (trimmed.startsWith('/approve')) {
+      handleApproveDraft({
+        id: 'draft-pr-104',
+        blake3Hash: '3b8f1a92e4c01d7890abcdef1234567890abcdef1234567890abcdef12345678',
+      });
+    } else if (trimmed.startsWith('/veto')) {
+      handleVetoDraft({ id: 'draft-pr-104' });
+    }
     setDirectiveInput('');
   };
 
@@ -324,8 +385,9 @@ export const ThreePaneWorkspace: React.FC<ThreePaneWorkspaceProps> = ({
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {centerMode === 'STREAM' ? (
               <>
-                <ProcessMilestoneThread milestone={SAMPLE_MILESTONE} />
-                <ProcessMilestoneThread milestone={SAMPLE_ACTIVE_MILESTONE} />
+                {milestones.map((ms) => (
+                  <ProcessMilestoneThread key={ms.id} milestone={ms} />
+                ))}
               </>
             ) : (
               <AgentBattleView />
@@ -389,7 +451,11 @@ export const ThreePaneWorkspace: React.FC<ThreePaneWorkspaceProps> = ({
           aria-label="Context and Drafts Inspector"
         >
           {/* Agent Drafts Queue Component */}
-          <AgentDraftsQueue className="flex-1" />
+          <AgentDraftsQueue
+            className="flex-1"
+            onApprove={handleApproveDraft}
+            onVeto={handleVetoDraft}
+          />
 
           {/* System Telemetry & Output Budget Status */}
           <div className="p-3 bg-neutral-950 border-t border-neutral-750 font-mono text-xs text-neutral-300 space-y-1">
