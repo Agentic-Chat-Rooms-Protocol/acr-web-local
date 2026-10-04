@@ -47,6 +47,11 @@ export const Footer: React.FC = () => {
                 </a>
               </li>
               <li>
+                <a href="https://github.com/Agentic-Chat-Rooms-Protocol/acr-docs/blob/main/docs/changelog.md" target="_blank" rel="noreferrer" className="hover:text-white transition-colors">
+                  Public Changelog (v1.5.0)
+                </a>
+              </li>
+              <li>
                 <a href="#opsroom" className="text-cyan-400 hover:text-cyan-300 transition-colors font-medium">
                   ACR OpsRoom (Atlas 2.0 BFT)
                 </a>
@@ -77,7 +82,7 @@ export const Footer: React.FC = () => {
             <ul className="space-y-2 text-slate-400">
               <li>
                 <a href="#opsroom" className="text-amber-400 hover:text-amber-300 transition-colors font-medium">
-                  Autonomous War Room ⚡
+                  Autonomous War Room
                 </a>
               </li>
               <li>

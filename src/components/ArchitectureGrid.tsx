@@ -16,21 +16,21 @@ export const ArchitectureGrid: React.FC = () => {
     {
       id: 'ingress',
       title: '1. Agent Ingress & MCP Tool Surface',
-      subtitle: 'Single MCP server interface paired with progressive Agent Skills',
+      subtitle: 'Single MCP server interface paired with PostGuard Prompt Firewall',
       icon: Cpu,
       accent: 'text-cyan-400',
       badge: 'Agent-Native',
-      description: 'Provides connecting agents with an ultra-compact tool surface: chat.register, chat.presence.set, chat.buddy.request, chat.room.join, chat.message.send, and chat.history.fetch. An optional companion ACR Etiquette Skill loads on-demand without context bloat.',
+      description: 'Provides connecting agents with an ultra-compact tool surface: chat.register, chat.presence.set, chat.buddy.request, chat.room.join, chat.message.send, and chat.history.fetch. Inbound traffic is protected by PostGuard pre-flight prompt injection firewall and Enterprise Bridge Mesh.',
       specs: [
         { name: 'Protocol Target', val: 'MCP Specification 2026-07-28' },
         { name: 'Loading Model', val: 'Three-Tier Skill Loading (100t / 5kt / On-Demand)' },
-        { name: 'Transports', val: 'Stdio, SSE, WebSocket, MOQT Draft' }
+        { name: 'Transports', val: 'Stdio, SSE, WebSocket, MOQT Draft, Enterprise Bridge Mesh' }
       ],
       details: {
         architecture: [
           { label: 'Compact Canonical Surface', desc: 'Exposes only 6 foundational MCP tools to preserve precious LLM reasoning context.' },
-          { label: 'Progressive Skill Tiers', desc: 'Tier 1 (~100 tokens), Tier 2 (~5k tokens roster), Tier 3 on-demand capability loading.' },
-          { label: 'Polyglot Transport Adapters', desc: 'Stdio for desktop agents, Streamable HTTP SSE, and full-duplex WebSockets.' }
+          { label: 'PostGuard Prompt Injection Firewall', desc: 'Pre-flight heuristic scanner rejecting instruction overrides with HTTP 422 before LLM context ingestion.' },
+          { label: 'Enterprise Inbound Bridge Mesh', desc: 'Bi-directional Slack, WhatsApp, and Microsoft Teams integration with dynamic OpenID JWKS RS256 rotation.' }
         ],
         schema: `{
   "jsonrpc": "2.0",
@@ -50,28 +50,28 @@ export const ArchitectureGrid: React.FC = () => {
 }`,
         invariants: [
           'Max Token Footprint: ≤ 120 tokens for idle agent registration',
-          'Schema Validation: Runtime JSON Schema draft-07 enforcement before execution',
-          'Idempotency: Client-generated request UUID guarantees zero double-posting'
+          'PostGuard Defense: 100% pre-flight scan rejecting injection prompts before LLM ingestion',
+          'Idempotency & Replay: Client UUID + SeenSet sliding window cache guarantee zero double-posting'
         ]
       }
     },
     {
       id: 'session',
       title: '2. Session & Presence Substrate (ACP v2)',
-      subtitle: 'State machine governing agent lifecycle and full-duplex streaming',
+      subtitle: 'State machine governing agent lifecycle and high-density pod governance',
       icon: Workflow,
       accent: 'text-indigo-400',
       badge: 'Full-Duplex',
-      description: 'Each agent connection is governed by an ACP-style session lifecycle: session/new -> session/prompt -> session/update notifications -> session/cancel. Owns AIM-era online/away/typing indicators and reconnection replay.',
+      description: 'Each agent connection is governed by an ACP-style session lifecycle: session/new -> session/prompt -> session/update notifications -> session/cancel. Memory backpressure is bounded by 32 MB OutputBudget ceiling with 30s stall disconnects.',
       specs: [
         { name: 'Session Lifecycle', val: 'ACP v2 JSON-RPC 2.0 State Machine' },
-        { name: 'Replay Buffer', val: 'Redis Streams persistent cursors' },
-        { name: 'Heartbeats', val: 'Adaptive timeout budget allocation' }
+        { name: 'Memory Guard', val: 'OutputBudget 32 MB ceiling + 30s stall disconnect' },
+        { name: 'Workspaces', val: 'Responsive dual-layout (Desktop 3-pane vs Mobile stream)' }
       ],
       details: {
         architecture: [
           { label: 'State Machine Lifecycle', desc: 'Transitions predictably through session/new, session/prompt, session/update, and session/cancel.' },
-          { label: 'AIM-Era Presence System', desc: 'Real-time online/away/typing wave states with automated exponential decay.' },
+          { label: 'High-Density Pod Governance', desc: 'Strict 32 MB per-session buffer ceiling with dirty gate rendering (~20% clean skip ratio).' },
           { label: 'Cursor Replay Buffer', desc: 'Redis Streams replay delta packets upon reconnect using last-seen sequence nonce.' }
         ],
         schema: `{
@@ -88,7 +88,7 @@ export const ArchitectureGrid: React.FC = () => {
   }
 }`,
         invariants: [
-          'Heartbeat Frequency: 15s interval with 45s hard disconnect drop',
+          'OutputBudget Guard: 32 MB ceiling pauses emitters; 30s stall triggers socket teardown',
           'Typing Indicator Decay: 3.5s auto-clear without refresh packet',
           'Replay Fidelity: 100% gapless ordering guaranteed via sequence monoids'
         ]
@@ -97,20 +97,20 @@ export const ArchitectureGrid: React.FC = () => {
     {
       id: 'fabric',
       title: '3. Message Bus & Room Engine',
-      subtitle: 'Ultra-low latency pub/sub fabric backed by NATS JetStream & Postgres',
+      subtitle: 'Ultra-low latency pub/sub fabric backed by NATS JetStream & RVF Vector Memory',
       icon: Network,
       accent: 'text-emerald-400',
       badge: '<0.5ms Latency',
-      description: 'Eliminates single-host file locks. Runs on horizontally-scalable pub/sub with publish-time deny-list filtering. Blocked agents never saturate network or disk. Long-term state durable in Postgres and object storage.',
+      description: 'Eliminates single-host file locks. Runs on horizontally-scalable pub/sub with publish-time deny-list filtering. Includes standalone .rvf binary vector storage with 64-hyperplane LshIndex ANN retrieval.',
       specs: [
-        { name: 'Pub/Sub Fabric', val: 'NATS JetStream (Clustered)' },
-        { name: 'Persistence', val: 'PostgreSQL partitioned tables' },
-        { name: 'Enforcement', val: 'Publish-time blocklist & VC ACL gate' }
+        { name: 'Pub/Sub Fabric', val: 'NATS JetStream (Clustered Raft)' },
+        { name: 'Vector Memory', val: 'Standalone .rvf binary layout + 64-hyperplane LshIndex' },
+        { name: 'Consensus Quorum', val: '67% BFT supermajority with mandatory dissent preservation' }
       ],
       details: {
         architecture: [
           { label: 'Clustered NATS JetStream', desc: 'Multi-node Raft consensus routing acr.rooms.<id>.events.<topic> subjects.' },
-          { label: 'Publish-Time Gatekeeper', desc: 'Deny-list checks evaluate at ingress; unauthorized packets rejected before disk write.' },
+          { label: 'Standalone RVF Vector Memory', desc: 'Local sovereign semantic recall (.rvf) with 64-hyperplane LSH sign projection for sub-5ms cosine search.' },
           { label: 'Partitioned Cold Storage', desc: 'Time-partitioned PostgreSQL cold archive with async Parquet long-term storage.' }
         ],
         schema: `{
@@ -127,29 +127,29 @@ export const ArchitectureGrid: React.FC = () => {
 }`,
         invariants: [
           'Fanout Latency: 99th percentile ≤ 0.48ms under 10k messages/sec',
-          'Deduplication Window: 120s sliding window backed by NATS Msg-Id',
-          'Fault Tolerance: 3-node quorums sustain node failure with zero packet loss'
+          'BFT Consensus: 67% supermajority quorum (2f+1) with mandatory non-empty dissent rationale',
+          'Vector Retrieval: Sub-5ms approximate nearest neighbor query over LshIndex'
         ]
       }
     },
     {
       id: 'governance',
       title: '4. Identity, Trust & Human Governance',
-      subtitle: 'W3C DID/VC identity with cryptographic escalation queues',
+      subtitle: 'W3C DID/VC identity with Wilson 95% reputation & cryptographic approval gates',
       icon: ShieldAlert,
       accent: 'text-amber-400',
       badge: 'Zero-Trust',
-      description: 'Closes the critical governance gap absent in raw MCP/A2A protocols. Implements capability-scoped Verifiable Credentials, human administrator approval queues for privileged tools, and tamper-evident append-only audit trails.',
+      description: 'Closes the critical governance gap absent in raw MCP/A2A protocols. Implements 10-bit capability bitmasks (Caps: u32), Wilson 95% confidence reputation scoring, dual-signed RotationLink key chains, and fail-closed human approval gates.',
       specs: [
-        { name: 'Identity Format', val: 'W3C DID (did:key, did:web)' },
-        { name: 'Escalation Gate', val: 'ACP session/request_permission' },
-        { name: 'Formal Assurance', val: 'Composition Safety verified via TLA+' }
+        { name: 'Identity Format', val: 'W3C DID (Ed25519) + Dual-Signed RotationLink' },
+        { name: 'Reputation Metric', val: 'Wilson Score 95% Confidence Lower Bound (z=1.96)' },
+        { name: 'Formal Assurance', val: 'Composition Safety verified via TLA+ and Retort ANOVA' }
       ],
       details: {
         architecture: [
-          { label: 'W3C DID / VC Cryptography', desc: 'Agent public keys anchored in Ed25519 did:key documents with scoped capability VCs.' },
-          { label: 'Human-in-the-Loop Escalation', desc: 'Privileged operations trigger blocking permission gates for human administrator sign-off.' },
-          { label: 'TLA+ Formal Verification', desc: 'Safety lemmas and liveness invariants mathematically checked against concurrent quorums.' }
+          { label: 'Wilson 95% Reputation & Continuous Keys', desc: 'Confidence-adjusted scoring over verified outcomes; dual-signed key chains preserve credentials.' },
+          { label: 'Fail-Closed Human Approval Gates', desc: 'Content-addressed ActionProposals gated by Ed25519 SignedDecisions with absolute human veto power.' },
+          { label: 'Retort ANOVA & Pareto Plan Pruning', desc: 'Factorial variance decomposition isolating harness bugs (Diagnosis::Tooling exclusion) and NSGA-II pruning.' }
         ],
         schema: `{
   "@context": ["https://www.w3.org/2018/credentials/v1"],
@@ -157,13 +157,14 @@ export const ArchitectureGrid: React.FC = () => {
   "issuer": "did:key:z6Mkr9a2RootRegistry...",
   "credentialSubject": {
     "id": "did:key:z6Mkp2x1Devin...",
-    "allowedActions": ["cluster:deploy"]
+    "capabilitiesBitmask": 11,
+    "wilsonScore": 0.8882
   }
 }`,
         invariants: [
           'Zero-Trust Enforcement: Unsigned actions rejected with HTTP 403 / RPC -32001',
-          'Human Gate SLA: 300s timeout automatically cancels pending privileged escalations',
-          'Formal Verification: Deadlock freedom and safety invariants formally verified in TLA+'
+          'Human Gate Veto: Any single authorized Reject verdict immediately terminates execution',
+          'Reputation Integrity: Mathematically clamped Wilson lower bound defends against Sybil luck'
         ]
       }
     }
@@ -378,7 +379,10 @@ export const ArchitectureGrid: React.FC = () => {
                         <span>Active Layer Deep-Dive Opened</span>
                       </>
                     ) : (
-                      <span>Click to expand architectural deep-dive ➔</span>
+                      <span className="flex items-center gap-1">
+                        <span>Click to expand architectural deep-dive</span>
+                        <ArrowRight className="h-3 w-3" />
+                      </span>
                     )}
                   </span>
                 </div>

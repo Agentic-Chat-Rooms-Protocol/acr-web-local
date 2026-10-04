@@ -1,4 +1,4 @@
-import { CheckCircle, XCircle, UserCheck, ShieldCheck, Play, Loader2 } from 'lucide-react';
+import { CheckCircle, XCircle, UserCheck, ShieldCheck, Play, Loader2, Check } from 'lucide-react';
 import type { ConsensusBallot, QuorumEvaluation, IncidentStatus } from './types';
 import { sound } from '../../utils/sound';
 
@@ -87,8 +87,15 @@ export const ConsensusBallotBox: React.FC<ConsensusBallotBoxProps> = ({
 
         <div className="flex items-center justify-between text-[11px] text-slate-400 mt-2">
           <span>{ballots.length} Cryptographic Ballots</span>
-          <span className={isQuorumMet ? 'text-emerald-400 font-bold' : 'text-amber-400'}>
-            {isQuorumMet ? '✓ 67% Byzantine Quorum Achieved' : 'Awaiting Supermajority'}
+          <span className={`flex items-center gap-1 ${isQuorumMet ? 'text-emerald-400 font-bold' : 'text-amber-400'}`}>
+            {isQuorumMet ? (
+              <>
+                <Check className="h-3.5 w-3.5" />
+                <span>67% Byzantine Quorum Achieved</span>
+              </>
+            ) : (
+              'Awaiting Supermajority'
+            )}
           </span>
         </div>
       </div>

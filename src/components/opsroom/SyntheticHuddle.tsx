@@ -753,7 +753,7 @@ export const SyntheticHuddle: React.FC<SyntheticHuddleProps> = ({
                     </span>
                   </div>
                   <p className="text-slate-400 text-[11px]">
-                    WebGPU: {hardwareProfile.hasWebGPU ? '✅ Supported' : '❌ Unavailable'} • AudioContext: {hardwareProfile.hasAudioContext ? '✅' : '❌'} • SpeechSynthesis: {hardwareProfile.hasSpeechSynthesis ? '✅' : '❌'}
+                    WebGPU: {hardwareProfile.hasWebGPU ? 'Supported' : 'Unavailable'} • AudioContext: {hardwareProfile.hasAudioContext ? 'Ready' : 'None'} • SpeechSynthesis: {hardwareProfile.hasSpeechSynthesis ? 'Ready' : 'None'}
                   </p>
                 </div>
 

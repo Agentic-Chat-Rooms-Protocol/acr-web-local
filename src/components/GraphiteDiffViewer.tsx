@@ -349,7 +349,7 @@ const StackGraph: React.FC<{ stack: Stack | null; selectedPR: number | null; onS
             }`}
           >
             #{layer.pr_number}
-            {layer.status === 'merged' && <span className="ml-1 text-emerald-400">✓</span>}
+            {layer.status === 'merged' && <Check className="ml-1 h-3 w-3 inline text-emerald-400" />}
           </button>
           {i < stack.layers.length - 1 && (
             <ChevronRight className="h-3 w-3 text-slate-600" />
@@ -377,7 +377,10 @@ const ConsensusProofPanel: React.FC<{ envelope: ConsensusEnvelope | null }> = ({
       {approvals.map((v, i) => (
         <div key={i} className="text-[10px] font-mono bg-[#0c0d14] border border-white/[0.04] rounded p-2">
           <div className="text-slate-400 truncate">{v.agent_did}</div>
-          <div className="text-emerald-400 mt-0.5">✓ {v.decision}</div>
+          <div className="text-emerald-400 mt-0.5 flex items-center gap-1">
+            <Check className="h-3 w-3" />
+            <span>{v.decision}</span>
+          </div>
           <div className="text-slate-600 mt-0.5 truncate">{v.sig.slice(0, 24)}…</div>
         </div>
       ))}

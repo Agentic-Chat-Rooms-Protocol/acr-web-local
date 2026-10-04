@@ -218,8 +218,8 @@ export const RootAdminProfileModal: React.FC<RootAdminProfileModalProps> = ({
                     className="h-9 w-9 rounded-lg object-cover"
                   />
                   {avatar === presetUrl && (
-                    <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-cyan-500 text-[8px] text-black font-bold">
-                      ✓
+                    <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-cyan-500 text-black">
+                      <Check className="h-2.5 w-2.5 stroke-[3]" />
                     </span>
                   )}
                 </button>

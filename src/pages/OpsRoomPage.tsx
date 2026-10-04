@@ -461,7 +461,7 @@ export const OpsRoomPage: React.FC<OpsRoomPageProps> = ({
           <div className="ops-badge mb-4 inline-block">
             <SectionPill
               icon={Flame}
-              primary="ACR OpsRoom ⚡ Autonomous War Room"
+              primary="ACR OpsRoom: Autonomous War Room"
               secondary="Beyond Salesforce Agentforce & Slack AI"
             />
           </div>
