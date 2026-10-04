@@ -16,6 +16,7 @@ import { OpsRoomSection } from './components/opsroom/OpsRoomSection';
 import { OpsRoomModal } from './components/opsroom/OpsRoomModal';
 import { OpsRoomPage } from './pages/OpsRoomPage';
 import { AcrChatApp } from './app/AcrChatApp';
+import { ThreePaneWorkspace } from './components/workspace/ThreePaneWorkspace';
 
 export const App: React.FC = () => {
   const [isCommandOpen, setIsCommandOpen] = useState(false);
@@ -24,10 +25,13 @@ export const App: React.FC = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isOpsRoomModalOpen, setIsOpsRoomModalOpen] = useState(false);
 
-  const resolveViewMode = (): 'showcase' | 'opsroom' | 'app' => {
+  const resolveViewMode = (): 'showcase' | 'opsroom' | 'app' | 'workspace' => {
     if (typeof window !== 'undefined') {
       const path = window.location.pathname.toLowerCase();
       const hash = window.location.hash.toLowerCase();
+      if (path === '/workspace' || path === '/workspace/' || hash.includes('workspace')) {
+        return 'workspace';
+      }
       if (path === '/opsroom' || path === '/opsroom/' || hash.includes('opsroom')) {
         return 'opsroom';
       }
@@ -38,7 +42,7 @@ export const App: React.FC = () => {
     return 'showcase';
   };
 
-  const [viewMode, setViewMode] = useState<'showcase' | 'opsroom' | 'app'>(resolveViewMode);
+  const [viewMode, setViewMode] = useState<'showcase' | 'opsroom' | 'app' | 'workspace'>(resolveViewMode);
 
   useEffect(() => {
     const handleUrlChange = () => {
@@ -142,6 +146,28 @@ export const App: React.FC = () => {
   // If in authentic application mode, render full-screen AcrChatApp
   if (viewMode === 'app') {
     return <AcrChatApp onBackToShowcase={handleBackToShowcase} />;
+  }
+
+  // If in 3-pane deliberation workspace mode, render ThreePaneWorkspace
+  if (viewMode === 'workspace') {
+    return (
+      <div className="min-h-screen bg-[#050508] p-3 md:p-6 flex flex-col">
+        <div className="mb-3 flex items-center justify-between">
+          <button
+            onClick={() => handleBackToShowcase()}
+            className="text-xs font-mono text-neutral-300 hover:text-white px-3 py-1.5 rounded bg-neutral-900 border border-neutral-750 focus:outline-none focus:ring-2 focus:ring-sky-500"
+          >
+            [BACK TO SHOWCASE]
+          </button>
+          <span className="text-xs font-mono text-sky-400">
+            [DUAL-LAYOUT WCAG 2.2 AAA WORKSPACE]
+          </span>
+        </div>
+        <div className="flex-1">
+          <ThreePaneWorkspace />
+        </div>
+      </div>
+    );
   }
 
   // If in dedicated OpsRoom mode, render dedicated OpsRoomPage

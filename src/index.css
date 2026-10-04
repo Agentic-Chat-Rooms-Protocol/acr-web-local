@@ -53,7 +53,7 @@
 }
 
 .font-mono-code {
-  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-family: 'Atkinson Hyperlegible Mono', 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-feature-settings: "tnum", "zero", "calt";
 }
 
