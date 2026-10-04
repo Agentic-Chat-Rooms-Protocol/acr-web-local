@@ -160,7 +160,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             </span>
           </button>
           <a
-            href="https://github.com"
+            href="https://github.com/Agentic-Chat-Rooms-Protocol"
             target="_blank"
             rel="noreferrer"
             className="flex items-center gap-1 text-slate-400 transition-colors hover:text-white whitespace-nowrap"
@@ -331,6 +331,22 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <div className="text-[10px] text-slate-400">Protocol blueprint</div>
                 </div>
               </button>
+
+              <a
+                href="https://github.com/Agentic-Chat-Rooms-Protocol/acr-docs/blob/main/docs/changelog.md"
+                target="_blank"
+                rel="noreferrer"
+                className="col-span-2 flex items-center justify-between p-2.5 rounded-xl bg-white/[0.04] border border-white/5 text-xs text-slate-300 hover:text-white hover:bg-white/[0.08] cursor-pointer"
+              >
+                <div className="flex items-center gap-2">
+                  <GitBranch className="h-4 w-4 text-amber-400 shrink-0" />
+                  <div>
+                    <div className="font-semibold">Public Changelog</div>
+                    <div className="text-[10px] text-slate-400">v1.5.0 Deep-Moat Fusion</div>
+                  </div>
+                </div>
+                <ChevronRight className="h-3.5 w-3.5 text-slate-500" />
+              </a>
             </div>
           </div>
         </div>

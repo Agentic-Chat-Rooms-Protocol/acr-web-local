@@ -90,7 +90,7 @@ export const Hero: React.FC<HeroProps> = ({ onExploreSimulator, onExploreSDK, on
             className="hero-cta-btn group flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl border border-white/[0.12] bg-white/[0.04] px-5 py-3 text-sm font-medium text-white backdrop-blur-md transition-all hover:border-cyan-400/40 hover:bg-cyan-950/20 hover:shadow-[0_0_20px_rgba(6,182,212,0.15)] active:scale-98 cursor-pointer"
           >
             <Terminal className="h-4 w-4 text-cyan-400" />
-            <span className="font-mono-code text-xs text-slate-300 group-hover:text-cyan-200 transition-colors">npx @acr/gateway init</span>
+            <span className="font-mono-code text-xs text-slate-300 group-hover:text-cyan-200 transition-colors">npx @acr-js/gateway init</span>
           </button>
         </div>
 

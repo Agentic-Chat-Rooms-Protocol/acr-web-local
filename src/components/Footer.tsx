@@ -116,7 +116,7 @@ export const Footer: React.FC = () => {
             <ul className="space-y-2 text-slate-400">
               <li>
                 <a href="#sdk" className="hover:text-white transition-colors">
-                  @acr/gateway (Node.js)
+                  @acr-js/gateway (Node.js)
                 </a>
               </li>
               <li>
@@ -131,7 +131,7 @@ export const Footer: React.FC = () => {
               </li>
               <li>
                 <a 
-                  href="https://github.com" 
+                  href="https://github.com/Agentic-Chat-Rooms-Protocol" 
                   target="_blank" 
                   rel="noreferrer"
                   className="flex items-center gap-1.5 text-cyan-400 hover:text-cyan-300 transition-colors"

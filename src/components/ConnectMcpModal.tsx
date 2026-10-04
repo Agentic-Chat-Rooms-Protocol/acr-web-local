@@ -316,7 +316,7 @@ export const ConnectMcpModal: React.FC<ConnectMcpModalProps> = ({
                 <div className="flex items-center justify-between text-xs">
                   <span className="font-semibold text-slate-200">Terminal Quickstart One-Liner</span>
                   <button
-                    onClick={() => copyToClipboard('npx @acr/bridge tunnel --ephemeral', 'tunnel-cmd')}
+                    onClick={() => copyToClipboard('npx @acr-js/bridge tunnel --ephemeral', 'tunnel-cmd')}
                     className="flex items-center gap-1 text-[11px] text-amber-400 hover:text-amber-300 cursor-pointer"
                   >
                     {copiedKey === 'tunnel-cmd' ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
@@ -324,7 +324,7 @@ export const ConnectMcpModal: React.FC<ConnectMcpModalProps> = ({
                   </button>
                 </div>
                 <pre className="p-3 rounded-xl bg-black/70 border border-white/[0.08] text-[11px] font-mono-code text-amber-300 overflow-x-auto">
-                  npx @acr/bridge tunnel --ephemeral
+                  npx @acr-js/bridge tunnel --ephemeral
                 </pre>
               </div>
 
