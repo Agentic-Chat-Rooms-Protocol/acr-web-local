@@ -209,7 +209,8 @@ export const Navbar: React.FC<NavbarProps> = ({
               onOpenCommand();
             }}
             className="flex items-center gap-2 rounded-lg border border-white/[0.08] bg-slate-900/60 px-2.5 py-1.5 text-xs text-slate-400 transition-all hover:border-white/20 hover:bg-slate-800/80 hover:text-slate-200 cursor-pointer shrink-0 whitespace-nowrap"
-            title="Search Protocol (⌘K / Ctrl+K)"
+            title="Search Protocol (⌘K / Ctrl+K / Ctrl+Shift+G)"
+            aria-label="Search Protocol (Command K / Ctrl+Shift+G)"
           >
             <Search className="h-3.5 w-3.5 text-slate-400" />
             <span className="hidden sm:inline text-[11px] whitespace-nowrap">Search</span>

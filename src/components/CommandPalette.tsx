@@ -149,14 +149,21 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (!isOpen) {
-        if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-          e.preventDefault();
-          // Toggle command palette
+      // Toggle hotkey: Cmd/Ctrl+K or Ctrl+Shift+G (or Cmd+Shift+G)
+      const isCmdK = (e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K');
+      const isCtrlShiftG = (e.metaKey || e.ctrlKey) && e.shiftKey && (e.key === 'g' || e.key === 'G');
+
+      if (isCmdK || isCtrlShiftG) {
+        e.preventDefault();
+        if (isOpen) {
+          onClose();
+        } else {
           onSelectAction('toggle-command');
         }
         return;
       }
+
+      if (!isOpen) return;
 
       if (e.key === 'Escape') {
         e.preventDefault();
@@ -185,6 +192,10 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-24 px-4 bg-black/75 backdrop-blur-md">
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Command Palette"
+        data-testid="command-palette-dialog"
         className="w-full max-w-2xl overflow-hidden rounded-xl border border-white/[0.12] bg-[#0c0d14] shadow-2xl shadow-cyan-950/40 animate-in fade-in zoom-in-95 duration-150"
         onClick={(e) => e.stopPropagation()}
       >
