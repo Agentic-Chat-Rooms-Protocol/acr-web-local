@@ -54,14 +54,14 @@ export interface AgentSquad {
   name: string;
   specialization: string;
   agents: AgentProfile[];
-  consensusThreshold: number; // e.g. 0.67 for 2/3 Byzantine fault tolerance
+  consensusThreshold: number; // e.g. 0.67 for 2/3 supermajority consensus gate
 }
 
 export type DeliberationPhase = 
   | 'detect'
   | 'ground'
   | 'deliberate'
-  | 'quorum'
+  | 'consensus_vote'
   | 'execute'
   | 'verify'
   | 'completed'
@@ -216,7 +216,7 @@ export interface OpsIncident {
   deliberationTurns: DeliberationTurn[];
   executionPlan?: ExecutionPlan;
   ballots: ConsensusBallot[];
-  quorum?: QuorumEvaluation;
+  quorumEval?: QuorumEvaluation;
   canvas: OpsCanvas;
   huddle?: HuddleSession;
 }

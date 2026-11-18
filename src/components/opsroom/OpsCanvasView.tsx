@@ -31,7 +31,7 @@ export const OpsCanvasView: React.FC<OpsCanvasViewProps> = ({
             </span>
           </div>
           <p className="text-xs text-slate-400 mt-0.5">
-            Reinventing Slack Canvas: Real-time telemetry binding, state machine progression &amp; Merkle integrity.
+            Reinventing Slack Canvas: Real-time telemetry binding, state machine progression &amp; Agentseal audit chain integrity.
           </p>
         </div>
 
@@ -79,7 +79,7 @@ export const OpsCanvasView: React.FC<OpsCanvasViewProps> = ({
         </div>
       </div>
 
-      {/* Main Two Columns: Action Items & Execution DAG */}
+      {/* Main Two Columns: Action Items & Execution Plan */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* Action Items List */}
         <div className="p-4 rounded-2xl bg-slate-900/40 border border-white/10">
@@ -119,11 +119,11 @@ export const OpsCanvasView: React.FC<OpsCanvasViewProps> = ({
           </div>
         </div>
 
-        {/* Atlas 2.0 Execution Plan DAG */}
+        {/* Atlas 2.0 Execution Plan */}
         <div className="p-4 rounded-2xl bg-slate-900/40 border border-white/10">
           <h4 className="text-xs font-bold uppercase tracking-wider text-slate-300 mb-3 flex items-center gap-1.5">
             <Activity className="w-3.5 h-3.5 text-cyan-400" aria-hidden="true" />
-            Atlas 2.0 Mitigation Execution DAG
+            Atlas 2.0 Mitigation Execution Plan
           </h4>
 
           {!executionPlan || executionPlan.steps.length === 0 ? (
@@ -149,7 +149,7 @@ export const OpsCanvasView: React.FC<OpsCanvasViewProps> = ({
                   <div className="flex items-center gap-2 shrink-0">
                     {step.rollbackStep && (
                       <span className="text-[9px] px-1.5 py-0.5 rounded bg-purple-950/50 text-purple-300 border border-purple-500/30">
-                        Rollback DAG
+                        Rollback Plan
                       </span>
                     )}
                     <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase ${

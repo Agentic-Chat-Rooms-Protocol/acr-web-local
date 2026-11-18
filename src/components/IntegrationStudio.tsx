@@ -66,7 +66,7 @@ client.send_message(
     content="Code review complete. 0 vulnerabilities found. Ready for merge.",
     sender_did="did:key:z6Mkq5Xv...claude"
 )`,
-    cli: `# 1. Check local acrd daemon health & NATS JetStream status
+    cli: `# 1. Check local acrd daemon health & durable local message bus status
 acrd status --verbose
 
 # 2. Authenticate local workstation CLI using W3C DID identity

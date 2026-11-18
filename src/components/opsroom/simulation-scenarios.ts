@@ -57,8 +57,8 @@ export function getScenarioForPreset(
         },
         {
           agentRoleIndex: 0, // Atlas Orchestrator
-          reasoning: `Atlas 2.0 Goal Decomposition complete for custom incident. Synthesized mitigation DAG with automated rollback step. Initiating Byzantine Quorum ballot.`,
-          proposedHypothesis: 'Dynamic DAG Compiled',
+          reasoning: `Atlas 2.0 Goal Decomposition complete for custom incident. Synthesized mitigation plan with automated rollback step. Initiating 67% Consensus Gate ballot.`,
+          proposedHypothesis: 'Dynamic Plan Compiled',
           proposedActions: [
             {
               toolName: 'rebalance_workload_mesh',
@@ -69,7 +69,7 @@ export function getScenarioForPreset(
             },
           ],
           confidence: 0.96,
-          spokenLine: 'Goal decomposition complete. Requesting 67% Byzantine Quorum vote.',
+          spokenLine: 'Goal decomposition complete. Requesting 67% Consensus Gate vote.',
         },
       ],
     };
@@ -124,11 +124,11 @@ export function getScenarioForPreset(
           },
           {
             agentRoleIndex: 0, // Atlas
-            reasoning: 'Atlas 2.0 compiled 3-step security containment DAG: quarantine pod -> revoke token -> shift mesh traffic. Rollback DAG generated in case of cascade. Initiating Byzantine Quorum.',
-            proposedHypothesis: 'Security Containment DAG Synthesized',
+            reasoning: 'Atlas 2.0 compiled 3-step security containment plan: quarantine pod -> revoke token -> shift mesh traffic. Rollback plan generated in case of cascade. Initiating 67% Consensus Gate.',
+            proposedHypothesis: 'Security Containment Plan Synthesized',
             proposedActions: [],
             confidence: 0.97,
-            spokenLine: 'Containment DAG compiled with rollback checkpoints. Ready for quorum ballot.',
+            spokenLine: 'Containment plan compiled with rollback checkpoints. Ready for consensus gate ballot.',
           },
         ],
       };
@@ -173,11 +173,11 @@ export function getScenarioForPreset(
           },
           {
             agentRoleIndex: 0, // Atlas
-            reasoning: 'Atlas 2.0 DAG compiled: Resource patch -> Replica scale-out. Preflight dry-run confirms zero node scheduling affinity violations. Initiating Byzantine Quorum.',
-            proposedHypothesis: 'Scale-out Mitigation DAG Ready',
+            reasoning: 'Atlas 2.0 execution plan compiled: Resource patch -> Replica scale-out. Preflight dry-run confirms zero node scheduling affinity violations. Initiating 67% Consensus Gate.',
+            proposedHypothesis: 'Scale-out Mitigation Plan Ready',
             proposedActions: [],
             confidence: 0.98,
-            spokenLine: 'Scale-out mitigation plan verified. Opening Byzantine Quorum voting.',
+            spokenLine: 'Scale-out mitigation plan verified. Opening 67% Consensus Gate voting.',
           },
         ],
       };
@@ -212,12 +212,12 @@ export function getScenarioForPreset(
             proposedHypothesis: 'Safe ToolHive Sandboxing',
             proposedActions: [],
             confidence: 0.96,
-            spokenLine: 'Zero-trust egress allowlist verified. Proceeding to quorum vote.',
+            spokenLine: 'Zero-trust egress allowlist verified. Proceeding to consensus gate vote.',
           },
           {
             agentRoleIndex: 0, // Atlas
-            reasoning: 'Atlas 2.0 Goal Decomposition complete. Generated 2-step mitigation DAG with automated rollback step: isolate_failing_node -> activate_secondary_route. Initiating Byzantine Quorum ballot.',
-            proposedHypothesis: 'DAG Mitigation Plan Compiled',
+            reasoning: 'Atlas 2.0 Goal Decomposition complete. Generated 2-step mitigation plan with automated rollback step: isolate_failing_node -> activate_secondary_route. Initiating 67% Consensus Gate ballot.',
+            proposedHypothesis: 'Mitigation Plan Compiled',
             proposedActions: [
               {
                 toolName: 'activate_secondary_route',
@@ -228,7 +228,7 @@ export function getScenarioForPreset(
               },
             ],
             confidence: 0.98,
-            spokenLine: 'Mitigation DAG compiled with automatic rollback. Opening 67% Byzantine Quorum voting.',
+            spokenLine: 'Mitigation plan compiled with automatic rollback. Opening 67% Consensus Gate voting.',
           },
         ],
       };

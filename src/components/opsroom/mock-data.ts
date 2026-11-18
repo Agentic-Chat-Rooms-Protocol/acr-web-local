@@ -60,7 +60,7 @@ export const DEFAULT_SQUAD_AGENTS: AgentProfile[] = [
     did: 'did:key:z6MkuSREatlasOrchestrator0184x7',
     role: 'atlas_orchestrator',
     name: 'Atlas 2.0 Orchestrator',
-    capabilities: ['Goal Decomposition', 'Dynamic DAG State Machine', 'Consensus Gating'],
+    capabilities: ['Goal Decomposition', 'Dynamic Plan State Machine', 'Consensus Gating'],
     voteWeight: 1.5,
     publicKey: '037b5a19c671b56a3e9c4d924151b6817290fbb0124803d2745300fbc4b48ec193',
     status: 'idle',
@@ -117,7 +117,7 @@ export const BATTLECARD_ITEMS = [
   {
     feature: 'Safety & Fault Tolerance',
     agentforce: 'Single LLM decision; vulnerable to prompt injection & hallucinations; unverified CRM direct write actions.',
-    opsroom: 'Byzantine Fault Tolerant (BFT) Quorum Consensus with 67% supermajority & Ed25519 W3C DID cryptographic signatures.',
+    opsroom: '67% Consensus Gate with 2/3 supermajority & Ed25519 W3C DID cryptographic signatures.',
     winner: 'ACR OpsRoom',
   },
   {
@@ -129,7 +129,7 @@ export const BATTLECARD_ITEMS = [
   {
     feature: 'Collaborative Ops Surface',
     agentforce: 'Static Slack channel text dumps + passive Slack Canvas with slow, asynchronous syncing.',
-    opsroom: 'Live Collaborative Ops Canvas: Real-time telemetry gauges, dynamic DAG progression, and synthetic audio synthesizer.',
+    opsroom: 'Live Collaborative Ops Canvas: Real-time telemetry gauges, dynamic plan progression, and synthetic audio synthesizer.',
     winner: 'ACR OpsRoom',
   },
   {
@@ -141,7 +141,7 @@ export const BATTLECARD_ITEMS = [
   {
     feature: 'Audit Trail & Compliance Provenance',
     agentforce: 'Proprietary Salesforce cloud event logs; mutable by admins; non-exportable outside Salesforce ecosystem.',
-    opsroom: 'Cryptographic Merkle Tree Audit Ledger; exportable tamper-evident SOC2 / ISO27001 verifiable certificates.',
+    opsroom: 'Agentseal Cryptographic Audit Chain; exportable tamper-evident SOC2 / ISO27001 verifiable certificates.',
     winner: 'ACR OpsRoom',
   },
   {

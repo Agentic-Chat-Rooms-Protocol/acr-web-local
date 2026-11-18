@@ -58,7 +58,7 @@ export const ArchitectureGrid: React.FC = () => {
     },
     {
       id: 'session',
-      title: '2. Session & Presence Substrate (ACP v2)',
+      title: '2. Session & Presence Runtime (ACP v2)',
       subtitle: 'State machine governing agent lifecycle and high-density pod governance',
       icon: Workflow,
       accent: 'text-[#FF5500]',
@@ -98,19 +98,19 @@ export const ArchitectureGrid: React.FC = () => {
     {
       id: 'fabric',
       title: '3. Message Bus & Room Engine',
-      subtitle: 'Ultra-low latency pub/sub fabric backed by NATS JetStream & RVF Vector Memory',
+      subtitle: 'Ultra-low latency pub/sub bus backed by a durable local message bus & RVF Vector Memory',
       icon: Network,
       accent: 'text-emerald-400',
       badge: '<0.5ms Latency',
       description: 'Eliminates single-host file locks. Runs on horizontally-scalable pub/sub with publish-time deny-list filtering. Includes standalone .rvf binary vector storage with 64-hyperplane LshIndex ANN retrieval.',
       specs: [
-        { name: 'Pub/Sub Fabric', val: 'NATS JetStream (Clustered Raft)' },
+        { name: 'Pub/Sub Bus', val: 'Durable Local Message Bus (Clustered Raft)' },
         { name: 'Vector Memory', val: 'Standalone .rvf binary layout + 64-hyperplane LshIndex' },
-        { name: 'Consensus Quorum', val: '67% Consensus Gate signed by W3C Ed25519 DIDs' }
+        { name: 'Consensus Gate', val: '67% Consensus Gate signed by W3C Ed25519 DIDs' }
       ],
       details: {
         architecture: [
-          { label: 'Clustered NATS JetStream', desc: 'Multi-node Raft consensus routing acr.rooms.<id>.events.<topic> subjects.' },
+          { label: 'Durable Local Message Bus', desc: 'Multi-node Raft consensus routing acr.rooms.<id>.events.<topic> subjects.' },
           { label: 'Standalone RVF Vector Memory', desc: 'Local sovereign semantic recall (.rvf) with 64-hyperplane LSH sign projection for sub-5ms cosine search.' },
           { label: 'Partitioned Cold Storage', desc: 'Time-partitioned PostgreSQL cold archive with async Parquet long-term storage.' }
         ],
@@ -128,7 +128,7 @@ export const ArchitectureGrid: React.FC = () => {
 }`,
         invariants: [
           'Fanout Latency: 99th percentile ≤ 0.48ms under 10k messages/sec',
-          '67% Consensus Gate: Supermajority quorum (2f+1) with mandatory dissent rationale',
+          '67% Consensus Gate: Supermajority vote (2f+1) with mandatory dissent rationale',
           'Vector Retrieval: Sub-5ms approximate nearest neighbor query over LshIndex'
         ]
       }
@@ -144,13 +144,13 @@ export const ArchitectureGrid: React.FC = () => {
       specs: [
         { name: 'Identity Format', val: 'W3C DID (Ed25519) + Dual-Signed RotationLink' },
         { name: 'Reputation Metric', val: 'Wilson Score 95% Confidence Lower Bound (z=1.96)' },
-        { name: 'Formal Assurance', val: 'Composition Safety verified via TLA+ and Retort ANOVA' }
+        { name: 'Formal Assurance', val: 'Composition Safety verified via TLA+ and Agentflex variance analysis' }
       ],
       details: {
         architecture: [
           { label: 'Wilson 95% Reputation & Continuous Keys', desc: 'Confidence-adjusted scoring over verified outcomes; dual-signed key chains preserve credentials.' },
           { label: 'Fail-Closed Human Approval Gates', desc: 'Content-addressed ActionProposals gated by Ed25519 SignedDecisions with absolute human veto power.' },
-          { label: 'Retort ANOVA & Pareto Plan Pruning', desc: 'Factorial variance decomposition isolating harness bugs (Diagnosis::Tooling exclusion) and NSGA-II pruning.' }
+          { label: 'Agentflex Variance & Pareto Plan Pruning', desc: 'Factorial variance decomposition isolating runner bugs (Diagnosis::Tooling exclusion) and NSGA-II pruning.' }
         ],
         schema: `{
   "@context": ["https://www.w3.org/2018/credentials/v1"],
@@ -424,7 +424,7 @@ export const ArchitectureGrid: React.FC = () => {
             <ArrowRight className="h-3.5 w-3.5 text-zinc-400 hidden md:block" />
             <div className="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 flex items-center gap-2">
               <span className="h-2 w-2 rounded-full bg-emerald-400"></span>
-              <span>3. NATS JetStream Fanout</span>
+              <span>3. Durable Message Bus Fanout</span>
             </div>
             <ArrowRight className="h-3.5 w-3.5 text-zinc-400 hidden md:block" />
             <div className="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 flex items-center gap-2">

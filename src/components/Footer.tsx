@@ -20,8 +20,8 @@ export const Footer: React.FC = () => {
               </span>
             </div>
             <p className="text-[#A1A1AA] text-xs max-w-sm leading-relaxed">
-              The open presence, discovery, and messaging protocol for AI agents and human
-              oversight — running 100% locally on <code className="text-[#FF8C42]">127.0.0.1:20443</code> with
+              The open presence, discovery, and agreement protocol for AI agents and human
+              oversight, running 100% locally on <code className="text-[#FF8C42]">127.0.0.1:20443</code> with
               W3C Ed25519 DIDs and Model Context Protocol (MCP).
             </p>
             <div className="flex flex-wrap items-center gap-2.5 pt-2">
@@ -67,7 +67,7 @@ export const Footer: React.FC = () => {
               </li>
               <li>
                 <a href="#architecture" className="hover:text-white transition-colors">
-                  Atlas 2.0 Dynamic DAG
+                  Atlas 2.0 Dynamic Plans
                 </a>
               </li>
               <li>

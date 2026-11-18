@@ -125,7 +125,7 @@ export const OpsRoomModal: React.FC<OpsRoomModalProps> = ({ isOpen, onClose }) =
       await new Promise((r) => setTimeout(r, 450));
     }
 
-    // Step 2: Quorum Voting
+    // Step 2: Consensus Gate Voting
     Atlas2Engine.transitionPhase(inc, 'awaiting_quorum');
     const plan = Atlas2Engine.compileExecutionPlan(inc, scenario.summary, {
       affectedNodes: scenario.affectedNodes,
@@ -135,7 +135,7 @@ export const OpsRoomModal: React.FC<OpsRoomModalProps> = ({ isOpen, onClose }) =
     Atlas2Engine.simulateDryRun(plan);
 
     const ballots: ConsensusBallot[] = [
-      ByzantineConsensusEngine.signBallot(inc.id, DEFAULT_SQUAD.agents[0], 'approve', 0.98, 'DAG execution plan validated'),
+      ByzantineConsensusEngine.signBallot(inc.id, DEFAULT_SQUAD.agents[0], 'approve', 0.98, 'Atlas 2.0 execution plan validated'),
       ByzantineConsensusEngine.signBallot(inc.id, DEFAULT_SQUAD.agents[1], 'approve', 0.94, 'Telemetry thresholds satisfied'),
       ByzantineConsensusEngine.signBallot(inc.id, DEFAULT_SQUAD.agents[2], 'approve', 0.96, 'Zero-trust containment verified'),
       ByzantineConsensusEngine.signBallot(inc.id, DEFAULT_SQUAD.agents[3], 'approve', 0.91, 'Schema integrity preserved'),
@@ -143,9 +143,9 @@ export const OpsRoomModal: React.FC<OpsRoomModalProps> = ({ isOpen, onClose }) =
     ];
     inc.ballots = ballots;
 
-    const quorum = ByzantineConsensusEngine.evaluateQuorum(inc.id, DEFAULT_SQUAD, ballots);
-    inc.quorum = quorum;
-    inc.canvas.liveFields.activeQuorumRatio = quorum.weightedApprovalRatio;
+    const quorumEval = ByzantineConsensusEngine.evaluateQuorum(inc.id, DEFAULT_SQUAD, ballots);
+    inc.quorumEval = quorumEval;
+    inc.canvas.liveFields.activeQuorumRatio = quorumEval.weightedApprovalRatio;
     HuddleManager.synthesizeAndSyncToCanvas(huddle, inc.canvas);
 
     sound.playApprovalChime();
@@ -217,7 +217,7 @@ export const OpsRoomModal: React.FC<OpsRoomModalProps> = ({ isOpen, onClose }) =
       DEFAULT_SQUAD,
       working.ballots
     );
-    working.quorum = newQuorum;
+    working.quorumEval = newQuorum;
     working.canvas.liveFields.activeQuorumRatio = newQuorum.weightedApprovalRatio;
     setCurrentIncident(working);
   };
@@ -226,7 +226,7 @@ export const OpsRoomModal: React.FC<OpsRoomModalProps> = ({ isOpen, onClose }) =
   const handleExportCertificate = () => {
     const ledger = new CryptographicAuditLedger(currentIncident.id);
     ledger.recordBlock(currentIncident.id, 'DELIBERATION_TURN', { count: currentIncident.deliberationTurns.length });
-    ledger.recordBlock(currentIncident.id, 'QUORUM_EVALUATION', { quorum: currentIncident.quorum });
+    ledger.recordBlock(currentIncident.id, 'QUORUM_EVALUATION', { quorumEval: currentIncident.quorumEval });
     const cert = ledger.generateComplianceCertificate(currentIncident.id);
 
     const blob = new Blob([JSON.stringify(cert, null, 2)], { type: 'application/json' });
@@ -300,7 +300,7 @@ export const OpsRoomModal: React.FC<OpsRoomModalProps> = ({ isOpen, onClose }) =
 
             <ConsensusBallotBox
               ballots={currentIncident.ballots}
-              quorum={currentIncident.quorum}
+              quorumEval={currentIncident.quorumEval}
               humanApproved={humanApproved}
               onToggleHumanApproval={() => setHumanApproved(!humanApproved)}
               onExecutePlan={handleExecutePlan}

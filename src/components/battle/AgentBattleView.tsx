@@ -28,7 +28,7 @@ const DEFAULT_CANDIDATE_A: BattleCandidate = {
   name: 'Agent Did-01',
   model: 'Claude-3.7-Sonnet',
   promptStrategy: 'ReAct + Honest Scoring',
-  harness: 'Multi-Way ANOVA DoE',
+  harness: 'Agentflex Factorial DoE',
   latencyMs: 184,
   spendUsd: 0.0024,
   tokens: 418,
@@ -39,7 +39,7 @@ const DEFAULT_CANDIDATE_A: BattleCandidate = {
 export async function enforceQuorumGate(ballots: Ballot[]): Promise<GateVerdict> {
   const supermajority = ballots.filter(b => b.confidence >= 0.67);
   if (supermajority.length / ballots.length < 0.67) {
-    return { verdict: 'PARK_AWAITING_APPROVAL', rationale: 'Quorum below threshold' };
+    return { verdict: 'PARK_AWAITING_APPROVAL', rationale: 'Consensus gate below threshold' };
   }
   return { verdict: 'APPROVE', rationale: 'Supermajority verified without dissent' };
 }`,
@@ -59,7 +59,7 @@ const DEFAULT_CANDIDATE_B: BattleCandidate = {
   coveragePct: 96.8,
   paretoRank: 1,
   paretoStatus: 'COST_OPTIMAL',
-  outputContent: `// Cost-Optimized Quorum Gate Implementation
+  outputContent: `// Cost-Optimized 67% Consensus Gate Implementation
 export async function enforceQuorumGate(ballots: Ballot[]): Promise<GateVerdict> {
   let approves = 0;
   for (const b of ballots) {
@@ -82,7 +82,7 @@ export const AgentBattleView: React.FC<AgentBattleViewProps> = ({
   const [candidateA, setCandidateA] = useState<BattleCandidate>(DEFAULT_CANDIDATE_A);
   const [candidateB, setCandidateB] = useState<BattleCandidate>(DEFAULT_CANDIDATE_B);
   const [selectedPrompt, setSelectedPrompt] = useState<string>(
-    'Implement Byzantine Fault Recovery with fail-closed human veto gates under adversarial conditions.'
+    'Implement 67% Consensus Gate recovery with fail-closed human veto gates under adversarial conditions.'
   );
   const [userVoted, setUserVoted] = useState<string | null>(null);
 
@@ -146,7 +146,7 @@ export const AgentBattleView: React.FC<AgentBattleViewProps> = ({
             </h2>
           </div>
           <p className="text-xs text-neutral-300 font-mono mt-1">
-            Blind side-by-side evaluation over ANOVA factors and Wilson 95% reputation bounds
+            Blind side-by-side evaluation over Agentflex factorial metrics and Wilson 95% reputation bounds
           </p>
         </div>
 

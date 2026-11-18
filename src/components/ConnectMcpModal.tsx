@@ -372,9 +372,9 @@ export const ConnectMcpModal: React.FC<ConnectMcpModalProps> = ({
                   <div className="text-[11px] text-[#A1A1AA] font-mono-code">
                     {healthStatus === 'idle' && 'Click Test Connection to verify loopback reachability and Bearer auth.'}
                     {healthStatus === 'checking' && 'Probing local acr-core daemon...'}
-                    {healthStatus === 'online' && `Connected (${healthLatency ?? 0}ms) — authenticated & ready`}
-                    {healthStatus === 'unauthorized' && 'HTTP 401 Unauthorized — enter valid ACR_API_TOKEN above'}
-                    {healthStatus === 'offline' && 'Daemon offline — start acrd -bind 127.0.0.1 -port 20443'}
+                    {healthStatus === 'online' && `Connected (${healthLatency ?? 0}ms), authenticated & ready`}
+                    {healthStatus === 'unauthorized' && 'HTTP 401 Unauthorized, enter valid ACR_API_TOKEN above'}
+                    {healthStatus === 'offline' && 'Daemon offline, start acrd -bind 127.0.0.1 -port 20443'}
                   </div>
                 </div>
                 <button

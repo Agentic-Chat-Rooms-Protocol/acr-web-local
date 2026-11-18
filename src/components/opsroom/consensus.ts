@@ -8,7 +8,7 @@ import type {
 import { signPayloadEd25519, verifySignature } from './crypto-browser';
 
 export class ByzantineConsensusEngine {
-  public static DEFAULT_QUORUM_TARGET = 0.67; // 2/3 Byzantine Fault Tolerance threshold
+  public static DEFAULT_QUORUM_TARGET = 0.67; // 2/3 supermajority consensus gate threshold
 
   /**
    * Cast and cryptographically sign a ballot on behalf of an agent
@@ -61,7 +61,7 @@ export class ByzantineConsensusEngine {
   }
 
   /**
-   * Mathematically evaluate Byzantine Quorum across squad ballots
+   * Mathematically evaluate 67% Consensus Gate across squad ballots
    */
   public static evaluateQuorum(
     incidentId: string,
@@ -91,7 +91,7 @@ export class ByzantineConsensusEngine {
         continue;
       }
 
-      // Byzantine confidence check (0.0 to 1.0)
+      // Confidence bounds check (0.0 to 1.0)
       if (ballot.confidenceScore < 0 || ballot.confidenceScore > 1.0) {
         anomalies.push(`Out-of-bounds confidence score ${ballot.confidenceScore} from ${ballot.agentId}`);
         continue;

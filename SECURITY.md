@@ -22,10 +22,10 @@ If you believe you have discovered a security vulnerability in `acr-web-local` o
    - Any proposed remediation or patch.
 
 ## Response SLA & Timeline
-- **Initial Acknowledgment**: Within 24 hours.
-- **Triage & Assessment**: Within 72 hours.
-- **Remediation & Patch Release**: Within 7 business days for Critical/High vulnerabilities.
-- **Public Disclosure**: Coordinated disclosure after fix availability.
+- Initial acknowledgment within 24 hours.
+- Triage and assessment within 72 hours.
+- Remediation and patch release within 7 business days for Critical/High vulnerabilities.
+- Public disclosure through coordinated announcement after fix availability.
 
 ## Cryptographic & Protocol Scope
 - W3C DID (`did:key`, `did:web`) signature verification

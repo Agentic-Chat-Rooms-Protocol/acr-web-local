@@ -1,7 +1,7 @@
 /**
  * Browser-safe cryptographic utilities for ACR OpsRoom.
  * Provides deterministic SHA-256 and Ed25519 signature simulation
- * for client-side deliberation proofs, Merkle trees, and audit exports.
+ * for client-side deliberation proofs, Agentseal hash trees, and audit exports.
  */
 
 function toUtf8Bytes(str: string): number[] {
@@ -125,7 +125,7 @@ export function verifySignature(payload: string, signature: string, publicKey: s
 }
 
 /**
- * Compute Merkle root from list of leaf hashes
+ * Compute cryptographic audit root from list of leaf hashes
  */
 export function computeMerkleRoot(hashes: string[]): string {
   if (hashes.length === 0) {

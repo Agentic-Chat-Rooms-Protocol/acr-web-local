@@ -162,7 +162,7 @@ export class Atlas2Engine {
   }
 
   /**
-   * Compile a multi-step execution plan DAG with preflight dry-run validation.
+   * Compile a multi-step execution plan graph with preflight dry-run validation.
    */
   public static compileExecutionPlan(
     incident: OpsIncident, 
@@ -225,7 +225,7 @@ export class Atlas2Engine {
   }
 
   /**
-   * Simulate a preflight dry run of the compiled DAG.
+   * Simulate a preflight dry run of the compiled execution plan.
    */
   public static simulateDryRun(plan: ExecutionPlan): boolean {
     for (const step of plan.steps) {

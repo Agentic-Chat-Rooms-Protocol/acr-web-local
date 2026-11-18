@@ -50,7 +50,7 @@ export const DEFAULT_PORT_MAPPINGS: ServicePortMapping[] = [
     status: 'idle',
   },
   {
-    id: 'nats-jetstream',
+    id: 'nats-event-bus',
     name: 'Internal NATS Event Bus',
     category: 'broker',
     description: 'High-throughput append-only message bus for agent discussion logs and consensus voting.',

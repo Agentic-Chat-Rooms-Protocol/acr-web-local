@@ -4,7 +4,7 @@ import { sound } from '../../utils/sound';
 
 interface ConsensusBallotBoxProps {
   ballots: ConsensusBallot[];
-  quorum?: QuorumEvaluation;
+  quorumEval?: QuorumEvaluation;
   humanApproved: boolean;
   onToggleHumanApproval: () => void;
   onExecutePlan: () => void;
@@ -15,7 +15,7 @@ interface ConsensusBallotBoxProps {
 
 export const ConsensusBallotBox: React.FC<ConsensusBallotBoxProps> = ({
   ballots,
-  quorum,
+  quorumEval,
   humanApproved,
   onToggleHumanApproval,
   onExecutePlan,
@@ -23,10 +23,10 @@ export const ConsensusBallotBox: React.FC<ConsensusBallotBoxProps> = ({
   onToggleBallotDecision,
   incidentStatus,
 }) => {
-  const approvalPercent = quorum ? Math.round(quorum.weightedApprovalRatio * 100) : 0;
-  const thresholdPercent = quorum ? Math.round(quorum.weightedQuorumTarget * 100) : 67;
-  const isQuorumMet = quorum ? quorum.thresholdReached : false;
-  const isEscalated = quorum?.status === 'escalated_human';
+  const approvalPercent = quorumEval ? Math.round(quorumEval.weightedApprovalRatio * 100) : 0;
+  const thresholdPercent = quorumEval ? Math.round(quorumEval.weightedQuorumTarget * 100) : 67;
+  const isQuorumMet = quorumEval ? quorumEval.thresholdReached : false;
+  const isEscalated = quorumEval?.status === 'escalated_human';
 
   return (
     <section 
@@ -37,7 +37,7 @@ export const ConsensusBallotBox: React.FC<ConsensusBallotBoxProps> = ({
         <div>
           <h3 id="consensus-heading" className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
             <ShieldCheck className="w-4 h-4 text-emerald-400" aria-hidden="true" />
-            Byzantine Quorum Consensus Box
+            67% Consensus Gate Ballot Box
           </h3>
           <p className="text-xs text-slate-400 mt-0.5">
             Guarantees 2/3 supermajority agreement across signed W3C Ed25519 DIDs.
@@ -50,15 +50,15 @@ export const ConsensusBallotBox: React.FC<ConsensusBallotBoxProps> = ({
             isEscalated ? 'bg-amber-950/60 text-amber-300 border-amber-500/40' :
             'bg-slate-900 text-slate-400 border-white/10'
           }`}>
-            {quorum ? quorum.status.replace('_', ' ') : 'STANDBY'}
+            {quorumEval ? quorumEval.status.replace('_', ' ') : 'STANDBY'}
           </span>
         </div>
       </div>
 
-      {/* Quorum Progress Meter */}
+      {/* Consensus Gate Progress Meter */}
       <div className="mb-5 p-4 rounded-2xl bg-slate-900/70 border border-white/10">
         <div className="flex items-center justify-between text-xs mb-2">
-          <span className="font-semibold text-slate-300">Weighted Quorum Ratio</span>
+          <span className="font-semibold text-slate-300">Weighted Consensus Ratio</span>
           <span className="font-mono font-bold text-white">
             {approvalPercent}% <span className="text-slate-500 font-normal">/ {thresholdPercent}% Target</span>
           </span>
@@ -91,7 +91,7 @@ export const ConsensusBallotBox: React.FC<ConsensusBallotBoxProps> = ({
             {isQuorumMet ? (
               <>
                 <Check className="h-3.5 w-3.5" />
-                <span>67% Byzantine Quorum Achieved</span>
+                <span>67% Consensus Gate Achieved</span>
               </>
             ) : (
               'Awaiting Supermajority'

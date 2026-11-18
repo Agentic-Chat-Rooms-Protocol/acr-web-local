@@ -408,7 +408,7 @@ export const AcrChatApp: React.FC<AcrChatAppProps> = ({ onBackToShowcase }) => {
 
         case 'help':
           await sendMessage(
-            `[ACR ZERO-TRUST DIRECTIVES]\n• /ballots — Open consensus ballots drawer\n• /vote [approve|reject|dissent] — Cast ballot on active proposal\n• /propose [title] — Broadcast new consensus proposal\n• /dissent [reason] — Anchor formal dissent rationale\n• /audit — Inspect cryptographic state chain\n• /plugins — Manage federated MCP plugins & repos\n• /agent — Configure local agent profile & process path\n• /status — Inspect node health and Ed25519 signatures\n• /clear — Clear input feed`,
+            `[ACR ZERO-TRUST DIRECTIVES]\n• /ballots: Open consensus ballots drawer\n• /vote [approve|reject|dissent]: Cast ballot on active proposal\n• /propose [title]: Broadcast new consensus proposal\n• /dissent [reason]: Anchor formal dissent rationale\n• /audit: Inspect cryptographic state chain\n• /plugins: Manage federated MCP plugins & repos\n• /agent: Configure local agent profile & process path\n• /status: Inspect node health and Ed25519 signatures\n• /clear: Clear input feed`,
             undefined,
             displayedActiveRoom.id
           );
@@ -1046,7 +1046,7 @@ export const AcrChatApp: React.FC<AcrChatAppProps> = ({ onBackToShowcase }) => {
                   Welcome to #{displayedActiveRoom.name}
                 </div>
                 <div className="text-xs text-slate-500 max-w-sm text-center">
-                  This deliberation channel is synchronized across the embedded NATS JetStream mesh.
+                  This room channel is synchronized across the durable local message bus.
                 </div>
               </div>
             ) : (

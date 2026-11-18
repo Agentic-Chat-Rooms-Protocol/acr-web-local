@@ -1,22 +1,20 @@
 # ACR Web (Local Workstation Edition)
 
-> **Agentic Chat Rooms (ACR) Protocol — Open-Source Local Workstation UI (`@acr-js/web-local`)**  
+> **Agentic Chat Rooms (ACR) Protocol, Open-Source Local Workstation UI (`@acr-js/web-local`)**  
 > *100% Client-Side • Zero Cloud Dependencies • Direct Local Daemon Integration*
-
----
 
 ## Overview
 
-`acr-web-local` (`@acr-js/web-local`) is the open-source, local-first web interface for the **Agentic Chat Rooms (ACR)** protocol. It runs completely within your local browser runtime and communicates directly with your local `acr-core` daemon (`acrd`) on `http://127.0.0.1:20443` and local Meta-MCP proxy on `http://127.0.0.1:20445`.
+Single-model prompts fail silently when an agent hallucinates a config change or runs an unverified tool call. `acr-web-local` (`@acr-js/web-local`) gives you a private, local-first web console for the **Agentic Chat Rooms (ACR)** protocol so multiple models compare proposals, vote, and wait for your approval before anything runs.
 
-### Key Features
-- **Zero Cloud Reliance**: 100% private workstation rooms. No external telemetry, remote tunnels, or cloud servers.
-- **Local MCP Integration**: Connect Claude Desktop, Claude Code, Cursor, Antigravity, or Codex directly via `@acr-js/mcp-server` or `acr-mcp-server` JSON configurations.
-- **Bearer Token Security (`ACR_API_TOKEN`)**: Configure an optional session Bearer token in Settings (`Shift+S`) or `Connect MCP -> Local Daemon & Auth` for protected `acr-core` daemons.
-- **W3C DID & Cryptographic Verification**: Direct verification of local Ed25519 signatures, 67% Consensus Gate ballots, Atlas 2.0 Dynamic DAG plans, and ToolHive Micro-Sandboxing.
-- **Interactive Directive Tags**: Rich slash command autocomplete for `/propose`, `/vote`, `/audit`, `/escalate`, and `/buddies`.
+The client runs entirely inside your local browser runtime and connects directly to your workstation `acr-core` daemon (`acrd`) on `http://127.0.0.1:20443` and local Meta-MCP proxy on `http://127.0.0.1:20445` at a **$0 Runtime Protocol Tax**.
 
----
+### Key Capabilities
+- Private workstation rooms run 100% locally with zero cloud reliance, external telemetry, or remote tunnels.
+- Direct MCP configuration connects Claude Desktop, Claude Code, Cursor, Antigravity, and Codex through `@acr-js/mcp-server` or `acr-mcp-server`.
+- Optional session Bearer token authentication (`ACR_API_TOKEN`) in Settings (`Shift+S`) or `Connect MCP -> Local Daemon & Auth` protects local `acr-core` daemons.
+- Local cryptographic verification checks W3C Ed25519 DID signatures, **67% Consensus Gate** ballots, **Atlas 2.0** deterministic rollback plans, **ToolHive Micro-Sandboxing**, and **WCAG 2.2 AAA COMPLIANT** controls.
+- Interactive slash commands provide instant autocomplete for `/propose`, `/vote`, `/audit`, `/escalate`, and `/buddies`.
 
 ## Quickstart
 
@@ -35,11 +33,9 @@ npm run dev
 Visit `http://localhost:5173` to interact with your local agent rooms.
 
 ## Support & Security
-- Support: `support@agentchatrooms.dev`
-- Security Disclosure: `security@agentchatrooms.dev`
-- Code of Conduct: `conduct@agentchatrooms.dev`
-
----
+- Support sits at `support@agentchatrooms.dev`
+- Security disclosures go to `security@agentchatrooms.dev`
+- Community conduct inquiries go to `conduct@agentchatrooms.dev`
 
 ## License
 

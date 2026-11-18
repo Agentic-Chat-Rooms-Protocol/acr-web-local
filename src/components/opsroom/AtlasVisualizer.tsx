@@ -49,32 +49,32 @@ export const AtlasVisualizer: React.FC = () => {
     {
       step: 'Phase 3',
       title: 'Squad Deliberation',
-      subtitle: 'Parallel Cross-Agent Critique & DAG',
-      detail: 'Heterogeneous agents (SRE, SecOps, DataOps, FinOps) critique hypotheses in parallel. Atlas decomposes goals into a dependency-directed DAG.',
-      tag: 'Goal-Directed DAG',
+      subtitle: 'Parallel Cross-Agent Critique & Planning',
+      detail: 'Heterogeneous agents (SRE, SecOps, DataOps, FinOps) critique hypotheses in parallel. Atlas decomposes goals into a dependency-ordered execution plan.',
+      tag: 'Atlas 2.0 Dynamic Plan',
       icon: Layers,
     },
     {
       step: 'Phase 4',
-      title: 'Byzantine Quorum',
+      title: '67% Consensus Gate',
       subtitle: '67% Ed25519 Weighted Consensus',
-      detail: 'M-of-N quorum where each vote is cryptographically signed with W3C Ed25519 DIDs. Auto-escalates to Human Dual Consent on high-risk actions.',
-      tag: 'Fault-Tolerant Consensus',
+      detail: 'Supermajority vote where each ballot is cryptographically signed with W3C Ed25519 DIDs. Auto-escalates to Human Dual Consent on high-risk actions.',
+      tag: 'Signed Consensus Gate',
       icon: Lock,
     },
     {
       step: 'Phase 5',
       title: 'Sandbox Execution',
       subtitle: 'ToolHive Micro-Container Containment',
-      detail: 'All remediation actions execute inside isolated micro-containers with locked egress allowlists, workspace scope, and automatic rollback DAGs.',
+      detail: 'All remediation actions execute inside isolated micro-containers with locked egress allowlists, workspace scope, and deterministic rollback plans.',
       tag: 'ToolHive Zero-Trust',
       icon: ShieldCheck,
     },
     {
       step: 'Phase 6',
-      title: 'Merkle Audit Proof',
+      title: 'Agentseal Audit Proof',
       subtitle: 'Tamper-Proof Audit & Live Canvas',
-      detail: 'Cryptographic Merkle tree computes an immutable digest of all turns, votes, and container logs. Exportable to SOC2 & ISO27001 audit standards.',
+      detail: 'Cryptographic hash chain computes an immutable digest of all turns, votes, and container logs. Exportable to SOC2 & ISO27001 audit standards.',
       tag: 'Cryptographic Ledger',
       icon: CheckCircle2,
     },
@@ -101,7 +101,7 @@ export const AtlasVisualizer: React.FC = () => {
                 Atlas 2.0 Reasoning &amp; Deliberation Architecture
               </h3>
               <p className="text-xs text-slate-400 mt-0.5">
-                Compare Salesforce Atlas 1.0 single-agent prompt-chaining vs ACR Atlas 2.0 Goal-Directed DAG.
+                Compare Salesforce Atlas 1.0 single-agent prompt-chaining vs ACR Atlas 2.0 Goal-Directed Execution Plans.
               </p>
             </div>
           </div>
@@ -220,7 +220,7 @@ export const AtlasVisualizer: React.FC = () => {
             })}
           </div>
 
-          {/* Active Phase Deep Dive Card */}
+          {/* Active Phase Detail Card */}
           <div 
             role="tabpanel"
             id={`phase-panel-${activePhaseIndex}`}
@@ -282,7 +282,7 @@ export const AtlasVisualizer: React.FC = () => {
               <span className="text-[10px] font-mono text-red-400 uppercase font-bold tracking-wider">Step 3 (Vulnerable)</span>
               <h4 className="text-xs font-bold text-white mt-1.5">Direct CRM Mutation</h4>
               <p className="text-[11px] text-slate-400 mt-1 leading-relaxed">
-                Directly writes records without sandbox containment, rollbacks, or quorum approval.
+                Directly writes records without sandbox containment, rollbacks, or 67% Consensus Gate approval.
               </p>
             </div>
 

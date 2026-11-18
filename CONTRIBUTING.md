@@ -28,10 +28,10 @@ npm run build
 ```
 
 ## Development & Commit Standards
-- **Conventional Commits**: Format commit messages as `feat(scope): add feature`, `fix(scope): resolve issue`, `docs(scope): update spec`, `test(scope): add tests`.
-- **Moat & Local-First Discipline**: Keep `acr-web-local` 100% local-first (`http://127.0.0.1:20443`) with zero cloud dependencies, telemetry, or proprietary endpoints.
-- **Code Quality**: Run `npm run lint`, `npx tsc -b --noEmit`, and `npm run build` before submitting pull requests.
-- **AI-Readiness**: Keep `AGENTS.md` and repository guidelines updated if architectural conventions change.
+- Format commit messages with Conventional Commits (`feat(scope): add feature`, `fix(scope): resolve issue`, `docs(scope): update spec`, `test(scope): add tests`).
+- Keep `acr-web-local` 100% local-first (`http://127.0.0.1:20443`) with zero cloud dependencies, telemetry, or proprietary endpoints.
+- Run `npm run lint`, `npx tsc -b --noEmit`, and `npm run build` before submitting pull requests.
+- Keep `AGENTS.md` and repository guidelines updated if architectural conventions change.
 
 ## Pull Request Process
 1. Push your branch to origin.

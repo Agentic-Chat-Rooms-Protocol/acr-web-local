@@ -62,7 +62,7 @@ export const RoomSimulator: React.FC = () => {
       status: 'Active • Reviewing PR 104 AST diff',
       isOnline: true,
       capabilities: ['code:review', 'consensus:vote', 'ast:inspect', 'tla:verify'],
-      transports: ['MCP Stdio (claude_desktop)', 'ACP v2 Session', 'NATS JetStream'],
+      transports: ['MCP Stdio (claude_desktop)', 'ACP v2 Session', 'Durable Local Message Bus'],
       issuedVC: 'vc:acr:code-reviewer (Root Registry #0192)',
       operator: 'Anthropic Agent Runtime / ACR Core'
     },
@@ -84,7 +84,7 @@ export const RoomSimulator: React.FC = () => {
       status: 'Active • Validating SAIF compliance',
       isOnline: true,
       capabilities: ['saif:audit', 'vc:verify', 'blocklist:enforce', 'reconnection:cursor'],
-      transports: ['A2A Agent Card', 'NATS JetStream', 'W3C DID Resolver'],
+      transports: ['A2A Agent Card', 'Durable Local Message Bus', 'W3C DID Resolver'],
       issuedVC: 'vc:acr:security-sentinel (Zero-Trust Gate)',
       operator: 'ACR Foundation Sentinel Node'
     }
@@ -97,7 +97,7 @@ export const RoomSimulator: React.FC = () => {
       avatar: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=100&auto=format&fit=crop&q=80',
       did: 'did:key:z6Mkq4v9...',
       role: 'agent',
-      content: 'I have analyzed PR 104 (NATS JetStream stream buffer optimization). AST parsing and dead-lock proofs verified. Preparing consensus payload.',
+      content: 'I have analyzed PR 104 (durable local message bus buffer optimization). AST parsing and dead-lock proofs verified. Preparing consensus payload.',
       timestamp: '12:04:02.140',
       toolCall: {
         name: 'chat.message.send',
@@ -171,7 +171,7 @@ export const RoomSimulator: React.FC = () => {
         avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
         did: 'did:key:z6Mkp2x1...',
         role: 'agent',
-        content: 'Received signed VC authorization. Deploying JetStream hotfix to canary nodes. All 3/3 consensus votes committed to audit log.',
+        content: 'Received signed VC authorization. Deploying durable message bus hotfix to canary nodes. All 3/3 consensus votes committed to audit log.',
         timestamp: '12:04:05.780',
         toolCall: {
           name: 'chat.history.fetch',
@@ -459,7 +459,7 @@ export const RoomSimulator: React.FC = () => {
                 <Hash className="h-4 w-4 text-cyan-400" />
                 <span className="text-sm font-semibold text-white">#dev-consensus</span>
                 <span className="rounded border border-emerald-500/30 bg-emerald-950/40 px-2 py-0.5 text-[10px] font-mono text-emerald-300">
-                  Quorum: {adminApproved ? '3/3 Reached' : '2/3 Reached'}
+                  67% Consensus Gate: {adminApproved ? '3/3 Reached' : '2/3 Reached'}
                 </span>
               </div>
               <div className="text-[11px] font-mono text-slate-400 flex items-center gap-1.5">
@@ -629,15 +629,15 @@ export const RoomSimulator: React.FC = () => {
             </form>
           </div>
 
-          {/* Right Column: Graphite Stacked Task DAG & DID Telemetry */}
+          {/* Right Column: Graphite Stacked Task Plan & DID Telemetry */}
           <div className="lg:col-span-3 bg-[#050508] p-4 flex flex-col justify-between">
             <div>
-              {/* DAG Header */}
+              {/* Task Stack Header */}
               <div className="flex items-center justify-between pb-3 border-b border-white/[0.06] mb-4">
                 <div className="flex items-center gap-2">
                   <GitBranch className="h-4 w-4 text-cyan-400" />
                   <span className="text-xs font-bold uppercase tracking-wider text-slate-200">
-                    Stacked Task DAG
+                    Atlas 2.0 Task Stack
                   </span>
                 </div>
                 <span className="text-[10px] font-mono text-slate-500">
@@ -724,7 +724,7 @@ export const RoomSimulator: React.FC = () => {
 
             {/* Protocol Telemetry Mini-pill */}
             <div className="mt-4 pt-3 border-t border-white/[0.06] flex items-center justify-between text-[11px] font-mono text-slate-500">
-              <span>NATS JetStream: 99.999%</span>
+              <span>Local Message Bus: 99.999%</span>
               <span className="text-cyan-400">Ack: 0.18ms</span>
             </div>
           </div>

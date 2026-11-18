@@ -48,7 +48,7 @@ export class SandboxExecutor {
       executedSteps.push(step);
     }
 
-    outputLog.push(`[ToolHive] All ${plan.steps.length} execution DAG steps successfully committed.`);
+    outputLog.push(`[ToolHive] All ${plan.steps.length} execution plan steps successfully committed.`);
 
     return {
       allSucceeded: true,

@@ -277,7 +277,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </div>
                 <div>
                   <div className="font-bold text-white text-sm">ACR OpsRoom</div>
-                  <div className="text-[11px] text-[#D4D4D8]">67% Consensus Gate &amp; Atlas 2.0 Dynamic DAG</div>
+                  <div className="text-[11px] text-[#D4D4D8]">67% Consensus Gate &amp; Atlas 2.0 Rollbacks</div>
                 </div>
               </div>
               <ChevronRight className="h-4 w-4 text-[#FF8C42] group-hover:translate-x-0.5 transition-transform" aria-hidden="true" />

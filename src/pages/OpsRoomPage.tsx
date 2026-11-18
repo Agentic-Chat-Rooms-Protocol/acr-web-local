@@ -196,7 +196,7 @@ export const OpsRoomPage: React.FC<OpsRoomPageProps> = ({
       await new Promise((r) => setTimeout(r, 450));
     }
 
-    // Quorum Voting phase
+    // Consensus Gate Voting phase
     Atlas2Engine.transitionPhase(inc, 'awaiting_quorum');
     const plan = Atlas2Engine.compileExecutionPlan(inc, scenario.summary, {
       affectedNodes: scenario.affectedNodes,
@@ -206,7 +206,7 @@ export const OpsRoomPage: React.FC<OpsRoomPageProps> = ({
     Atlas2Engine.simulateDryRun(plan);
 
     const ballots: ConsensusBallot[] = [
-      ByzantineConsensusEngine.signBallot(inc.id, DEFAULT_SQUAD.agents[0], 'approve', 0.98, 'DAG execution plan validated'),
+      ByzantineConsensusEngine.signBallot(inc.id, DEFAULT_SQUAD.agents[0], 'approve', 0.98, 'Atlas 2.0 execution plan validated'),
       ByzantineConsensusEngine.signBallot(inc.id, DEFAULT_SQUAD.agents[1], 'approve', 0.94, 'Telemetry thresholds satisfied'),
       ByzantineConsensusEngine.signBallot(inc.id, DEFAULT_SQUAD.agents[2], 'approve', 0.96, 'Zero-trust containment verified'),
       ByzantineConsensusEngine.signBallot(inc.id, DEFAULT_SQUAD.agents[3], 'approve', 0.91, 'Schema integrity preserved'),
@@ -214,9 +214,9 @@ export const OpsRoomPage: React.FC<OpsRoomPageProps> = ({
     ];
     inc.ballots = ballots;
 
-    const quorum = ByzantineConsensusEngine.evaluateQuorum(inc.id, DEFAULT_SQUAD, ballots);
-    inc.quorum = quorum;
-    inc.canvas.liveFields.activeQuorumRatio = quorum.weightedApprovalRatio;
+    const quorumEval = ByzantineConsensusEngine.evaluateQuorum(inc.id, DEFAULT_SQUAD, ballots);
+    inc.quorumEval = quorumEval;
+    inc.canvas.liveFields.activeQuorumRatio = quorumEval.weightedApprovalRatio;
     HuddleManager.synthesizeAndSyncToCanvas(huddle, inc.canvas);
 
     sound.playApprovalChime();
@@ -288,7 +288,7 @@ export const OpsRoomPage: React.FC<OpsRoomPageProps> = ({
       DEFAULT_SQUAD,
       working.ballots
     );
-    working.quorum = newQuorum;
+    working.quorumEval = newQuorum;
     working.canvas.liveFields.activeQuorumRatio = newQuorum.weightedApprovalRatio;
     setCurrentIncident(working);
   };
@@ -297,7 +297,7 @@ export const OpsRoomPage: React.FC<OpsRoomPageProps> = ({
   const handleExportCertificate = () => {
     const ledger = new CryptographicAuditLedger(currentIncident.id);
     ledger.recordBlock(currentIncident.id, 'DELIBERATION_TURN', { count: currentIncident.deliberationTurns.length });
-    ledger.recordBlock(currentIncident.id, 'QUORUM_EVALUATION', { quorum: currentIncident.quorum });
+    ledger.recordBlock(currentIncident.id, 'QUORUM_EVALUATION', { quorumEval: currentIncident.quorumEval });
     const cert = ledger.generateComplianceCertificate(currentIncident.id);
 
     const blob = new Blob([JSON.stringify(cert, null, 2)], { type: 'application/json' });
@@ -366,7 +366,7 @@ export const OpsRoomPage: React.FC<OpsRoomPageProps> = ({
               <Flame className="w-4 h-4 text-amber-400" />
               <span className="font-bold text-xs text-white">ACR OpsRoom</span>
               <span className="rounded-full bg-gradient-to-r from-amber-500/20 to-cyan-500/20 border border-amber-400/40 text-amber-300 text-[10px] font-mono px-2 py-0.5 uppercase font-bold">
-                BFT Quorum
+                67% Consensus Gate
               </span>
             </div>
           </div>
@@ -391,7 +391,7 @@ export const OpsRoomPage: React.FC<OpsRoomPageProps> = ({
                   : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
               }`}
             >
-              Atlas 2.0 DAG
+              Atlas 2.0 Plan
             </button>
             <button
               onClick={() => handleTabSwitch('battlecard')}
@@ -477,7 +477,7 @@ export const OpsRoomPage: React.FC<OpsRoomPageProps> = ({
           </h1>
 
           <p className="ops-hero-desc text-sm sm:text-base text-slate-300 max-w-3xl mx-auto leading-relaxed mb-8">
-            Where Salesforce charges <strong className="text-red-400 font-bold">$2.00 per conversation</strong> for fragile single-prompt hallucinations and unverified CRM writes, ACR OpsRoom delivers multi-agent goal-directed DAG planning, Ed25519 cryptographic quorum ballots, and ToolHive micro-sandboxing — with <strong>$0 platform tax</strong>.
+            Where Salesforce charges <strong className="text-red-400 font-bold">$2.00 per conversation</strong> for fragile single-prompt hallucinations and unverified CRM writes, ACR OpsRoom delivers multi-agent Atlas 2.0 dynamic plans, Ed25519 cryptographic ballots, and ToolHive Micro-Sandboxing at a <strong>$0 Runtime Protocol Tax</strong>.
           </p>
 
           {/* 4 Strategic Metric Badges (Slack Palette Elevation) */}
@@ -488,17 +488,17 @@ export const OpsRoomPage: React.FC<OpsRoomPageProps> = ({
                 <span className="text-[10px] font-mono uppercase font-bold tracking-wider">Cognitive Engine</span>
                 <Cpu className="w-3.5 h-3.5" />
               </div>
-              <div className="font-bold text-white text-sm">Atlas 2.0 Dynamic DAG</div>
-              <div className="text-[11px] text-slate-400 mt-0.5">Goal state machine + rollbacks</div>
+              <div className="font-bold text-white text-sm">Atlas 2.0 Dynamic Plan</div>
+              <div className="text-[11px] text-slate-400 mt-0.5">Deterministic rollbacks</div>
             </div>
 
-            {/* Quadrant 2: Lush Green (Quorum Consensus) */}
+            {/* Quadrant 2: Lush Green (Consensus Gate) */}
             <div className="ops-quadrant p-4 rounded-2xl bg-slate-950/70 border border-emerald-500/30 backdrop-blur-xl shadow-lg">
               <div className="flex items-center justify-between text-emerald-400 mb-1">
-                <span className="text-[10px] font-mono uppercase font-bold tracking-wider">BFT Consensus</span>
+                <span className="text-[10px] font-mono uppercase font-bold tracking-wider">Approval Gate</span>
                 <ShieldCheck className="w-3.5 h-3.5" />
               </div>
-              <div className="font-bold text-white text-sm">67% Weighted Quorum</div>
+              <div className="font-bold text-white text-sm">67% Consensus Gate</div>
               <div className="text-[11px] text-slate-400 mt-0.5">Signed by W3C Ed25519 DIDs</div>
             </div>
 
@@ -546,7 +546,7 @@ export const OpsRoomPage: React.FC<OpsRoomPageProps> = ({
               }`}
             >
               <Layers className="w-3.5 h-3.5 text-cyan-400" />
-              <span>Atlas 2.0 DAG</span>
+              <span>Atlas 2.0 Plan</span>
             </button>
 
             <button
@@ -622,7 +622,7 @@ export const OpsRoomPage: React.FC<OpsRoomPageProps> = ({
 
                 <ConsensusBallotBox
                   ballots={currentIncident.ballots}
-                  quorum={currentIncident.quorum}
+                  quorumEval={currentIncident.quorumEval}
                   humanApproved={humanApproved}
                   onToggleHumanApproval={() => setHumanApproved(!humanApproved)}
                   onExecutePlan={handleExecutePlan}

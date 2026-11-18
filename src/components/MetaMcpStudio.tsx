@@ -1015,7 +1015,7 @@ export const MetaMcpStudio: React.FC<MetaMcpStudioProps> = ({ isOpen, onClose })
 
                   {execResult !== null && execResult !== undefined && (
                     <div className="pt-3 mt-2 border-t border-white/5 flex items-center justify-between text-[10px] text-zinc-400">
-                      <span>Audit Merkle Root: sha256:7f8e...39ab</span>
+                      <span>Agentseal Audit Chain Root: sha256:7f8e...39ab</span>
                       <span className="text-[#FF8C42] font-semibold">ToolHive Micro-Sandboxing</span>
                     </div>
                   )}

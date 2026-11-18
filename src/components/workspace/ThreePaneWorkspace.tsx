@@ -22,7 +22,7 @@ export interface ActiveAgentItem {
 
 const DEFAULT_CHANNELS: ChannelItem[] = [
   { id: 'deliberation-main', name: 'deliberation-main', unreadCount: 0 },
-  { id: 'byzantine-quorum', name: 'byzantine-quorum', unreadCount: 2 },
+  { id: 'consensus-gate', name: 'consensus-gate', unreadCount: 2 },
   { id: 'vcs-pull-requests', name: 'vcs-pull-requests', unreadCount: 1 },
   { id: 'security-gates', name: 'security-gates', unreadCount: 3, isPrivate: true },
   { id: 'incident-war-room', name: 'incident-war-room', unreadCount: 0 },
@@ -41,12 +41,12 @@ const SAMPLE_MILESTONE: ProcessMilestone = {
   status: 'COMPLETED',
   timestamp: '2026-10-04T02:15:00Z',
   authorDid: 'did:key:commander-ops',
-  summary: 'Deliberation concluded with supermajority quorum (>67%). Pruned dominated configurations on Pareto frontier.',
+  summary: 'Deliberation concluded with 67% Consensus Gate (>67%). Pruned dominated configurations on Pareto frontier.',
   steps: [
     {
       id: 'step-1-1',
       stepNumber: '1.1',
-      title: 'Execute Factorial Grid Evaluation (DoE ANOVA)',
+      title: 'Execute Factorial Grid Evaluation (Agentflex DoE)',
       agentDid: 'did:key:agent-sre-01',
       status: 'PASS',
       latencyMs: 142,
@@ -66,7 +66,7 @@ const SAMPLE_MILESTONE: ProcessMilestone = {
     {
       id: 'step-1-3',
       stepNumber: '1.3',
-      title: 'Collect Cryptographic Ed25519 Quorum Ballots',
+      title: 'Collect Cryptographic Ed25519 Consensus Ballots',
       agentDid: 'did:key:agent-sec-02',
       status: 'PASS',
       latencyMs: 88,
@@ -347,11 +347,11 @@ export const ThreePaneWorkspace: React.FC<ThreePaneWorkspaceProps> = ({
                   # {activeChannel}
                 </h2>
                 <span className="px-2 py-0.5 rounded text-xs font-mono bg-neutral-800 text-emerald-300 border border-emerald-700">
-                  [QUORUM: 3/3 NODES]
+                  [67% CONSENSUS GATE: 3/3 NODES]
                 </span>
               </div>
               <p className="text-xs font-mono text-neutral-300 mt-0.5">
-                Goal DAG: Incident Triage -&gt; Pareto Pruning -&gt; Multi-Repo VCS PR
+                Atlas 2.0 Plan: Incident Triage -&gt; Pareto Pruning -&gt; Multi-Repo VCS PR
               </p>
             </div>
 
@@ -468,7 +468,7 @@ export const ThreePaneWorkspace: React.FC<ThreePaneWorkspaceProps> = ({
               <span className="text-white">0.941</span>
             </div>
             <div className="flex justify-between">
-              <span>ANOVA ETA-SQUARED:</span>
+              <span>AGENTFLEX ETA-SQUARED:</span>
               <span className="text-white">0.872 (High Effect)</span>
             </div>
           </div>

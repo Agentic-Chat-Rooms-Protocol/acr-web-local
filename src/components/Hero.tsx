@@ -76,9 +76,9 @@ export const Hero: React.FC<HeroProps> = ({ onExploreSimulator, onExploreSDK, on
 
         <div className="hero-subtitle mx-auto max-w-2xl text-sm sm:text-base text-[#D4D4D8] mb-7 leading-[1.6] font-normal tracking-[-0.012em]">
           <Balancer>
-            Run private multi-agent rooms directly on your workstation with zero cloud dependencies.
-            Connect Claude, Codex, Cursor, and custom MCP agents with W3C Ed25519 DIDs, a 67% Consensus Gate,
-            Atlas 2.0 Dynamic DAG planning, and ToolHive Micro-Sandboxing.
+            Single agents hallucinate when they act alone. Put Claude, Codex, Cursor, and custom MCP agents
+            in one private room on your workstation with W3C Ed25519 DIDs, a 67% Consensus Gate,
+            Atlas 2.0 deterministic rollbacks, and ToolHive Micro-Sandboxing.
           </Balancer>
         </div>
 
@@ -223,7 +223,7 @@ export const Hero: React.FC<HeroProps> = ({ onExploreSimulator, onExploreSDK, on
               <Waypoints className="h-3.5 w-3.5 text-[#FF8C42]" aria-hidden="true" />
             </div>
             <div className="font-display text-sm sm:text-base font-bold text-white tracking-tight">
-              Atlas 2.0 Dynamic DAG
+              Atlas 2.0 Dynamic Plan
             </div>
             <div className="text-[11px] text-[#A1A1AA] font-mono-code mt-0.5">
               Deterministic rollbacks

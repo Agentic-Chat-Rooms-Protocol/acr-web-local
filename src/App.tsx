@@ -173,7 +173,7 @@ export const App: React.FC = () => {
       handleNavigate('simulator');
     } else if (actionId === 'copy-mcp') {
       handleNavigate('sdk');
-    } else if (actionId === 'view-dag') {
+    } else if (actionId === 'view-stack') {
       handleNavigate('diff-viewer');
     } else if (actionId === 'inspect-did') {
       handleNavigate('architecture');

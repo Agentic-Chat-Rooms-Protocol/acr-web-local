@@ -74,7 +74,7 @@ interface ConsensusEnvelope {
   pr_ids: number[];
   commit_sha: string;
   verdicts: Verdict[];
-  quorum: string;
+  consensusGate: string;
   timestamp: string;
 }
 
@@ -101,8 +101,8 @@ const DEFAULT_DEMO_STACK: Stack = {
     {
       index: 1,
       pr_number: 105,
-      branch: 'agent/devin-jetstream-quorum',
-      title: 'NATS JetStream Raft Quorum Buffer',
+      branch: 'agent/devin-eventbus-consensus',
+      title: 'Durable Message Bus Consensus Buffer',
       status: 'open',
       verdicts: [
         { agent_did: 'did:key:z6Mkq5Xv...claude', decision: 'APPROVE' }
@@ -112,7 +112,7 @@ const DEFAULT_DEMO_STACK: Stack = {
       index: 2,
       pr_number: 106,
       branch: 'agent/sentinel-dissent-record',
-      title: 'Cryptographic Dissent Merkle Ledger',
+      title: 'Cryptographic Dissent Audit Chain',
       status: 'open',
       verdicts: []
     }
@@ -226,7 +226,7 @@ const DEFAULT_DEMO_CONSENSUS: ConsensusEnvelope = {
   repo: 'ACR/acr-core',
   pr_ids: [104, 105, 106],
   commit_sha: 'a3f9b1c84e2098d7f',
-  quorum: '3/3',
+  consensusGate: '3/3',
   timestamp: '2026-09-01T11:00:00Z',
   verdicts: [
     {
@@ -297,7 +297,7 @@ const HunkRow: React.FC<{ hunk: AstDiffHunk; mode: 'split' | 'unified' }> = ({ h
     );
   }
 
-  // Split mode — pair old/new lines by index
+  // Split mode: pair old/new lines by index
   const max = Math.max(allOld.length, allNew.length);
   const rows = Array.from({ length: max }, (_, i) => ({
     old: allOld[i] ?? null,
@@ -370,7 +370,7 @@ const ConsensusProofPanel: React.FC<{ envelope: ConsensusEnvelope | null }> = ({
         <ShieldCheck className="h-3.5 w-3.5 text-[#10B981]" />
         <span className="text-[11px] font-bold text-white">Consensus Proof</span>
         <span className="text-[10px] font-mono text-[#10B981] bg-[#10B981]/10 border border-[#10B981]/25 rounded px-1.5 py-0.5">
-          Gate {envelope.quorum}
+          Gate {envelope.consensusGate}
         </span>
       </div>
       {approvals.map((v, i) => (

@@ -59,7 +59,7 @@ export class CryptographicAuditLedger {
       },
       invariantsVerified: [
         'INV-1: Zero unverified production write mutations',
-        'INV-2: 67% Byzantine Quorum reached prior to execution',
+        'INV-2: 67% Consensus Gate reached prior to execution',
         'INV-3: ToolHive zero-trust micro-sandbox process containment',
         'INV-4: Ed25519 ballot signature non-repudiation verified',
       ],
