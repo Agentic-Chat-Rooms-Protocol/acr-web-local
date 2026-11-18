@@ -41,15 +41,15 @@ export const DeliberationFeed: React.FC<DeliberationFeedProps> = ({
       <div className="flex items-center justify-between pb-4 mb-4 border-b border-white/10">
         <div>
           <h3 id="feed-heading" className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
-            <MessageSquare className="w-4 h-4 text-cyan-400" aria-hidden="true" />
-            Autonomous Deliberation Feed
+            <MessageSquare className="w-4 h-4 text-[#FF8C42]" aria-hidden="true" />
+            Coordinated Deliberation Feed
           </h3>
           <p className="text-xs text-slate-400 mt-0.5">
             Real-time cross-agent critique and hypothesis validation turns.
           </p>
         </div>
 
-        <span className="text-[11px] font-mono px-2.5 py-1 rounded-full bg-cyan-950/50 border border-cyan-500/30 text-cyan-300 font-semibold uppercase tracking-wider">
+        <span className="text-[11px] font-mono px-2.5 py-1 rounded-full bg-[#FF5500]/15 border border-[#FF5500]/35 text-[#FF8C42] font-semibold uppercase tracking-wider">
           Phase: {activePhase}
         </span>
       </div>
@@ -57,7 +57,7 @@ export const DeliberationFeed: React.FC<DeliberationFeedProps> = ({
       <div className="flex-1 overflow-y-auto max-h-[380px] space-y-3 pr-1">
         {turns.length === 0 ? (
           <div className="text-center py-16 text-xs text-slate-500">
-            War room deliberation standing by. Click &quot;Simulate Autonomous Incident Response&quot; to begin.
+            War room deliberation standing by. Click &quot;Simulate Coordinated Incident Response&quot; to begin.
           </div>
         ) : (
           turns.map((t) => {

@@ -21,12 +21,28 @@ const INITIAL_EVENTS: EventItem[] = [
 ];
 
 export const TelemetryTicker: React.FC = () => {
-  const [isRunning, setIsRunning] = useState(true);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState<boolean>(() =>
+    typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+      ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      : false
+  );
+  const [isRunning, setIsRunning] = useState<boolean>(() => !prefersReducedMotion);
   const [events, setEvents] = useState<EventItem[]>(INITIAL_EVENTS);
   const [activeSlot, setActiveSlot] = useState<number>(0);
 
   useEffect(() => {
-    if (!isRunning) return;
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return;
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const onChange = (e: MediaQueryListEvent) => {
+      setPrefersReducedMotion(e.matches);
+      if (e.matches) setIsRunning(false);
+    };
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
+
+  useEffect(() => {
+    if (!isRunning || prefersReducedMotion) return;
 
     const interval = setInterval(() => {
       const types = ['DID_HANDSHAKE', 'CAPABILITY_VC', 'TOOL_INVOKE', 'JETSTREAM_FAN', 'CONSENSUS_VOTE'];
@@ -65,33 +81,34 @@ export const TelemetryTicker: React.FC = () => {
     }, 2200);
 
     return () => clearInterval(interval);
-  }, [isRunning]);
+  }, [isRunning, prefersReducedMotion]);
 
   return (
-    <section id="governance" className="py-12 border-t border-white/[0.06] bg-[#050508]/60 min-h-[340px] box-border">
+    <section id="governance" className="py-12 border-t border-white/[0.06] bg-[#000000]/80 min-h-[340px] box-border">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        
+
         {/* Ticker Container - Fixed Box Architecture */}
-        <div className="rounded-xl border border-white/[0.08] bg-[#090a10] p-4 shadow-xl min-h-[276px] box-border">
+        <div className="rounded-xl border border-[#262626] bg-[#0D0D11] p-4 shadow-xl min-h-[276px] box-border">
           {/* Ticker Top Bar */}
           <div className="flex h-7 items-center justify-between pb-3 border-b border-white/[0.06] mb-3 box-border">
             <div className="flex items-center gap-2.5">
               <span className="relative flex h-2 w-2 shrink-0">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-cyan-400 opacity-75"></span>
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-cyan-500"></span>
+                <span className="absolute inline-flex h-full w-full animate-ping motion-reduce:animate-none rounded-full bg-[#FF8C42] opacity-75"></span>
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-[#FF5500]"></span>
               </span>
-              <span className="font-display text-xs font-bold uppercase tracking-wider text-slate-200">
+              <span className="font-display text-xs font-bold uppercase tracking-wider text-zinc-200">
                 Live Protocol Telemetry Stream
               </span>
             </div>
 
             <div className="flex items-center gap-3 font-mono-code text-[11px]">
-              <span className="text-slate-400 hidden sm:inline tabular-nums">
-                Global Cursor: <span className="text-slate-200">#994,218</span> (0-gap)
+              <span className="text-zinc-400 hidden sm:inline tabular-nums">
+                Global Cursor: <span className="text-zinc-200">994,218</span> (0-gap)
               </span>
               <button
-                onClick={() => { sound.playTick(); setIsRunning(!isRunning)} }
-                className="flex items-center gap-1 text-cyan-400 hover:text-cyan-300 transition-colors border border-cyan-500/20 bg-cyan-950/30 px-2 py-0.5 rounded cursor-pointer"
+                type="button"
+                onClick={() => { sound.playTick(); setIsRunning(!isRunning); }}
+                className="flex items-center gap-1 text-[#FF8C42] hover:text-[#FFA066] transition-colors border border-[#FF5500]/30 bg-[#FF5500]/10 px-2 py-0.5 rounded cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500]"
               >
                 {isRunning ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />}
                 <span>{isRunning ? 'Live Feed' : 'Paused'}</span>
@@ -100,7 +117,7 @@ export const TelemetryTicker: React.FC = () => {
           </div>
 
           {/* Tabular Header (Strict Grid Alignment) */}
-          <div className="hidden md:grid grid-cols-12 gap-3 px-3 h-5 items-center text-[10px] font-mono-code uppercase text-slate-400 border-b border-white/[0.04] mb-2 box-border select-none">
+          <div className="hidden md:grid grid-cols-12 gap-3 px-3 h-5 items-center text-[10px] font-mono-code uppercase text-zinc-400 border-b border-white/[0.04] mb-2 box-border select-none">
             <span className="col-span-2">TIMESTAMP</span>
             <span className="col-span-2">OPERATION</span>
             <span className="col-span-3">AGENT DID</span>
@@ -118,17 +135,17 @@ export const TelemetryTicker: React.FC = () => {
                   key={`fixed-slot-${idx}`}
                   className={`h-8 min-h-[32px] max-h-[32px] grid grid-cols-12 gap-3 items-center rounded-lg px-3 border box-border transition-colors duration-300 ${
                     isActive
-                      ? 'bg-cyan-950/30 border-cyan-500/40 text-white shadow-sm shadow-cyan-500/10'
-                      : 'bg-black/40 border-white/[0.03] text-slate-300'
+                      ? 'bg-[#FF5500]/15 border-[#FF5500]/40 text-white shadow-sm shadow-[#FF5500]/10'
+                      : 'bg-[#000000]/50 border-white/[0.04] text-zinc-300'
                   }`}
                 >
                   {/* Timestamp */}
-                  <div className="col-span-3 md:col-span-2 flex items-center gap-1.5 text-[11px] text-slate-400 truncate tabular-nums">
+                  <div className="col-span-3 md:col-span-2 flex items-center gap-1.5 text-[11px] text-zinc-400 truncate tabular-nums">
                     <span className="w-1.5 h-1.5 flex items-center justify-center shrink-0">
                       {isActive ? (
-                        <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse" />
+                        <span className="h-1.5 w-1.5 rounded-full bg-[#FF8C42] animate-pulse motion-reduce:animate-none" />
                       ) : (
-                        <span className="h-1 w-1 rounded-full bg-slate-700" />
+                        <span className="h-1 w-1 rounded-full bg-zinc-700" />
                       )}
                     </span>
                     <span>{evt.time}</span>
@@ -137,26 +154,26 @@ export const TelemetryTicker: React.FC = () => {
                   {/* Operation Badge */}
                   <div className="col-span-4 md:col-span-2 flex items-center">
                     <span className={`inline-block rounded px-1.5 py-0.5 text-[9px] truncate max-w-full font-semibold transition-colors ${
-                      isActive 
-                        ? 'bg-cyan-500/20 text-cyan-200 border border-cyan-400/40' 
-                        : 'bg-cyan-950/60 text-cyan-300 border border-cyan-500/20'
+                      isActive
+                        ? 'bg-[#FF5500]/25 text-[#FFB07A] border border-[#FF5500]/45'
+                        : 'bg-[#18181B] text-[#FFA066] border border-[#262626]'
                     }`}>
                       {evt.type}
                     </span>
                   </div>
 
                   {/* Agent DID */}
-                  <div className="col-span-5 md:col-span-3 text-[11px] text-slate-200 truncate tabular-nums">
+                  <div className="col-span-5 md:col-span-3 text-[11px] text-zinc-200 truncate tabular-nums">
                     {evt.agent}
                   </div>
 
                   {/* Room */}
-                  <div className="hidden md:block col-span-2 text-[11px] text-slate-400 truncate">
+                  <div className="hidden md:block col-span-2 text-[11px] text-zinc-400 truncate">
                     {evt.room}
                   </div>
 
                   {/* Latency */}
-                  <div className="hidden md:block col-span-1 text-right text-[11px] text-slate-400 tabular-nums">
+                  <div className="hidden md:block col-span-1 text-right text-[11px] text-zinc-400 tabular-nums">
                     {evt.latency}
                   </div>
 

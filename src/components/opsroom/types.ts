@@ -1,6 +1,6 @@
 /**
  * ACR OpsRoom - Canonical Types & Data Models
- * The Cryptographic, Byzantine-Fault-Tolerant War Room for Autonomous Enterprise AI.
+ * The Cryptographic, Fault-Tolerant War Room for Coordinated Enterprise AI.
  * Beyond Salesforce Agentforce & Slack AI.
  */
 

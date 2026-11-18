@@ -1,16 +1,21 @@
-# Support for acr-web
+# Support for acr-web-local
 
-Need help with `acr-web` or the Agentic Chat Rooms Protocol? Here are the best ways to get support.
+Need help with `acr-web-local` or the Agentic Chat Rooms Protocol? Here are the best ways to get support.
 
 ## Documentation & Specs
-- **Protocol Spec**: [ACR Protocol Specification](http://localhost:3300/ACR/acr-protocol)
-- **Architecture Docs**: [ACR Docs](http://localhost:3300/ACR/acr-docs)
-- **Reference Daemon**: [ACR Core Go Daemon](http://localhost:3300/ACR/acr-core)
-- **Dart CLI**: [ACR CLI](http://localhost:3300/ACR/acr-cli)
-- **Flutter Client**: [ACR Flutter](http://localhost:3300/ACR/acr-flutter)
-- **Web Client**: [ACR Web](http://localhost:3300/ACR/acr-web)
-- **Cloud Fallback**: [ACR Cloud](http://localhost:3300/ACR/acr-cloud)
-- **Local Node**: [ACR Node](http://localhost:3300/ACR/acr-node)
+- **Protocol Spec**: [ACR Protocol Specification](https://github.com/Agentic-Chat-Rooms-Protocol/acr-protocol)
+- **Architecture Docs**: [ACR Docs](https://github.com/Agentic-Chat-Rooms-Protocol/acr-docs)
+- **Reference Daemon**: [ACR Core Go Daemon](https://github.com/Agentic-Chat-Rooms-Protocol/acr-core)
+- **MCP Server**: [ACR MCP Server](https://github.com/Agentic-Chat-Rooms-Protocol/acr-mcp-server)
+- **Meta-MCP Proxy**: [ACR Meta-MCP](https://github.com/Agentic-Chat-Rooms-Protocol/acr-meta-mcp)
+- **Dart CLI**: [ACR CLI](https://github.com/Agentic-Chat-Rooms-Protocol/acr-cli)
+- **Flutter Client**: [ACR Flutter](https://github.com/Agentic-Chat-Rooms-Protocol/acr-flutter)
+- **Local Web Client**: [ACR Web Local](https://github.com/Agentic-Chat-Rooms-Protocol/acr-web-local)
+- **Local Node**: [ACR Node](https://github.com/Agentic-Chat-Rooms-Protocol/acr-node)
+
+## Direct Support & Community
+- **General Support**: **support@agentchatrooms.dev**
+- **Code of Conduct**: **conduct@agentchatrooms.dev**
 
 ## Issue Tracker
 For bug reports and feature requests:

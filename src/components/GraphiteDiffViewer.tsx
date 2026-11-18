@@ -5,8 +5,7 @@ import {
 } from 'lucide-react';
 import { sound } from '../utils/sound';
 import { SectionPill } from './SectionPill';
-
-const DAEMON_URL = (import.meta as any).env?.VITE_ACR_DAEMON_URL || 'http://localhost:20443';
+import { daemonFetch } from '../utils/daemonAuth';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -342,17 +341,17 @@ const StackGraph: React.FC<{ stack: Stack | null; selectedPR: number | null; onS
         <React.Fragment key={layer.pr_number}>
           <button
             onClick={() => { sound.playTick(); onSelect(layer.pr_number); }}
-            className={`px-2.5 py-1 rounded-lg border transition-all ${
+            className={`px-2.5 py-1 rounded-lg border transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500] ${
               selectedPR === layer.pr_number
-                ? 'bg-cyan-500/20 text-cyan-200 border-cyan-500/40 font-semibold'
-                : 'bg-[#0c0d14] text-slate-300 border-white/[0.08] hover:text-white hover:border-white/20'
+                ? 'bg-[#FF5500]/15 text-[#FF8C42] border-[#FF5500]/40 font-semibold'
+                : 'bg-[#0D0D11] text-[#D4D4D8] border-white/[0.08] hover:text-white hover:border-white/20'
             }`}
           >
-            #{layer.pr_number}
-            {layer.status === 'merged' && <Check className="ml-1 h-3 w-3 inline text-emerald-400" />}
+            PR {layer.pr_number}
+            {layer.status === 'merged' && <Check className="ml-1 h-3 w-3 inline text-[#10B981]" />}
           </button>
           {i < stack.layers.length - 1 && (
-            <ChevronRight className="h-3 w-3 text-slate-600" />
+            <ChevronRight className="h-3 w-3 text-[#71717A]" />
           )}
         </React.Fragment>
       ))}
@@ -368,20 +367,20 @@ const ConsensusProofPanel: React.FC<{ envelope: ConsensusEnvelope | null }> = ({
   return (
     <div className="mt-4 pt-4 border-t border-white/[0.06] space-y-2">
       <div className="flex items-center gap-2">
-        <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
+        <ShieldCheck className="h-3.5 w-3.5 text-[#10B981]" />
         <span className="text-[11px] font-bold text-white">Consensus Proof</span>
-        <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950/40 border border-emerald-500/20 rounded px-1.5 py-0.5">
-          Quorum {envelope.quorum}
+        <span className="text-[10px] font-mono text-[#10B981] bg-[#10B981]/10 border border-[#10B981]/25 rounded px-1.5 py-0.5">
+          Gate {envelope.quorum}
         </span>
       </div>
       {approvals.map((v, i) => (
-        <div key={i} className="text-[10px] font-mono bg-[#0c0d14] border border-white/[0.04] rounded p-2">
-          <div className="text-slate-400 truncate">{v.agent_did}</div>
-          <div className="text-emerald-400 mt-0.5 flex items-center gap-1">
+        <div key={i} className="text-[10px] font-mono bg-[#0D0D11] border border-white/[0.06] rounded p-2">
+          <div className="text-[#A1A1AA] truncate">{v.agent_did}</div>
+          <div className="text-[#10B981] mt-0.5 flex items-center gap-1">
             <Check className="h-3 w-3" />
             <span>{v.decision}</span>
           </div>
-          <div className="text-slate-600 mt-0.5 truncate">{v.sig.slice(0, 24)}…</div>
+          <div className="text-[#71717A] mt-0.5 truncate">{v.sig.slice(0, 24)}…</div>
         </div>
       ))}
     </div>
@@ -408,8 +407,8 @@ export const GraphiteDiffViewer: React.FC = () => {
       setLoading(true);
       try {
         const [stacksRes, diffRes] = await Promise.all([
-          fetch(`${DAEMON_URL}/api/v1/stacks?repo=ACR/acr-core`),
-          fetch(`${DAEMON_URL}/api/v1/review/diff?pr=104`),
+          daemonFetch('/api/v1/stacks?repo=ACR/acr-core'),
+          daemonFetch('/api/v1/review/diff?pr=104'),
         ]);
         if (stacksRes.ok && isMounted) {
           const s: StacksResponse = await stacksRes.json();
@@ -463,7 +462,7 @@ export const GraphiteDiffViewer: React.FC = () => {
             <h2 className="font-display text-2xl sm:text-4xl font-bold tracking-tight text-white">
               <span className="metal-text">Protocol Pull Request Review</span>
             </h2>
-            <p className="text-slate-300/90 text-sm sm:text-base mt-1.5 max-w-2xl leading-relaxed">
+            <p className="text-[#D4D4D8] text-sm sm:text-base mt-1.5 max-w-2xl leading-relaxed">
               Inspect stacked agent pull requests, side-by-side AST line diffs, and
               cryptographic consensus proofs across the ACR message bus codebase.
             </p>
@@ -472,16 +471,16 @@ export const GraphiteDiffViewer: React.FC = () => {
           <div className="flex items-center gap-2 font-mono-code text-xs">
             <div className={`rounded-lg border px-3 py-1.5 flex items-center gap-1.5 font-medium ${
               daemonOnline
-                ? 'border-emerald-500/30 bg-emerald-950/40 text-emerald-300'
-                : 'border-cyan-500/30 bg-cyan-950/40 text-cyan-300'
+                ? 'border-[#10B981]/30 bg-[#10B981]/10 text-[#10B981]'
+                : 'border-[#FF5500]/30 bg-[#FF5500]/10 text-[#FF8C42]'
             }`}>
               {daemonOnline ? <CheckCircle2 className="h-3.5 w-3.5" /> : <AlertCircle className="h-3.5 w-3.5" />}
               <span>{daemonOnline ? 'Daemon Live' : 'Demo Mode'}</span>
             </div>
             {approvalCount > 0 && (
-              <div className="rounded-lg border border-emerald-500/30 bg-emerald-950/40 px-3 py-1.5 text-emerald-300 flex items-center gap-1.5 font-medium">
+              <div className="rounded-lg border border-[#10B981]/30 bg-[#10B981]/10 px-3 py-1.5 text-[#10B981] flex items-center gap-1.5 font-medium">
                 <CheckCircle2 className="h-3.5 w-3.5" />
-                <span>Quorum {approvalCount}/{approvalCount} Passed</span>
+                <span>Consensus {approvalCount}/{approvalCount} Passed</span>
               </div>
             )}
             {selectedStack && (
@@ -495,43 +494,43 @@ export const GraphiteDiffViewer: React.FC = () => {
         </div>
 
         {/* Review Window */}
-        <div className="rounded-2xl border border-white/[0.1] bg-[#090a10] shadow-2xl overflow-hidden">
+        <div className="rounded-2xl border border-white/[0.1] bg-[#0D0D11] shadow-2xl overflow-hidden">
 
           {/* PR Header Bar */}
-          <div className="flex flex-wrap items-center justify-between border-b border-white/[0.08] bg-black/40 px-4 py-3 gap-3">
+          <div className="flex flex-wrap items-center justify-between border-b border-white/[0.08] bg-[#000000]/60 px-4 py-3 gap-3">
             <div className="flex items-center gap-3">
-              <div className="flex h-7 w-7 items-center justify-center rounded-md bg-cyan-500/10 border border-cyan-500/30 text-cyan-400">
+              <div className="flex h-7 w-7 items-center justify-center rounded-md bg-[#FF5500]/15 border border-[#FF5500]/35 text-[#FF8C42]">
                 <GitBranch className="h-4 w-4" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-bold text-white">
-                    {selectedPR ? `PR #${selectedPR}: Zero-Trust VC Capability Gate` : 'PR #104: Zero-Trust VC Capability Gate'}
+                    {selectedPR ? `PR ${selectedPR}: Zero-Trust VC Capability Gate` : 'PR 104: Zero-Trust VC Capability Gate'}
                   </span>
-                  <span className="rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-1.5 py-0.2 text-[10px] font-mono">
+                  <span className="rounded bg-[#10B981]/10 text-[#10B981] border border-[#10B981]/25 px-1.5 py-0.2 text-[10px] font-mono">
                     Open • Consensus Ready
                   </span>
                 </div>
-                <div className="text-[11px] font-mono text-slate-400 mt-0.5">
-                  Base: <code className="text-slate-200">main</code> ← Head: <code className="text-cyan-300">agent/claude-vc-gate</code> (
-                  <span className="text-red-400 font-semibold font-mono">+{totalAdded}</span>{' '}
-                  <span className="text-emerald-400 font-semibold font-mono">-{totalRemoved}</span>)
+                <div className="text-[11px] font-mono text-[#A1A1AA] mt-0.5">
+                  Base: <code className="text-[#D4D4D8]">main</code> ← Head: <code className="text-[#FF8C42]">agent/claude-vc-gate</code> (
+                  <span className="text-[#EF4444] font-semibold font-mono">+{totalAdded}</span>{' '}
+                  <span className="text-[#10B981] font-semibold font-mono">-{totalRemoved}</span>)
                 </div>
               </div>
             </div>
 
             <div className="flex items-center gap-2">
-              {loading && <RefreshCw className="h-3.5 w-3.5 text-slate-500 animate-spin" />}
-              <div className="flex rounded-lg border border-white/[0.08] bg-[#0c0d14] p-0.5 text-xs font-mono">
+              {loading && <RefreshCw className="h-3.5 w-3.5 text-[#A1A1AA] animate-spin motion-reduce:animate-none" />}
+              <div className="flex rounded-lg border border-white/[0.08] bg-[#141414] p-0.5 text-xs font-mono">
                 <button
                   onClick={() => { sound.playTick(); setViewMode('split'); }}
-                  className={`px-2.5 py-1 rounded-md transition-all ${viewMode === 'split' ? 'bg-cyan-500/20 text-cyan-300 font-semibold' : 'text-slate-400 hover:text-slate-200'}`}
+                  className={`px-2.5 py-1 rounded-md transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500] ${viewMode === 'split' ? 'bg-[#FF5500]/20 text-[#FF8C42] font-semibold' : 'text-[#A1A1AA] hover:text-white'}`}
                 >
                   Split Diff
                 </button>
                 <button
                   onClick={() => { sound.playTick(); setViewMode('unified'); }}
-                  className={`px-2.5 py-1 rounded-md transition-all ${viewMode === 'unified' ? 'bg-cyan-500/20 text-cyan-300 font-semibold' : 'text-slate-400 hover:text-slate-200'}`}
+                  className={`px-2.5 py-1 rounded-md transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500] ${viewMode === 'unified' ? 'bg-[#FF5500]/20 text-[#FF8C42] font-semibold' : 'text-[#A1A1AA] hover:text-white'}`}
                 >
                   Unified
                 </button>
@@ -543,8 +542,8 @@ export const GraphiteDiffViewer: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-12 min-h-[420px]">
 
             {/* Left sidebar: file list + agent verdict + consensus */}
-            <div className="lg:col-span-3 border-b lg:border-b-0 lg:border-r border-white/[0.08] bg-[#07070c] p-3 space-y-1 font-mono text-xs">
-              <div className="text-[10px] uppercase tracking-wider text-slate-500 px-2 py-1">
+            <div className="lg:col-span-3 border-b lg:border-b-0 lg:border-r border-white/[0.08] bg-[#050508] p-3 space-y-1 font-mono text-xs">
+              <div className="text-[10px] uppercase tracking-wider text-[#A1A1AA] px-2 py-1">
                 Changed Files ({diffData?.files?.length ?? 0})
               </div>
 
@@ -552,22 +551,22 @@ export const GraphiteDiffViewer: React.FC = () => {
                 <button
                   key={file.path}
                   onClick={() => { sound.playTick(); setSelectedFileIdx(idx); }}
-                  className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg transition-all text-left ${
+                  className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg transition-all text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500] ${
                     selectedFileIdx === idx
-                      ? 'bg-cyan-500/15 text-cyan-200 border border-cyan-500/30 font-semibold'
-                      : 'text-slate-400 hover:bg-white/[0.03] hover:text-slate-200'
+                      ? 'bg-[#FF5500]/15 text-[#FF8C42] border border-[#FF5500]/35 font-semibold'
+                      : 'text-[#A1A1AA] hover:bg-white/[0.03] hover:text-white'
                   }`}
                 >
                   <div className="flex items-center gap-2 truncate">
-                    <FileCode className="h-3.5 w-3.5 text-cyan-400 shrink-0" />
+                    <FileCode className="h-3.5 w-3.5 text-[#FF8C42] shrink-0" />
                     <span className="truncate">{file.path}</span>
                   </div>
-                  <span className="text-[10px] text-emerald-400 shrink-0">+{file.added} -{file.removed}</span>
+                  <span className="text-[10px] text-[#10B981] shrink-0">+{file.added} -{file.removed}</span>
                 </button>
               ))}
 
               {/* Agent Review Verdict Box */}
-              <div className="mt-4 pt-4 border-t border-white/[0.06] p-2 bg-[#0c0d14] rounded-lg border border-white/[0.04]">
+              <div className="mt-4 pt-4 border-t border-white/[0.06] p-2 bg-[#141414] rounded-lg border border-white/[0.06]">
                 <div className="flex items-center gap-2 mb-2">
                   <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
                   <span className="text-[11px] font-bold text-white">Claude 5.0 Verdict</span>

@@ -1,10 +1,10 @@
-# Governance of acr-web & The ACR Ecosystem
+# Governance of acr-web-local & The ACR Ecosystem
 
-The Agentic Chat Rooms (ACR) Protocol is stewarded by **VRIL LABS** under an open-source, meritocratic governance framework modeled after proven standards from the Linux Foundation and Open Source Guide.
+The Agentic Chat Rooms (ACR) Protocol is stewarded under an open-source, meritocratic governance framework modeled after proven standards from the Linux Foundation and Open Source Guide.
 
 ## Governance Structure
 
-### 1. Project Stewards (VRIL LABS)
+### 1. Project Stewards (ACR Protocol Authors)
 - Holds overall accountability for protocol specifications, licensing, and brand stewardship.
 - Arbitrates deadlocks or unresolvable disputes.
 

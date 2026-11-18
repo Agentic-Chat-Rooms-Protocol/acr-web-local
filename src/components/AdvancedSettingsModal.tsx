@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useId } from 'react';
+import React, { useState, useMemo, useId } from 'react';
+import { createPortal } from 'react-dom';
 import {
   X,
   Sliders,
@@ -13,8 +14,17 @@ import {
   Sparkles,
   RotateCcw,
   Cpu,
+  KeyRound,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import { sound } from '../utils/sound';
+import { useAccessibleModal } from '../hooks/useAccessibleModal';
+import {
+  getStoredDaemonToken,
+  isDaemonTokenPersisted,
+  setStoredDaemonToken,
+} from '../utils/daemonAuth';
 import {
   type ServicePortMapping,
   getStoredPortMappings,
@@ -33,14 +43,15 @@ interface AdvancedSettingsModalProps {
   onPortsChanged?: (ports: ServicePortMapping[]) => void;
 }
 
-export const AdvancedSettingsModal: React.FC<AdvancedSettingsModalProps> = ({
-  isOpen,
-  onClose,
-  onPortsChanged,
-}) => {
+const AdvancedSettingsDialog: React.FC<{
+  onClose: () => void;
+  onPortsChanged?: (ports: ServicePortMapping[]) => void;
+}> = ({ onClose, onPortsChanged }) => {
   const [activeTab, setActiveTab] = useState<'ports' | 'export' | 'diagnostics'>('ports');
-  const [mappings, setMappings] = useState<ServicePortMapping[]>(getStoredPortMappings());
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [mappings, setMappings] = useState<ServicePortMapping[]>(() => getStoredPortMappings());
+  const [apiToken, setApiToken] = useState<string>(() => getStoredDaemonToken());
+  const [persistToken, setPersistToken] = useState<boolean>(() => isDaemonTokenPersisted());
+  const [showToken, setShowToken] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [testingId, setTestingId] = useState<string | null>(null);
   const [isTestingAll, setIsTestingAll] = useState(false);
@@ -48,51 +59,34 @@ export const AdvancedSettingsModal: React.FC<AdvancedSettingsModalProps> = ({
 
   const titleId = useId();
   const descId = useId();
+  const modalRef = useAccessibleModal<HTMLDivElement>({
+    isOpen: true,
+    onClose,
+  });
 
-  useEffect(() => {
-    if (isOpen) {
-      const stored = getStoredPortMappings();
-      setMappings(stored);
-      validate(stored);
-    }
-  }, [isOpen]);
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
-    };
-    if (isOpen) {
-      window.addEventListener('keydown', handleKeyDown);
-    }
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
-
-  const validate = (current: ServicePortMapping[]) => {
-    const valErrors = validatePortMappings(current);
+  const errors = useMemo(() => {
+    const valErrors = validatePortMappings(mappings);
     const errMap: Record<string, string> = {};
     for (const e of valErrors) {
       errMap[e.serviceId] = e.message;
     }
-    setErrors(errMap);
-    return valErrors.length === 0;
-  };
+    return errMap;
+  }, [mappings]);
 
   const handlePortChange = (id: string, newPortStr: string) => {
     const newPort = parseInt(newPortStr, 10);
     const updated = mappings.map((m) => (m.id === id ? { ...m, currentPort: isNaN(newPort) ? 0 : newPort } : m));
     setMappings(updated);
     setIsSaved(false);
-    validate(updated);
   };
 
   const handleSave = () => {
-    if (!validate(mappings)) {
+    if (Object.keys(errors).length > 0) {
       sound.playError();
       return;
     }
     saveStoredPortMappings(mappings);
+    setStoredDaemonToken(apiToken, persistToken);
     setIsSaved(true);
     sound.playSuccess();
     if (onPortsChanged) {
@@ -106,20 +100,27 @@ export const AdvancedSettingsModal: React.FC<AdvancedSettingsModalProps> = ({
     const updated = mappings.map((m) => (m.id === id ? { ...m, currentPort: m.defaultPort } : m));
     setMappings(updated);
     setIsSaved(false);
-    validate(updated);
   };
 
   const handleResetAll = () => {
     sound.playTick();
     const defaults = resetStoredPortMappings();
     setMappings(defaults);
-    setErrors({});
     setIsSaved(true);
     sound.playSuccess();
     if (onPortsChanged) {
       onPortsChanged(defaults);
     }
     setTimeout(() => setIsSaved(false), 2500);
+  };
+
+  const handleClearToken = () => {
+    sound.playTick();
+    setApiToken('');
+    setStoredDaemonToken('', false);
+    setPersistToken(false);
+    setIsSaved(true);
+    setTimeout(() => setIsSaved(false), 2000);
   };
 
   const handleTestService = async (m: ServicePortMapping) => {
@@ -169,37 +170,37 @@ export const AdvancedSettingsModal: React.FC<AdvancedSettingsModalProps> = ({
     setTimeout(() => setCopiedFormat(null), 2000);
   };
 
-  if (!isOpen) return null;
-
   const hasErrors = Object.keys(errors).length > 0;
-  const isCustomized = mappings.some((m) => m.currentPort !== m.defaultPort);
+  const isCustomized = mappings.some((m) => m.currentPort !== m.defaultPort) || apiToken.trim().length > 0;
 
-  return (
+  return createPortal(
     <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby={titleId}
-      aria-describedby={descId}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-2xl animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#000000]/85 backdrop-blur-2xl animate-in motion-reduce:animate-none fade-in duration-200"
+      onClick={onClose}
     >
       <div
-        className="relative w-full max-w-4xl max-h-[92vh] flex flex-col rounded-3xl border border-white/[0.12] bg-[#07080e] shadow-[0_30px_90px_rgba(0,0,0,0.95),0_0_60px_rgba(6,182,212,0.2),inset_0_1px_0_rgba(255,255,255,0.18)] overflow-hidden font-sans"
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        aria-describedby={descId}
+        className="relative w-full max-w-4xl max-h-[92vh] flex flex-col rounded-3xl border border-[#262626] bg-[#0D0D11] shadow-[0_30px_90px_rgba(0,0,0,0.95),0_0_60px_rgba(255,85,0,0.14),inset_0_1px_0_rgba(255,255,255,0.12)] overflow-hidden font-sans"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Top Header Bar */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.08] bg-black/60 shrink-0">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.08] bg-[#000000]/70 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-500/20 to-indigo-500/20 border border-cyan-500/40 shadow-[0_0_20px_rgba(6,182,212,0.3)]">
-              <Sliders className="h-5 w-5 text-cyan-400" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FF5500]/15 border border-[#FF5500]/40 shadow-[0_0_20px_rgba(255,85,0,0.22)]">
+              <Sliders className="h-5 w-5 text-[#FF8C42]" />
             </div>
             <div>
               <div className="flex items-center gap-2.5">
                 <h2 id={titleId} className="text-lg font-display font-semibold tracking-tight text-white">
-                  Advanced Settings &amp; Port Mapping
+                  Advanced Settings, Ports &amp; ACR_API_TOKEN
                 </h2>
                 {isCustomized ? (
                   <span className="rounded-full border border-amber-500/40 bg-amber-950/40 px-2 py-0.5 text-[10px] font-mono-code font-medium text-amber-300">
-                    Custom Mappings
+                    Custom Config
                   </span>
                 ) : (
                   <span className="rounded-full border border-emerald-500/30 bg-emerald-950/30 px-2 py-0.5 text-[10px] font-mono-code font-medium text-emerald-300">
@@ -207,64 +208,68 @@ export const AdvancedSettingsModal: React.FC<AdvancedSettingsModalProps> = ({
                   </span>
                 )}
               </div>
-              <p id={descId} className="text-xs text-slate-400">
-                Configure runtime ports, resolve collisions, and export dynamic network manifests across the ACR mesh.
+              <p id={descId} className="text-xs text-zinc-400">
+                Configure 127.0.0.1 workstation port bindings, Bearer ACR_API_TOKEN auth, and .env/JSON exports.
               </p>
             </div>
           </div>
 
           <button
+            type="button"
             onClick={() => {
               sound.playTick();
               onClose();
             }}
             aria-label="Close Settings Modal"
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/[0.08] bg-white/[0.04] text-slate-400 hover:text-white hover:bg-white/[0.1] transition-colors cursor-pointer"
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/[0.08] bg-white/[0.04] text-zinc-400 hover:text-white hover:bg-white/[0.1] transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500]"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex items-center justify-between px-6 border-b border-white/[0.08] bg-[#05060b] shrink-0">
+        <div className="flex flex-wrap items-center justify-between gap-2 px-6 border-b border-white/[0.08] bg-[#000000]/90 shrink-0">
           <div className="flex items-center gap-2 py-2.5">
             <button
+              type="button"
               onClick={() => {
                 sound.playTick();
                 setActiveTab('ports');
               }}
-              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500] ${
                 activeTab === 'ports'
-                  ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-[0_0_12px_rgba(6,182,212,0.25)]'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.04]'
+                  ? 'bg-[#FF5500]/20 text-[#FFB07A] border border-[#FF5500]/45 shadow-[0_0_12px_rgba(255,85,0,0.2)]'
+                  : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.04] border border-transparent'
               }`}
             >
               <Server className="h-3.5 w-3.5" />
               Service Port Matrix
             </button>
             <button
+              type="button"
               onClick={() => {
                 sound.playTick();
                 setActiveTab('export');
               }}
-              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500] ${
                 activeTab === 'export'
-                  ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-[0_0_12px_rgba(6,182,212,0.25)]'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.04]'
+                  ? 'bg-[#FF5500]/20 text-[#FFB07A] border border-[#FF5500]/45 shadow-[0_0_12px_rgba(255,85,0,0.2)]'
+                  : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.04] border border-transparent'
               }`}
             >
               <Download className="h-3.5 w-3.5" />
               Manifest &amp; .env Exports
             </button>
             <button
+              type="button"
               onClick={() => {
                 sound.playTick();
                 setActiveTab('diagnostics');
               }}
-              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500] ${
                 activeTab === 'diagnostics'
-                  ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-[0_0_12px_rgba(6,182,212,0.25)]'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.04]'
+                  ? 'bg-[#FF5500]/20 text-[#FFB07A] border border-[#FF5500]/45 shadow-[0_0_12px_rgba(255,85,0,0.2)]'
+                  : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.04] border border-transparent'
               }`}
             >
               <Activity className="h-3.5 w-3.5" />
@@ -272,13 +277,14 @@ export const AdvancedSettingsModal: React.FC<AdvancedSettingsModalProps> = ({
             </button>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 py-2 sm:py-0">
             <button
+              type="button"
               onClick={handleTestAll}
               disabled={isTestingAll}
-              className="flex items-center gap-1.5 px-3 py-1 rounded-md text-[11px] font-mono-code text-slate-300 bg-white/[0.05] border border-white/[0.1] hover:bg-white/[0.1] hover:text-white transition-all cursor-pointer disabled:opacity-50"
+              className="flex items-center gap-1.5 px-3 py-1 rounded-md text-[11px] font-mono-code text-zinc-300 bg-white/[0.05] border border-white/[0.1] hover:bg-white/[0.1] hover:text-white transition-all cursor-pointer disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500]"
             >
-              <RefreshCw className={`h-3 w-3 ${isTestingAll ? 'animate-spin text-cyan-400' : ''}`} />
+              <RefreshCw className={`h-3 w-3 ${isTestingAll ? 'animate-spin motion-reduce:animate-none text-[#FF8C42]' : ''}`} />
               Test All Endpoints
             </button>
           </div>
@@ -286,14 +292,75 @@ export const AdvancedSettingsModal: React.FC<AdvancedSettingsModalProps> = ({
 
         {/* Modal Scrollable Body */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
-          {/* TAB 1: SERVICE PORT MATRIX */}
+          {/* TAB 1: SERVICE PORT MATRIX + ACR_API_TOKEN */}
           {activeTab === 'ports' && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-mono-code uppercase tracking-wider text-slate-400">
-                  Configured Port Bindings (5 Ecosystem Services)
+              {/* ACR_API_TOKEN Bearer Auth Panel */}
+              <div className="rounded-2xl border border-[#FF5500]/30 bg-[#000000]/70 p-4 space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <KeyRound className="h-4 w-4 text-[#FF8C42]" />
+                    <span className="text-xs font-mono-code uppercase tracking-wider font-semibold text-white">
+                      Local Daemon Authentication (ACR_API_TOKEN)
+                    </span>
+                  </div>
+                  <span className="text-[11px] font-mono-code text-zinc-400">
+                    Sent as Authorization: Bearer &lt;token&gt; to 127.0.0.1
+                  </span>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <div className="relative flex-1">
+                    <input
+                      type={showToken ? 'text' : 'password'}
+                      value={apiToken}
+                      onChange={(e) => {
+                        setApiToken(e.target.value);
+                        setIsSaved(false);
+                      }}
+                      placeholder="Optional local ACR_API_TOKEN (e.g. acr_local_dev_token)"
+                      aria-label="Local ACR_API_TOKEN"
+                      className="w-full rounded-xl border border-white/[0.15] bg-[#0D0D11] pl-3 pr-9 py-2 text-xs font-mono-code text-white placeholder-zinc-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500]"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowToken((prev) => !prev)}
+                      aria-label={showToken ? 'Hide API token' : 'Show API token'}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-zinc-400 hover:text-white rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500]"
+                    >
+                      {showToken ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                    </button>
+                  </div>
+                  {apiToken && (
+                    <button
+                      type="button"
+                      onClick={handleClearToken}
+                      className="px-3 py-2 rounded-xl border border-red-500/30 bg-red-950/20 text-xs font-mono-code text-red-300 hover:bg-red-950/40 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500]"
+                    >
+                      Clear Token
+                    </button>
+                  )}
+                </div>
+
+                <label className="flex items-center gap-2 text-xs text-zinc-300 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={persistToken}
+                    onChange={(e) => {
+                      setPersistToken(e.target.checked);
+                      setIsSaved(false);
+                    }}
+                    className="h-3.5 w-3.5 rounded border-white/20 bg-[#0D0D11] accent-[#FF5500] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500]"
+                  />
+                  <span>Remember ACR_API_TOKEN in localStorage across restarts (default: sessionStorage only)</span>
+                </label>
+              </div>
+
+              <div className="flex items-center justify-between pt-2">
+                <span className="text-xs font-mono-code uppercase tracking-wider text-zinc-400">
+                  Configured Port Bindings (5 Local Services)
                 </span>
-                <span className="text-xs text-slate-500">Unprivileged user range: 1024 - 65535</span>
+                <span className="text-xs text-zinc-400">Unprivileged user range: 1024 - 65535</span>
               </div>
 
               <div className="space-y-3">
@@ -308,40 +375,40 @@ export const AdvancedSettingsModal: React.FC<AdvancedSettingsModalProps> = ({
                         hasErr
                           ? 'border-red-500/60 bg-red-950/15 shadow-[0_0_20px_rgba(239,68,68,0.15)]'
                           : isModified
-                          ? 'border-cyan-500/40 bg-cyan-950/10 shadow-[0_0_20px_rgba(6,182,212,0.1)]'
-                          : 'border-white/[0.08] bg-black/40 hover:border-white/[0.16]'
+                          ? 'border-[#FF5500]/45 bg-[#FF5500]/5 shadow-[0_0_20px_rgba(255,85,0,0.08)]'
+                          : 'border-[#262626] bg-[#000000]/50 hover:border-white/[0.18]'
                       }`}
                     >
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div className="space-y-1">
-                          <div className="flex items-center gap-2.5">
+                          <div className="flex items-center gap-2.5 flex-wrap">
                             <span className="text-sm font-semibold text-white tracking-tight">{m.name}</span>
-                            <span className="rounded border border-white/[0.1] bg-white/[0.04] px-1.5 py-0.5 text-[10px] font-mono-code text-slate-300">
+                            <span className="rounded border border-white/[0.1] bg-white/[0.04] px-1.5 py-0.5 text-[10px] font-mono-code text-zinc-300">
                               {m.protocol.toUpperCase()}
                             </span>
-                            <span className="rounded border border-cyan-500/20 bg-cyan-950/40 px-1.5 py-0.5 text-[10px] font-mono-code text-cyan-300">
+                            <span className="rounded border border-[#FF5500]/30 bg-[#FF5500]/10 px-1.5 py-0.5 text-[10px] font-mono-code text-[#FFB07A]">
                               ${'{' + m.envVar + '}'}
                             </span>
                             {isModified && (
-                              <span className="rounded-full border border-amber-500/30 bg-amber-950/30 px-1.5 py-0.2 text-[9px] font-mono-code text-amber-300">
+                              <span className="rounded-full border border-amber-500/30 bg-amber-950/30 px-1.5 py-0.5 text-[9px] font-mono-code text-amber-300">
                                 Default: {m.defaultPort}
                               </span>
                             )}
                           </div>
-                          <p className="text-xs text-slate-400 max-w-xl">{m.description}</p>
+                          <p className="text-xs text-zinc-400 max-w-xl">{m.description}</p>
                         </div>
 
                         {/* Port Input & Actions */}
                         <div className="flex items-center gap-3 shrink-0">
                           {/* Live Status Indicator */}
-                          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-white/[0.08] bg-black/60 text-[11px] font-mono-code">
+                          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-white/[0.08] bg-[#000000]/80 text-[11px] font-mono-code">
                             {testingId === m.id ? (
-                              <RefreshCw className="h-3 w-3 animate-spin text-cyan-400" />
+                              <RefreshCw className="h-3 w-3 animate-spin motion-reduce:animate-none text-[#FF8C42]" />
                             ) : m.status === 'online' ? (
                               <>
                                 <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]"></span>
                                 <span className="text-emerald-400">ONLINE</span>
-                                {m.latencyMs && <span className="text-slate-500 text-[10px]">({m.latencyMs}ms)</span>}
+                                {m.latencyMs && <span className="text-zinc-400 text-[10px]">({m.latencyMs}ms)</span>}
                               </>
                             ) : m.status === 'offline' ? (
                               <>
@@ -350,15 +417,15 @@ export const AdvancedSettingsModal: React.FC<AdvancedSettingsModalProps> = ({
                               </>
                             ) : (
                               <>
-                                <span className="h-2 w-2 rounded-full bg-slate-600"></span>
-                                <span className="text-slate-400">UNTESTED</span>
+                                <span className="h-2 w-2 rounded-full bg-zinc-600"></span>
+                                <span className="text-zinc-400">UNTESTED</span>
                               </>
                             )}
                           </div>
 
                           {/* Port Number Input */}
                           <div className="flex items-center gap-1.5">
-                            <span className="text-xs font-mono-code text-slate-400">:</span>
+                            <span className="text-xs font-mono-code text-zinc-400">:</span>
                             <input
                               type="number"
                               min="1024"
@@ -366,20 +433,22 @@ export const AdvancedSettingsModal: React.FC<AdvancedSettingsModalProps> = ({
                               value={m.currentPort === 0 ? '' : m.currentPort}
                               onChange={(e) => handlePortChange(m.id, e.target.value)}
                               aria-label={`Port for ${m.name}`}
-                              className={`w-24 rounded-xl border bg-black/80 px-3 py-1.5 text-center font-mono-code text-sm text-white focus:outline-none transition-all ${
+                              className={`w-24 rounded-xl border bg-[#000000] px-3 py-1.5 text-center font-mono-code text-sm text-white transition-all focus-visible:outline-none ${
                                 hasErr
-                                  ? 'border-red-500 focus:border-red-400 focus:ring-1 focus:ring-red-400/50'
-                                  : 'border-white/[0.15] focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/40'
+                                  ? 'border-red-500 focus-visible:border-red-400 focus-visible:ring-2 focus-visible:ring-red-400/50'
+                                  : 'border-white/[0.15] focus-visible:border-[#FF5500] focus-visible:ring-2 focus-visible:ring-[#FF5500]'
                               }`}
                             />
                           </div>
 
                           {/* Test Button */}
                           <button
+                            type="button"
                             onClick={() => handleTestService(m)}
                             disabled={testingId === m.id}
                             title="Ping port"
-                            className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/[0.08] bg-white/[0.04] text-slate-400 hover:text-cyan-300 hover:border-cyan-500/40 transition-colors cursor-pointer"
+                            aria-label={`Ping port for ${m.name}`}
+                            className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/[0.08] bg-white/[0.04] text-zinc-400 hover:text-[#FFB07A] hover:border-[#FF5500]/40 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500]"
                           >
                             <Activity className="h-3.5 w-3.5" />
                           </button>
@@ -387,9 +456,11 @@ export const AdvancedSettingsModal: React.FC<AdvancedSettingsModalProps> = ({
                           {/* Reset Button */}
                           {isModified && (
                             <button
+                              type="button"
                               onClick={() => handleResetService(m.id)}
                               title="Reset to default port"
-                              className="flex h-8 w-8 items-center justify-center rounded-lg border border-amber-500/30 bg-amber-950/20 text-amber-300 hover:bg-amber-950/40 transition-colors cursor-pointer"
+                              aria-label={`Reset port for ${m.name}`}
+                              className="flex h-8 w-8 items-center justify-center rounded-lg border border-amber-500/30 bg-amber-950/20 text-amber-300 hover:bg-amber-950/40 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500]"
                             >
                               <RotateCcw className="h-3.5 w-3.5" />
                             </button>
@@ -415,51 +486,53 @@ export const AdvancedSettingsModal: React.FC<AdvancedSettingsModalProps> = ({
           {activeTab === 'export' && (
             <div className="space-y-6">
               {/* .env Export Box */}
-              <div className="rounded-2xl border border-white/[0.08] bg-black/60 p-4 space-y-3">
+              <div className="rounded-2xl border border-[#262626] bg-[#000000]/70 p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Terminal className="h-4 w-4 text-cyan-400" />
+                    <Terminal className="h-4 w-4 text-[#FF8C42]" />
                     <span className="text-xs font-mono-code uppercase font-semibold text-white">
                       Standard .env File Export
                     </span>
                   </div>
                   <button
-                    onClick={() => copyToClipboard(generateEnvExport(mappings), 'env')}
-                    className="flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-mono-code text-cyan-300 bg-cyan-950/40 border border-cyan-500/30 hover:bg-cyan-900/50 transition-colors cursor-pointer"
+                    type="button"
+                    onClick={() => copyToClipboard(generateEnvExport(mappings, apiToken), 'env')}
+                    className="flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-mono-code text-[#FFB07A] bg-[#FF5500]/15 border border-[#FF5500]/35 hover:bg-[#FF5500]/25 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500]"
                   >
                     {copiedFormat === 'env' ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
                     {copiedFormat === 'env' ? 'Copied .env' : 'Copy .env'}
                   </button>
                 </div>
-                <pre className="p-3 rounded-xl bg-[#030408] border border-white/[0.06] text-xs font-mono-code text-cyan-200/90 overflow-x-auto">
-                  {generateEnvExport(mappings)}
+                <pre className="p-3 rounded-xl bg-[#000000] border border-white/[0.06] text-xs font-mono-code text-[#FFB07A] overflow-x-auto">
+                  {generateEnvExport(mappings, apiToken)}
                 </pre>
               </div>
 
               {/* JSON Manifest Export Box */}
-              <div className="rounded-2xl border border-white/[0.08] bg-black/60 p-4 space-y-3">
+              <div className="rounded-2xl border border-[#262626] bg-[#000000]/70 p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Cpu className="h-4 w-4 text-indigo-400" />
+                    <Cpu className="h-4 w-4 text-[#FF5500]" />
                     <span className="text-xs font-mono-code uppercase font-semibold text-white">
                       Daemon Configuration (~/.acr/ports.json)
                     </span>
                   </div>
                   <button
+                    type="button"
                     onClick={() => copyToClipboard(generateJsonExport(mappings), 'json')}
-                    className="flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-mono-code text-indigo-300 bg-indigo-950/40 border border-indigo-500/30 hover:bg-indigo-900/50 transition-colors cursor-pointer"
+                    className="flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-mono-code text-[#FFB07A] bg-[#FF5500]/15 border border-[#FF5500]/35 hover:bg-[#FF5500]/25 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500]"
                   >
                     {copiedFormat === 'json' ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
                     {copiedFormat === 'json' ? 'Copied JSON' : 'Copy JSON'}
                   </button>
                 </div>
-                <pre className="p-3 rounded-xl bg-[#030408] border border-white/[0.06] text-xs font-mono-code text-indigo-200/90 overflow-x-auto">
+                <pre className="p-3 rounded-xl bg-[#000000] border border-white/[0.06] text-xs font-mono-code text-zinc-200 overflow-x-auto">
                   {generateJsonExport(mappings)}
                 </pre>
               </div>
 
               {/* MCP Client Config Export */}
-              <div className="rounded-2xl border border-white/[0.08] bg-black/60 p-4 space-y-3">
+              <div className="rounded-2xl border border-[#262626] bg-[#000000]/70 p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Sparkles className="h-4 w-4 text-emerald-400" />
@@ -468,15 +541,16 @@ export const AdvancedSettingsModal: React.FC<AdvancedSettingsModalProps> = ({
                     </span>
                   </div>
                   <button
-                    onClick={() => copyToClipboard(generateMcpClientConfig(mappings), 'mcp')}
-                    className="flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-mono-code text-emerald-300 bg-emerald-950/40 border border-emerald-500/30 hover:bg-emerald-900/50 transition-colors cursor-pointer"
+                    type="button"
+                    onClick={() => copyToClipboard(generateMcpClientConfig(mappings, apiToken), 'mcp')}
+                    className="flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-mono-code text-emerald-300 bg-emerald-950/40 border border-emerald-500/30 hover:bg-emerald-900/50 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500]"
                   >
                     {copiedFormat === 'mcp' ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
                     {copiedFormat === 'mcp' ? 'Copied Config' : 'Copy MCP Config'}
                   </button>
                 </div>
-                <pre className="p-3 rounded-xl bg-[#030408] border border-white/[0.06] text-xs font-mono-code text-emerald-200/90 overflow-x-auto">
-                  {generateMcpClientConfig(mappings)}
+                <pre className="p-3 rounded-xl bg-[#000000] border border-white/[0.06] text-xs font-mono-code text-emerald-200/90 overflow-x-auto">
+                  {generateMcpClientConfig(mappings, apiToken)}
                 </pre>
               </div>
             </div>
@@ -485,44 +559,44 @@ export const AdvancedSettingsModal: React.FC<AdvancedSettingsModalProps> = ({
           {/* TAB 3: LIVE MESH DIAGNOSTICS */}
           {activeTab === 'diagnostics' && (
             <div className="space-y-4">
-              <div className="rounded-2xl border border-white/[0.08] bg-black/50 p-5 space-y-4">
+              <div className="rounded-2xl border border-[#262626] bg-[#000000]/60 p-5 space-y-4">
                 <div className="flex items-center justify-between border-b border-white/[0.08] pb-3">
                   <div>
                     <h3 className="text-sm font-semibold text-white">Local Workstation Topology &amp; PNA Status</h3>
-                    <p className="text-xs text-slate-400">
+                    <p className="text-xs text-zinc-400">
                       Private Network Access (PNA) headers and CORS loopback engine status.
                     </p>
                   </div>
                   <span className="flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-950/40 px-3 py-1 text-xs font-mono-code text-emerald-300">
-                    <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse motion-reduce:animate-none"></span>
                     PNA Engine: Active
                   </span>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div className="rounded-xl border border-white/[0.06] bg-black/60 p-3 space-y-1">
-                    <span className="text-[11px] font-mono-code text-slate-400">PNA Header</span>
-                    <p className="text-xs font-mono-code text-cyan-300">Access-Control-Allow-Private-Network: true</p>
+                  <div className="rounded-xl border border-white/[0.06] bg-[#000000]/80 p-3 space-y-1">
+                    <span className="text-[11px] font-mono-code text-zinc-400">PNA Header</span>
+                    <p className="text-xs font-mono-code text-[#FFB07A]">Access-Control-Allow-Private-Network: true</p>
                   </div>
-                  <div className="rounded-xl border border-white/[0.06] bg-black/60 p-3 space-y-1">
-                    <span className="text-[11px] font-mono-code text-slate-400">Loopback Resolution</span>
-                    <p className="text-xs font-mono-code text-cyan-300">127.0.0.1 / localhost</p>
+                  <div className="rounded-xl border border-white/[0.06] bg-[#000000]/80 p-3 space-y-1">
+                    <span className="text-[11px] font-mono-code text-zinc-400">Loopback Resolution</span>
+                    <p className="text-xs font-mono-code text-[#FFB07A]">127.0.0.1 / localhost</p>
                   </div>
-                  <div className="rounded-xl border border-white/[0.06] bg-black/60 p-3 space-y-1">
-                    <span className="text-[11px] font-mono-code text-slate-400">CLI Config Target</span>
-                    <p className="text-xs font-mono-code text-cyan-300">~/.acr/ports.json</p>
+                  <div className="rounded-xl border border-white/[0.06] bg-[#000000]/80 p-3 space-y-1">
+                    <span className="text-[11px] font-mono-code text-zinc-400">CLI Config Target</span>
+                    <p className="text-xs font-mono-code text-[#FFB07A]">~/.acr/ports.json</p>
                   </div>
                 </div>
 
-                <div className="rounded-xl border border-white/[0.06] bg-[#04050a] p-4 text-xs font-mono-code text-slate-300 space-y-2">
-                  <div className="flex items-center gap-2 text-cyan-400 font-bold">
+                <div className="rounded-xl border border-white/[0.06] bg-[#000000] p-4 text-xs font-mono-code text-zinc-300 space-y-2">
+                  <div className="flex items-center gap-2 text-[#FF8C42] font-bold">
                     <Terminal className="h-4 w-4" />
                     <span>CLI Quick Commands</span>
                   </div>
-                  <p className="text-slate-400">
-                    You can inspect and alter port bindings directly from your terminal:
+                  <p className="text-zinc-400">
+                    Inspect and alter port bindings directly from your local terminal:
                   </p>
-                  <div className="space-y-1 text-cyan-200">
+                  <div className="space-y-1 text-[#FFB07A]">
                     <p>• acr ports list</p>
                     <p>• acr ports set acr-core 20499</p>
                     <p>• acr ports reset</p>
@@ -535,17 +609,18 @@ export const AdvancedSettingsModal: React.FC<AdvancedSettingsModalProps> = ({
         </div>
 
         {/* Bottom Footer Bar */}
-        <div className="flex items-center justify-between px-6 py-4 border-t border-white/[0.08] bg-black/70 shrink-0">
+        <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-4 border-t border-white/[0.08] bg-[#000000]/80 shrink-0">
           <div className="flex items-center gap-3">
             <button
+              type="button"
               onClick={handleResetAll}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-white/[0.1] bg-white/[0.04] text-xs font-medium text-slate-300 hover:text-white hover:bg-white/[0.08] transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-white/[0.1] bg-white/[0.04] text-xs font-medium text-zinc-300 hover:text-white hover:bg-white/[0.08] transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500]"
             >
               <RotateCcw className="h-3.5 w-3.5 text-amber-400" />
               Reset All to Defaults
             </button>
             {isSaved && (
-              <span className="flex items-center gap-1 text-xs font-mono-code text-emerald-400 animate-in fade-in">
+              <span className="flex items-center gap-1 text-xs font-mono-code text-emerald-400 animate-in motion-reduce:animate-none fade-in">
                 <Check className="h-3.5 w-3.5" />
                 Settings Saved &amp; Applied!
               </span>
@@ -554,25 +629,37 @@ export const AdvancedSettingsModal: React.FC<AdvancedSettingsModalProps> = ({
 
           <div className="flex items-center gap-3">
             <button
+              type="button"
               onClick={() => {
                 sound.playTick();
                 onClose();
               }}
-              className="px-4 py-2 rounded-xl text-xs font-medium text-slate-300 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer"
+              className="px-4 py-2 rounded-xl text-xs font-medium text-zinc-300 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500]"
             >
               Close
             </button>
             <button
+              type="button"
               onClick={handleSave}
               disabled={hasErrors}
-              className="flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-semibold tracking-wide uppercase font-mono-code text-black bg-gradient-to-r from-cyan-400 to-indigo-400 hover:from-cyan-300 hover:to-indigo-300 shadow-[0_0_20px_rgba(6,182,212,0.4)] transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
+              className="flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-semibold tracking-wide uppercase font-mono-code text-[#000000] bg-[#FF5500] hover:bg-[#FF6600] shadow-[0_0_20px_rgba(255,85,0,0.3)] transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500]"
             >
-              <Check className="h-3.5 w-3.5 text-black" />
-              Save &amp; Apply Ports
+              <Check className="h-3.5 w-3.5 text-[#000000]" />
+              Save &amp; Apply Settings
             </button>
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
+};
+
+export const AdvancedSettingsModal: React.FC<AdvancedSettingsModalProps> = ({
+  isOpen,
+  onClose,
+  onPortsChanged,
+}) => {
+  if (!isOpen || typeof document === 'undefined') return null;
+  return <AdvancedSettingsDialog onClose={onClose} onPortsChanged={onPortsChanged} />;
 };

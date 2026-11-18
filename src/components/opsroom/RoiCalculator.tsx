@@ -74,7 +74,7 @@ export const RoiCalculator: React.FC = () => {
 
           <div>
             <div className="flex justify-between text-xs font-bold text-slate-300 mb-2">
-              <label htmlFor="agents-slider">Autonomous Agents &amp; Squads Active:</label>
+              <label htmlFor="agents-slider">Coordinated Agents &amp; Squads Active:</label>
               <span className="text-purple-400 font-mono text-sm">{activeAgents}</span>
             </div>
             <input

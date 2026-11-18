@@ -49,7 +49,7 @@ export const ProcessMilestoneThread: React.FC<ProcessMilestoneThreadProps> = ({
         );
       case 'IN_PROGRESS':
         return (
-          <span className="px-2 py-0.5 rounded text-xs font-mono font-semibold bg-sky-950 text-sky-300 border border-sky-500 animate-pulse">
+          <span className="px-2 py-0.5 rounded text-xs font-mono font-semibold bg-[#FF5500]/15 text-[#FF8C42] border border-[#FF5500]/40 animate-pulse motion-reduce:animate-none">
             [IN_PROGRESS]
           </span>
         );
@@ -78,7 +78,7 @@ export const ProcessMilestoneThread: React.FC<ProcessMilestoneThreadProps> = ({
         );
       case 'RUNNING':
         return (
-          <span className="px-1.5 py-0.5 rounded text-[11px] font-mono font-semibold bg-sky-950 text-sky-300 border border-sky-600 animate-pulse">
+          <span className="px-1.5 py-0.5 rounded text-[11px] font-mono font-semibold bg-[#FF5500]/15 text-[#FF8C42] border border-[#FF5500]/40 animate-pulse motion-reduce:animate-none">
             [RUNNING]
           </span>
         );
@@ -128,7 +128,7 @@ export const ProcessMilestoneThread: React.FC<ProcessMilestoneThreadProps> = ({
           <button
             type="button"
             onClick={() => setIsExpanded(!isExpanded)}
-            className="px-2.5 py-1 text-xs font-mono font-medium rounded bg-neutral-800 hover:bg-neutral-750 text-neutral-200 border border-neutral-600 transition-colors focus:outline-none focus:ring-2 focus:ring-sky-500"
+            className="px-2.5 py-1 text-xs font-mono font-medium rounded bg-neutral-800 hover:bg-neutral-750 text-neutral-200 border border-neutral-600 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500]"
             aria-expanded={isExpanded}
             aria-controls={`milestone-steps-${milestone.id}`}
           >

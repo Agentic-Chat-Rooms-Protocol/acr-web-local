@@ -1,6 +1,7 @@
 import React from 'react';
 import { FileText, Image as ImageIcon, Download } from 'lucide-react';
 import type { FileAttachment } from '../../types/protocol';
+import { getDaemonBaseUrl } from '../../utils/daemonAuth';
 
 interface FileAttachmentCardProps {
   attachment: FileAttachment;
@@ -14,13 +15,13 @@ export const FileAttachmentCard: React.FC<FileAttachmentCardProps> = ({ attachme
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
-  const fileUrl = attachment.url.startsWith('http') ? attachment.url : `http://localhost:20443${attachment.url}`;
+  const fileUrl = attachment.url.startsWith('http') ? attachment.url : `${getDaemonBaseUrl()}${attachment.url}`;
 
   return (
-    <div className="mt-2 rounded-xl border border-white/[0.1] bg-black/40 p-2.5 max-w-sm space-y-2 backdrop-blur-md">
+    <div className="mt-2 rounded-xl border border-white/[0.1] bg-[#0D0D11] p-2.5 max-w-sm space-y-2 backdrop-blur-md">
       {/* Image Preview if applicable */}
       {isImage && (
-        <div className="rounded-lg overflow-hidden border border-white/[0.08] max-h-48 bg-black/60">
+        <div className="rounded-lg overflow-hidden border border-white/[0.08] max-h-48 bg-[#000000]">
           <img
             src={fileUrl}
             alt={attachment.filename}
@@ -33,7 +34,7 @@ export const FileAttachmentCard: React.FC<FileAttachmentCardProps> = ({ attachme
       {/* File Info & Download Action */}
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2 min-w-0">
-          <div className="p-2 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 shrink-0">
+          <div className="p-2 rounded-lg bg-[#FF5500]/10 border border-[#FF5500]/25 text-[#FF8C42] shrink-0">
             {isImage ? <ImageIcon className="h-4 w-4" /> : <FileText className="h-4 w-4" />}
           </div>
           <div className="min-w-0">

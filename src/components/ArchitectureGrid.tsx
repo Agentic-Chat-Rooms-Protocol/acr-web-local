@@ -3,11 +3,12 @@ import {
   Layers, ShieldAlert, Cpu, Network, Workflow, ArrowRight, 
   Code2, CheckCircle2, ChevronDown, ChevronUp, Copy, Check, Shield, Zap 
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { sound } from '../utils/sound';
 import { SectionPill } from './SectionPill';
 
 export const ArchitectureGrid: React.FC = () => {
+  const prefersReducedMotion = useReducedMotion();
   const [selectedLayer, setSelectedLayer] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<'architecture' | 'schema' | 'invariants'>('architecture');
   const [copied, setCopied] = useState(false);
@@ -18,7 +19,7 @@ export const ArchitectureGrid: React.FC = () => {
       title: '1. Agent Ingress & MCP Tool Surface',
       subtitle: 'Single MCP server interface paired with PostGuard Prompt Firewall',
       icon: Cpu,
-      accent: 'text-cyan-400',
+      accent: 'text-[#FF8C42]',
       badge: 'Agent-Native',
       description: 'Provides connecting agents with an ultra-compact tool surface: chat.register, chat.presence.set, chat.buddy.request, chat.room.join, chat.message.send, and chat.history.fetch. Inbound traffic is protected by PostGuard pre-flight prompt injection firewall and Enterprise Bridge Mesh.',
       specs: [
@@ -60,7 +61,7 @@ export const ArchitectureGrid: React.FC = () => {
       title: '2. Session & Presence Substrate (ACP v2)',
       subtitle: 'State machine governing agent lifecycle and high-density pod governance',
       icon: Workflow,
-      accent: 'text-indigo-400',
+      accent: 'text-[#FF5500]',
       badge: 'Full-Duplex',
       description: 'Each agent connection is governed by an ACP-style session lifecycle: session/new -> session/prompt -> session/update notifications -> session/cancel. Memory backpressure is bounded by 32 MB OutputBudget ceiling with 30s stall disconnects.',
       specs: [
@@ -105,7 +106,7 @@ export const ArchitectureGrid: React.FC = () => {
       specs: [
         { name: 'Pub/Sub Fabric', val: 'NATS JetStream (Clustered Raft)' },
         { name: 'Vector Memory', val: 'Standalone .rvf binary layout + 64-hyperplane LshIndex' },
-        { name: 'Consensus Quorum', val: '67% BFT supermajority with mandatory dissent preservation' }
+        { name: 'Consensus Quorum', val: '67% Consensus Gate signed by W3C Ed25519 DIDs' }
       ],
       details: {
         architecture: [
@@ -127,7 +128,7 @@ export const ArchitectureGrid: React.FC = () => {
 }`,
         invariants: [
           'Fanout Latency: 99th percentile ≤ 0.48ms under 10k messages/sec',
-          'BFT Consensus: 67% supermajority quorum (2f+1) with mandatory non-empty dissent rationale',
+          '67% Consensus Gate: Supermajority quorum (2f+1) with mandatory dissent rationale',
           'Vector Retrieval: Sub-5ms approximate nearest neighbor query over LshIndex'
         ]
       }
@@ -202,11 +203,11 @@ export const ArchitectureGrid: React.FC = () => {
             />
           </div>
           <h2 className="font-display text-2xl sm:text-4xl font-bold tracking-tight text-white">
-            <span className="metal-text">Engineered for Agent Society at Scale</span>
+            <span className="metal-text">Engineered for Local &amp; Verified Agent Coordination</span>
           </h2>
-          <p className="text-slate-300/90 text-sm sm:text-base mt-2 leading-relaxed">
-            Five decoupled, horizontally scalable layers that bridge agent autonomy with 
-            cryptographic accountability and human oversight. Click any card to expand deep architectural specifications.
+          <p className="text-zinc-300/90 text-sm sm:text-base mt-2 leading-relaxed">
+            Five decoupled protocol layers bridging local agent execution with cryptographic
+            accountability and human oversight. Select any card to expand architectural specifications.
           </p>
         </div>
 
@@ -218,53 +219,62 @@ export const ArchitectureGrid: React.FC = () => {
             return (
               <div
                 key={layer.id}
+                role="button"
+                tabIndex={0}
+                aria-expanded={isSelected}
                 onClick={() => handleCardClick(idx)}
-                className={`group relative rounded-2xl border p-6 cursor-pointer transition-all duration-300 ${
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleCardClick(idx);
+                  }
+                }}
+                className={`group relative rounded-2xl border p-6 cursor-pointer transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500] ${
                   isSelected
-                    ? 'border-cyan-500/60 bg-[#0c0e1a] shadow-2xl shadow-cyan-950/50 ring-1 ring-cyan-500/30'
-                    : 'border-white/[0.07] bg-[#090a10]/70 hover:border-white/20 hover:bg-[#0c0d15]'
+                    ? 'border-[#FF5500]/60 bg-[#0D0D11] shadow-2xl shadow-black/90 ring-1 ring-[#FF5500]/30'
+                    : 'border-[#262626] bg-[#0D0D11]/80 hover:border-white/25 hover:bg-[#141414]'
                 }`}
               >
                 {/* Active Card Ambient Corner Glow */}
                 {isSelected && (
-                  <div className="pointer-events-none absolute -top-10 -right-10 h-32 w-32 rounded-full bg-cyan-500/10 blur-2xl" />
+                  <div className="pointer-events-none absolute -top-10 -right-10 h-32 w-32 rounded-full bg-[#FF5500]/15 blur-2xl" />
                 )}
 
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
-                    <div className={`flex h-10 w-10 items-center justify-center rounded-xl bg-white/[0.05] border border-white/[0.08] ${layer.accent} ${isSelected ? 'ring-1 ring-cyan-400/50' : ''}`}>
+                    <div className={`flex h-10 w-10 items-center justify-center rounded-xl bg-white/[0.05] border border-white/[0.08] ${layer.accent} ${isSelected ? 'ring-1 ring-[#FF5500]/50' : ''}`}>
                       <Icon className="h-5 w-5" />
                     </div>
                     <div>
-                      <h3 className="font-display text-base font-bold text-white group-hover:text-cyan-200 transition-colors">
+                      <h3 className="font-display text-base font-bold text-white group-hover:text-[#FFB07A] transition-colors">
                         {layer.title}
                       </h3>
-                      <p className="text-xs text-slate-400">
+                      <p className="text-xs text-zinc-400">
                         {layer.subtitle}
                       </p>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <span className="rounded bg-white/[0.06] px-2 py-0.5 text-[10px] font-mono-code text-slate-300 border border-white/[0.05]">
+                    <span className="rounded bg-white/[0.06] px-2 py-0.5 text-[10px] font-mono-code text-zinc-300 border border-white/[0.05]">
                       {layer.badge}
                     </span>
-                    <div className="text-slate-500 group-hover:text-white transition-colors">
-                      {isSelected ? <ChevronUp className="h-4 w-4 text-cyan-400" /> : <ChevronDown className="h-4 w-4" />}
+                    <div className="text-zinc-400 group-hover:text-white transition-colors">
+                      {isSelected ? <ChevronUp className="h-4 w-4 text-[#FF8C42]" /> : <ChevronDown className="h-4 w-4" />}
                     </div>
                   </div>
                 </div>
 
-                <p className="text-xs text-slate-300 leading-relaxed mb-4">
+                <p className="text-xs text-zinc-300 leading-relaxed mb-4">
                   {layer.description}
                 </p>
 
                 {/* Specs List */}
-                <div className="rounded-xl border border-white/[0.05] bg-black/40 p-3 space-y-1.5 font-mono-code text-[11px]">
+                <div className="rounded-xl border border-white/[0.06] bg-[#000000]/60 p-3 space-y-1.5 font-mono-code text-[11px]">
                   {layer.specs.map((spec, sIdx) => (
-                    <div key={sIdx} className="flex justify-between items-center text-slate-400">
-                      <span className="text-slate-500">{spec.name}:</span>
-                      <span className="text-slate-200">{spec.val}</span>
+                    <div key={sIdx} className="flex justify-between items-center text-zinc-400">
+                      <span className="text-zinc-400">{spec.name}:</span>
+                      <span className="text-zinc-200">{spec.val}</span>
                     </div>
                   ))}
                 </div>
@@ -273,22 +283,24 @@ export const ArchitectureGrid: React.FC = () => {
                 <AnimatePresence>
                   {isSelected && (
                     <motion.div
-                      initial={{ opacity: 0, height: 0 }}
+                      initial={prefersReducedMotion ? { opacity: 1, height: 'auto' } : { opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: 'auto' }}
-                      exit={{ opacity: 0, height: 0 }}
-                      transition={{ duration: 0.25 }}
+                      exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, height: 0 }}
+                      transition={{ duration: prefersReducedMotion ? 0 : 0.25 }}
                       onClick={(e) => e.stopPropagation()}
+                      onKeyDown={(e) => e.stopPropagation()}
                       className="mt-5 pt-5 border-t border-white/[0.08] space-y-4 overflow-hidden"
                     >
                       {/* Sub-Tabs for Expanded Card */}
                       <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-1 rounded-xl border border-white/[0.08] bg-black/60 p-1 font-mono-code text-[11px]">
+                        <div className="flex items-center gap-1 rounded-xl border border-white/[0.08] bg-[#000000]/80 p-1 font-mono-code text-[11px]">
                           <button
+                            type="button"
                             onClick={() => { sound.playTick(); setActiveTab('architecture'); }}
-                            className={`flex items-center gap-1 px-2.5 py-1 rounded-lg transition-all ${
+                            className={`flex items-center gap-1 px-2.5 py-1 rounded-lg transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500] ${
                               activeTab === 'architecture'
-                                ? 'bg-cyan-500 text-black font-semibold shadow-sm'
-                                : 'text-slate-400 hover:text-white'
+                                ? 'bg-[#FF5500] text-[#000000] font-semibold shadow-sm'
+                                : 'text-zinc-400 hover:text-white'
                             }`}
                           >
                             <Workflow className="h-3 w-3" />
@@ -296,11 +308,12 @@ export const ArchitectureGrid: React.FC = () => {
                           </button>
 
                           <button
+                            type="button"
                             onClick={() => { sound.playTick(); setActiveTab('schema'); }}
-                            className={`flex items-center gap-1 px-2.5 py-1 rounded-lg transition-all ${
+                            className={`flex items-center gap-1 px-2.5 py-1 rounded-lg transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500] ${
                               activeTab === 'schema'
-                                ? 'bg-cyan-500 text-black font-semibold shadow-sm'
-                                : 'text-slate-400 hover:text-white'
+                                ? 'bg-[#FF5500] text-[#000000] font-semibold shadow-sm'
+                                : 'text-zinc-400 hover:text-white'
                             }`}
                           >
                             <Code2 className="h-3 w-3" />
@@ -308,11 +321,12 @@ export const ArchitectureGrid: React.FC = () => {
                           </button>
 
                           <button
+                            type="button"
                             onClick={() => { sound.playTick(); setActiveTab('invariants'); }}
-                            className={`flex items-center gap-1 px-2.5 py-1 rounded-lg transition-all ${
+                            className={`flex items-center gap-1 px-2.5 py-1 rounded-lg transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500] ${
                               activeTab === 'invariants'
-                                ? 'bg-cyan-500 text-black font-semibold shadow-sm'
-                                : 'text-slate-400 hover:text-white'
+                                ? 'bg-[#FF5500] text-[#000000] font-semibold shadow-sm'
+                                : 'text-zinc-400 hover:text-white'
                             }`}
                           >
                             <Shield className="h-3 w-3" />
@@ -322,8 +336,9 @@ export const ArchitectureGrid: React.FC = () => {
 
                         {activeTab === 'schema' && (
                           <button
+                            type="button"
                             onClick={(e) => handleCopySchema(layer.details.schema, e)}
-                            className="flex items-center gap-1 rounded-lg border border-white/[0.1] bg-white/[0.04] px-2 py-1 text-[10px] font-mono-code text-slate-300 hover:text-white transition-colors"
+                            className="flex items-center gap-1 rounded-lg border border-white/[0.1] bg-white/[0.04] px-2 py-1 text-[10px] font-mono-code text-zinc-300 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500]"
                           >
                             {copied ? <Check className="h-3 w-3 text-emerald-400" /> : <Copy className="h-3 w-3" />}
                             <span>{copied ? 'Copied' : 'Copy'}</span>
@@ -336,11 +351,11 @@ export const ArchitectureGrid: React.FC = () => {
                         <div className="space-y-2 font-mono-code text-xs">
                           {layer.details.architecture.map((item, aIdx) => (
                             <div key={aIdx} className="rounded-xl border border-white/[0.05] bg-white/[0.02] p-3 space-y-1">
-                              <div className="flex items-center gap-1.5 text-cyan-300 font-display font-semibold text-xs">
-                                <Zap className="h-3.5 w-3.5 text-cyan-400 shrink-0" />
+                              <div className="flex items-center gap-1.5 text-[#FFB07A] font-display font-semibold text-xs">
+                                <Zap className="h-3.5 w-3.5 text-[#FF8C42] shrink-0" />
                                 <span>{item.label}</span>
                               </div>
-                              <p className="text-[11px] text-slate-300 font-sans leading-relaxed">
+                              <p className="text-[11px] text-zinc-300 font-sans leading-relaxed">
                                 {item.desc}
                               </p>
                             </div>
@@ -350,7 +365,7 @@ export const ArchitectureGrid: React.FC = () => {
 
                       {/* Tab 2: Wire Schema */}
                       {activeTab === 'schema' && (
-                        <div className="rounded-xl border border-white/[0.08] bg-black/80 p-3 font-mono-code text-[11px] text-cyan-300/95 overflow-x-auto max-h-48">
+                        <div className="rounded-xl border border-white/[0.08] bg-[#000000]/90 p-3 font-mono-code text-[11px] text-[#FFB07A] overflow-x-auto max-h-48">
                           <pre>{layer.details.schema}</pre>
                         </div>
                       )}
@@ -372,10 +387,10 @@ export const ArchitectureGrid: React.FC = () => {
 
                 {/* Selection Footer Indicator */}
                 <div className="mt-4 flex items-center justify-between text-[11px] font-mono-code pt-3 border-t border-white/[0.04]">
-                  <span className={isSelected ? 'text-cyan-400 font-semibold flex items-center gap-1.5' : 'text-slate-500'}>
+                  <span className={isSelected ? 'text-[#FF8C42] font-semibold flex items-center gap-1.5' : 'text-zinc-400'}>
                     {isSelected ? (
                       <>
-                        <CheckCircle2 className="h-3.5 w-3.5 text-cyan-400" />
+                        <CheckCircle2 className="h-3.5 w-3.5 text-[#FF8C42]" />
                         <span>Active Layer Deep-Dive Opened</span>
                       </>
                     ) : (
@@ -391,27 +406,27 @@ export const ArchitectureGrid: React.FC = () => {
           })}
         </div>
 
-        {/* End-to-End Sequence Flow Banner (Lemni dynamic choreography) */}
-        <div className="rounded-2xl border border-white/[0.1] bg-[#07080f] p-6 text-center">
-          <div className="text-xs font-mono-code uppercase tracking-wider text-cyan-400 mb-2">
+        {/* End-to-End Sequence Flow Banner */}
+        <div className="rounded-2xl border border-[#262626] bg-[#0D0D11] p-6 text-center">
+          <div className="text-xs font-mono-code uppercase tracking-wider text-[#FF8C42] mb-2">
             Protocol Trust &amp; Delivery Pipeline
           </div>
-          <div className="flex flex-col md:flex-row items-center justify-center gap-3 md:gap-4 text-xs font-mono-code text-slate-300">
+          <div className="flex flex-col md:flex-row items-center justify-center gap-3 md:gap-4 text-xs font-mono-code text-zinc-300">
             <div className="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-cyan-400"></span>
+              <span className="h-2 w-2 rounded-full bg-[#FF8C42]"></span>
               <span>1. DID Challenge-Response</span>
             </div>
-            <ArrowRight className="h-3.5 w-3.5 text-slate-500 hidden md:block" />
+            <ArrowRight className="h-3.5 w-3.5 text-zinc-400 hidden md:block" />
             <div className="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-indigo-400"></span>
+              <span className="h-2 w-2 rounded-full bg-[#FF5500]"></span>
               <span>2. Capability VC Evaluation</span>
             </div>
-            <ArrowRight className="h-3.5 w-3.5 text-slate-500 hidden md:block" />
+            <ArrowRight className="h-3.5 w-3.5 text-zinc-400 hidden md:block" />
             <div className="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 flex items-center gap-2">
               <span className="h-2 w-2 rounded-full bg-emerald-400"></span>
               <span>3. NATS JetStream Fanout</span>
             </div>
-            <ArrowRight className="h-3.5 w-3.5 text-slate-500 hidden md:block" />
+            <ArrowRight className="h-3.5 w-3.5 text-zinc-400 hidden md:block" />
             <div className="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 flex items-center gap-2">
               <span className="h-2 w-2 rounded-full bg-amber-400"></span>
               <span>4. Audit Log &amp; Replay Hash</span>

@@ -1,57 +1,65 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useId } from 'react';
+import { createPortal } from 'react-dom';
 import {
   X,
-  Sparkles,
-  Cloud,
   Terminal,
-  Radio,
   Copy,
   Check,
   Shield,
-  Clock,
   ArrowRight,
   Server,
   Zap,
+  KeyRound,
+  Eye,
+  EyeOff,
+  Trash2,
 } from 'lucide-react';
-
 import { getStoredPortMappings } from '../utils/ports';
+import {
+  getDaemonBaseUrl,
+  getStoredDaemonToken,
+  setStoredDaemonToken,
+  isDaemonTokenPersisted,
+  getDaemonAuthHeaders,
+} from '../utils/daemonAuth';
+import { useAccessibleModal } from '../hooks/useAccessibleModal';
+import { ctaSolidOrange } from './ctaStyles';
 
 interface ConnectMcpModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onLaunchCloudSandbox?: () => void;
+  onLaunchLocalApp?: () => void;
   onOpenSettings?: () => void;
 }
-
-const CLOUD_URL = (import.meta as any).env?.VITE_ACR_CLOUD_URL || 'https://cloud.agentchatrooms.dev';
-const CLOUD_DOMAIN = (import.meta as any).env?.VITE_ACR_CLOUD_DOMAIN || 'cloud.agentchatrooms.dev';
-const CLOUD_RELAY_NODE = (import.meta as any).env?.VITE_ACR_CLOUD_RELAY_NODE || '143.198.98.229:20443';
-const CLOUD_WSS_TUNNEL = (import.meta as any).env?.VITE_ACR_CLOUD_WSS_TUNNEL || `wss://${CLOUD_DOMAIN}/tunnel`;
 
 export const ConnectMcpModal: React.FC<ConnectMcpModalProps> = ({
   isOpen,
   onClose,
-  onLaunchCloudSandbox,
+  onLaunchLocalApp,
   onOpenSettings,
 }) => {
-  const [activeTab, setActiveTab] = useState<'sandbox' | 'local' | 'tunnel'>('sandbox');
+  const [activeTab, setActiveTab] = useState<'local' | 'daemon'>('local');
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const [tokenInput, setTokenInput] = useState<string>(() => getStoredDaemonToken());
+  const [showToken, setShowToken] = useState(false);
+  const [persistToken, setPersistToken] = useState<boolean>(() => isDaemonTokenPersisted());
+  const [tokenSaved, setTokenSaved] = useState(false);
+  const [healthStatus, setHealthStatus] = useState<'idle' | 'checking' | 'online' | 'unauthorized' | 'offline'>('idle');
+  const [healthLatency, setHealthLatency] = useState<number | null>(null);
+
+  const titleId = useId();
+  const modalRef = useAccessibleModal<HTMLDivElement>({
+    isOpen,
+    onClose,
+  });
+
+  if (!isOpen || typeof document === 'undefined') return null;
 
   const portMappings = getStoredPortMappings();
   const corePort = portMappings.find((m) => m.id === 'acr-core')?.currentPort || 20443;
   const metaPort = portMappings.find((m) => m.id === 'acr-meta-mcp')?.currentPort || 20445;
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    if (isOpen) {
-      window.addEventListener('keydown', handleKeyDown);
-    }
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
-
-  if (!isOpen) return null;
+  const daemonBase = getDaemonBaseUrl();
+  const activeToken = getStoredDaemonToken();
 
   const copyToClipboard = (text: string, key: string) => {
     navigator.clipboard.writeText(text);
@@ -59,20 +67,27 @@ export const ConnectMcpModal: React.FC<ConnectMcpModalProps> = ({
     setTimeout(() => setCopiedKey(null), 2000);
   };
 
+  const envBlock = activeToken
+    ? {
+        ACR_DAEMON_URL: `http://127.0.0.1:${corePort}`,
+        ACR_API_TOKEN: activeToken,
+      }
+    : {
+        ACR_DAEMON_URL: `http://127.0.0.1:${corePort}`,
+      };
+
   const claudeConfig = JSON.stringify(
     {
       mcpServers: {
         acr: {
-          command: "acr-mcp-server",
-          args: [],
-          env: {
-            ACR_DAEMON_URL: `http://localhost:${corePort}`
-          }
+          command: 'npx',
+          args: ['-y', '@acr-js/mcp-server'],
+          env: envBlock,
         },
-        "acr-meta-mcp": {
-          url: `http://localhost:${metaPort}/mcp`
-        }
-      }
+        'acr-meta-mcp': {
+          url: `http://127.0.0.1:${metaPort}/mcp`,
+        },
+      },
     },
     null,
     2
@@ -81,277 +96,347 @@ export const ConnectMcpModal: React.FC<ConnectMcpModalProps> = ({
   const antigravityConfig = JSON.stringify(
     {
       mcpServers: {
-        "acr-mesh": {
-          command: "acr-mcp-server",
+        'acr-mesh': {
+          command: 'acr-mcp-server',
           args: [],
-          env: {
-            ACR_DAEMON_URL: `http://localhost:${corePort}`
-          }
+          env: envBlock,
         },
-        "acr-meta-mcp": {
-          url: `http://localhost:${metaPort}/mcp`
-        }
-      }
+        'acr-meta-mcp': {
+          url: `http://127.0.0.1:${metaPort}/mcp`,
+        },
+      },
     },
     null,
     2
   );
 
-  return (
+  const handleSaveToken = () => {
+    setStoredDaemonToken(tokenInput, persistToken);
+    setTokenSaved(true);
+    setTimeout(() => setTokenSaved(false), 2000);
+  };
+
+  const handleClearToken = () => {
+    setTokenInput('');
+    setStoredDaemonToken('', false);
+    setTokenSaved(true);
+    setTimeout(() => setTokenSaved(false), 2000);
+  };
+
+  const handleCheckHealth = async () => {
+    setHealthStatus('checking');
+    const started = performance.now();
+    try {
+      const res = await fetch(`${daemonBase}/api/v1/rooms`, {
+        method: 'GET',
+        headers: getDaemonAuthHeaders(),
+      });
+      setHealthLatency(Math.round((performance.now() - started) * 10) / 10);
+      if (res.status === 401) {
+        setHealthStatus('unauthorized');
+      } else if (res.ok) {
+        setHealthStatus('online');
+      } else {
+        setHealthStatus('offline');
+      }
+    } catch {
+      setHealthStatus('offline');
+    }
+  };
+
+  return createPortal(
     <div
-      role="dialog"
-      aria-modal="true"
-      aria-label="Connect Model Context Protocol (MCP)"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-xl animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-xl animate-fadeIn motion-reduce:animate-none"
+      onClick={onClose}
     >
       <div
-        className="relative w-full max-w-2xl rounded-3xl border border-cyan-500/40 bg-[#090b14] shadow-[0_25px_80px_rgba(0,0,0,0.95),0_0_50px_rgba(6,182,212,0.25),inset_0_1px_0_rgba(255,255,255,0.2)] overflow-hidden font-sans"
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        tabIndex={-1}
+        className="relative w-full max-w-2xl rounded-2xl border border-white/[0.14] bg-[#0D0D11] shadow-[0_25px_80px_rgba(0,0,0,0.95)] overflow-hidden font-sans focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header Bar */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.08] bg-black/60">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-500/20 to-indigo-500/20 border border-cyan-500/40 shadow-[0_0_15px_rgba(6,182,212,0.3)]">
-              <Terminal className="h-5 w-5 text-cyan-300" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FF5500]/15 border border-[#FF5500]/40">
+              <Terminal className="h-5 w-5 text-[#FF5500]" aria-hidden="true" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-base font-bold text-white tracking-tight">Connect MCP to ACR</h2>
-                <span className="text-[10px] font-mono-code font-semibold px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
-                  v0.8.2 Cloud Native
+                <h2 id={titleId} className="text-base font-bold text-white tracking-tight">
+                  Connect Local MCP to ACR
+                </h2>
+                <span className="text-[10px] font-mono-code font-semibold px-2 py-0.5 rounded-full bg-[#FF5500]/15 text-[#FF8C42] border border-[#FF5500]/30">
+                  100% Local • Zero Cloud
                 </span>
               </div>
-              <p className="text-xs text-slate-400">
-                Bridge Claude Desktop, Antigravity, Cursor, or Cloud Sandboxes into ACR
+              <p className="text-xs text-[#A1A1AA]">
+                Bridge Claude Desktop, Claude Code, Antigravity, or Cursor into your local acr-core daemon
               </p>
             </div>
           </div>
 
           <button
+            type="button"
             onClick={onClose}
             aria-label="Close Connect MCP dialog"
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.04] text-slate-400 hover:text-white hover:bg-white/[0.1] border border-white/[0.08] transition-colors cursor-pointer"
+            className="flex h-11 w-11 items-center justify-center rounded-full bg-white/[0.04] text-[#A1A1AA] hover:text-white hover:bg-white/[0.1] border border-white/[0.08] transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500]"
           >
-            <X className="h-4 w-4" />
+            <X className="h-4 w-4" aria-hidden="true" />
           </button>
         </div>
 
         {/* Navigation Tabs */}
-        <div className="flex items-center px-6 pt-3 border-b border-white/[0.06] bg-black/30 gap-2">
+        <div className="flex items-center px-6 pt-3 border-b border-white/[0.08] bg-black/40 gap-2">
           <button
-            onClick={() => setActiveTab('sandbox')}
-            className={`flex items-center gap-2 px-3.5 py-2.5 text-xs font-semibold rounded-t-xl transition-all border-b-2 cursor-pointer ${
-              activeTab === 'sandbox'
-                ? 'text-cyan-300 border-cyan-400 bg-cyan-500/10'
-                : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-white/[0.02]'
-            }`}
-          >
-            <Cloud className="h-3.5 w-3.5 text-cyan-400" />
-            <span>1-Click Cloud Sandbox</span>
-            <span className="text-[9px] font-mono-code bg-emerald-500/20 text-emerald-300 px-1.5 py-0.2 rounded border border-emerald-500/30">
-              Zero-Install
-            </span>
-          </button>
-
-          <button
+            type="button"
             onClick={() => setActiveTab('local')}
-            className={`flex items-center gap-2 px-3.5 py-2.5 text-xs font-semibold rounded-t-xl transition-all border-b-2 cursor-pointer ${
+            className={`flex min-h-[44px] items-center gap-2 px-4 py-2 text-xs font-semibold rounded-t-xl transition-all border-b-2 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500] ${
               activeTab === 'local'
-                ? 'text-cyan-300 border-cyan-400 bg-cyan-500/10'
-                : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-white/[0.02]'
+                ? 'text-[#FF8C42] border-[#FF5500] bg-[#FF5500]/10'
+                : 'text-[#A1A1AA] border-transparent hover:text-white hover:bg-white/[0.03]'
             }`}
           >
-            <Server className="h-3.5 w-3.5 text-indigo-400" />
-            <span>Local MCP Agent</span>
+            <Server className="h-3.5 w-3.5 text-[#FF5500]" aria-hidden="true" />
+            <span>Local MCP Agents</span>
           </button>
 
           <button
-            onClick={() => setActiveTab('tunnel')}
-            className={`flex items-center gap-2 px-3.5 py-2.5 text-xs font-semibold rounded-t-xl transition-all border-b-2 cursor-pointer ${
-              activeTab === 'tunnel'
-                ? 'text-cyan-300 border-cyan-400 bg-cyan-500/10'
-                : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-white/[0.02]'
+            type="button"
+            onClick={() => setActiveTab('daemon')}
+            className={`flex min-h-[44px] items-center gap-2 px-4 py-2 text-xs font-semibold rounded-t-xl transition-all border-b-2 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500] ${
+              activeTab === 'daemon'
+                ? 'text-[#FF8C42] border-[#FF5500] bg-[#FF5500]/10'
+                : 'text-[#A1A1AA] border-transparent hover:text-white hover:bg-white/[0.03]'
             }`}
           >
-            <Radio className="h-3.5 w-3.5 text-amber-400" />
-            <span>Ephemeral Tunnel</span>
-            <span className="text-[9px] font-mono-code bg-amber-500/20 text-amber-300 px-1.5 py-0.2 rounded border border-amber-500/30">
-              15m TTL
-            </span>
+            <KeyRound className="h-3.5 w-3.5 text-[#FF8C42]" aria-hidden="true" />
+            <span>Local Daemon &amp; ACR_API_TOKEN</span>
           </button>
         </div>
 
-        {/* Tab Content Area */}
+        {/* Tab Content */}
         <div className="p-6 max-h-[460px] overflow-y-auto space-y-4">
-          {/* TAB 1: CLOUD SANDBOX */}
-          {activeTab === 'sandbox' && (
-            <div className="space-y-4 animate-in fade-in duration-150">
-              <div className="p-4 rounded-2xl border border-cyan-500/30 bg-gradient-to-br from-cyan-500/10 via-indigo-500/5 to-transparent">
-                <div className="flex items-start gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-cyan-500/20 border border-cyan-400 text-cyan-300 shrink-0">
-                    <Sparkles className="h-4 w-4" />
-                  </div>
-                  <div className="space-y-1">
-                    <h3 className="text-sm font-bold text-white">Instant Ephemeral Cloud Deliberation Floor</h3>
-                    <p className="text-xs text-slate-300 leading-relaxed">
-                      Deploy a dedicated, tokenized sandbox room directly on the proprietary ACR Cloud mesh (<a href={CLOUD_URL} target="_blank" rel="noopener noreferrer" className="text-cyan-300 font-mono-code underline hover:text-cyan-200">{CLOUD_DOMAIN}</a>). No local daemon or CLI installation required.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 mt-4 pt-3 border-t border-white/[0.08] text-[11px]">
-                  <div className="flex items-center gap-2 text-slate-300">
-                    <Clock className="h-3.5 w-3.5 text-cyan-400" />
-                    <span>15-min auto-purge TTL</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-slate-300">
-                    <Shield className="h-3.5 w-3.5 text-indigo-400" />
-                    <span>Unkey rate-limited quota</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-slate-300">
-                    <Zap className="h-3.5 w-3.5 text-emerald-400" />
-                    <span>Pre-seeded AI agents</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between p-3.5 rounded-xl border border-white/[0.08] bg-black/40 text-xs text-slate-300">
-                <div className="flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-                  <span>Cloud Relay Node: <span className="font-mono-code text-cyan-300">{CLOUD_RELAY_NODE}</span></span>
-                </div>
-                <span className="text-[10px] font-mono-code text-slate-500">Latency: ~28ms</span>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => {
-                  onClose();
-                  if (onLaunchCloudSandbox) onLaunchCloudSandbox();
-                }}
-                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white font-bold text-xs shadow-[0_0_25px_rgba(6,182,212,0.4)] transition-all cursor-pointer active:scale-98"
-              >
-                <span>Launch Cloud Sandbox Now</span>
-                <ArrowRight className="h-4 w-4" />
-              </button>
-            </div>
-          )}
-
-          {/* TAB 2: LOCAL MCP AGENTS */}
           {activeTab === 'local' && (
-            <div className="space-y-4 animate-in fade-in duration-150">
-              <p className="text-xs text-slate-300">
-                Connect your local desktop LLM client directly to ACR Core Daemon via standard Model Context Protocol:
+            <div className="space-y-4">
+              <p className="text-xs text-[#D4D4D8]">
+                Connect your local desktop or IDE agent directly to <code className="text-[#FF8C42]">http://127.0.0.1:{corePort}</code> via{' '}
+                <code className="text-[#FF8C42]">@acr-js/mcp-server</code> or <code className="text-[#FF8C42]">acr-mcp-server</code>:
               </p>
 
               {/* Claude Desktop Config */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="font-semibold text-slate-200">Claude Desktop (<code className="text-cyan-300 font-mono-code">claude_desktop_config.json</code>)</span>
+                  <span className="font-semibold text-white">
+                    Claude Desktop / Cursor (<code className="text-[#FF8C42] font-mono-code">claude_desktop_config.json</code>)
+                  </span>
                   <button
+                    type="button"
                     onClick={() => copyToClipboard(claudeConfig, 'claude')}
-                    className="flex items-center gap-1 text-[11px] text-cyan-400 hover:text-cyan-300 cursor-pointer"
+                    className="flex min-h-[36px] items-center gap-1 px-2 text-[11px] text-[#FF8C42] hover:text-white cursor-pointer rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500]"
                   >
-                    {copiedKey === 'claude' ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                    {copiedKey === 'claude' ? <Check className="h-3.5 w-3.5 text-[#10B981]" aria-hidden="true" /> : <Copy className="h-3.5 w-3.5" aria-hidden="true" />}
                     <span>{copiedKey === 'claude' ? 'Copied' : 'Copy JSON'}</span>
                   </button>
                 </div>
-                <pre className="p-3 rounded-xl bg-black/70 border border-white/[0.08] text-[11px] font-mono-code text-cyan-200/90 overflow-x-auto">
+                <pre className="p-3 rounded-xl bg-black/80 border border-white/[0.08] text-[11px] font-mono-code text-[#D4D4D8] overflow-x-auto">
                   {claudeConfig}
                 </pre>
               </div>
 
-              {/* Antigravity Config */}
+              {/* Antigravity / Go Binary Config */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="font-semibold text-slate-200">Google Antigravity (<code className="text-indigo-300 font-mono-code">antigravity_config.json</code>)</span>
+                  <span className="font-semibold text-white">
+                    Antigravity / Go Binary (<code className="text-[#FF8C42] font-mono-code">antigravity_config.json</code>)
+                  </span>
                   <button
+                    type="button"
                     onClick={() => copyToClipboard(antigravityConfig, 'antigravity')}
-                    className="flex items-center gap-1 text-[11px] text-indigo-400 hover:text-indigo-300 cursor-pointer"
+                    className="flex min-h-[36px] items-center gap-1 px-2 text-[11px] text-[#FF8C42] hover:text-white cursor-pointer rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500]"
                   >
-                    {copiedKey === 'antigravity' ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                    {copiedKey === 'antigravity' ? <Check className="h-3.5 w-3.5 text-[#10B981]" aria-hidden="true" /> : <Copy className="h-3.5 w-3.5" aria-hidden="true" />}
                     <span>{copiedKey === 'antigravity' ? 'Copied' : 'Copy JSON'}</span>
                   </button>
                 </div>
-                <pre className="p-3 rounded-xl bg-black/70 border border-white/[0.08] text-[11px] font-mono-code text-indigo-200/90 overflow-x-auto">
+                <pre className="p-3 rounded-xl bg-black/80 border border-white/[0.08] text-[11px] font-mono-code text-[#D4D4D8] overflow-x-auto">
                   {antigravityConfig}
                 </pre>
               </div>
 
               {/* Advanced Settings Link */}
               {onOpenSettings && (
-                <div className="flex items-center justify-between p-3 rounded-xl border border-cyan-500/20 bg-cyan-950/20 text-xs">
-                  <div className="flex items-center gap-2 text-slate-300">
-                    <Zap className="h-4 w-4 text-cyan-400" />
-                    <span>Need custom ports for Core (20443) or Meta-MCP (20445)?</span>
+                <div className="flex items-center justify-between p-3 rounded-xl border border-white/[0.08] bg-black/50 text-xs">
+                  <div className="flex items-center gap-2 text-[#D4D4D8]">
+                    <Zap className="h-4 w-4 text-[#FF5500]" aria-hidden="true" />
+                    <span>Need custom ports for Core ({corePort}) or Meta-MCP ({metaPort})?</span>
                   </div>
                   <button
+                    type="button"
                     onClick={() => {
                       onClose();
                       onOpenSettings();
                     }}
-                    className="text-cyan-400 hover:text-cyan-300 font-semibold underline cursor-pointer"
+                    className="min-h-[36px] px-2 text-[#FF8C42] hover:text-white font-semibold underline cursor-pointer rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500]"
                   >
-                    Configure in Advanced Settings →
+                    Configure Ports →
                   </button>
                 </div>
               )}
             </div>
           )}
 
-          {/* TAB 3: EPHEMERAL TUNNEL */}
-          {activeTab === 'tunnel' && (
-            <div className="space-y-4 animate-in fade-in duration-150">
-              <div className="p-3.5 rounded-xl border border-amber-500/30 bg-amber-500/10 text-xs text-amber-200 space-y-1">
-                <div className="flex items-center gap-1.5 font-bold">
-                  <Radio className="h-4 w-4 text-amber-400" />
-                  <span>NAT-Traversing Secure Reverse Tunnel</span>
+          {activeTab === 'daemon' && (
+            <div className="space-y-4">
+              <div className="p-4 rounded-xl border border-white/[0.08] bg-black/50 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Shield className="h-4 w-4 text-[#FF5500]" aria-hidden="true" />
+                    <h3 className="text-sm font-bold text-white">Local Daemon Bearer Auth (ACR_API_TOKEN)</h3>
+                  </div>
+                  <span
+                    className={`text-[10px] font-mono-code px-2 py-0.5 rounded-full border ${
+                      activeToken
+                        ? 'bg-[#10B981]/15 border-[#10B981]/40 text-[#10B981]'
+                        : 'bg-white/[0.05] border-white/[0.12] text-[#A1A1AA]'
+                    }`}
+                  >
+                    {activeToken ? 'Bearer Token Active' : 'Unauthenticated Loopback'}
+                  </span>
                 </div>
-                <p className="text-[11px] text-slate-300">
-                  Allow this public Vercel web app to securely invoke tools on your local MCP server through an encrypted outbound tunnel with automatic idle cleanup.
+
+                <p className="text-xs text-[#A1A1AA] leading-relaxed">
+                  If your local <code className="text-[#FF8C42]">acrd</code> daemon runs with <code className="text-[#FF8C42]">ACR_API_TOKEN</code> or{' '}
+                  <code className="text-[#FF8C42]">-api-token</code>, enter the token below. It is sent as{' '}
+                  <code className="text-[#FF8C42]">Authorization: Bearer &lt;token&gt;</code> to <code className="text-[#D4D4D8]">{daemonBase}</code>.
                 </p>
+
+                <div className="flex items-center gap-2">
+                  <div className="relative flex-1">
+                    <input
+                      type={showToken ? 'text' : 'password'}
+                      value={tokenInput}
+                      onChange={(e) => setTokenInput(e.target.value)}
+                      placeholder="Paste ACR_API_TOKEN for 127.0.0.1:20443..."
+                      aria-label="ACR_API_TOKEN Bearer token"
+                      className="w-full min-h-[44px] rounded-lg border border-white/[0.14] bg-[#000000] px-3 pr-10 text-xs font-mono-code text-white placeholder-[#71717A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500]"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowToken((prev) => !prev)}
+                      aria-label={showToken ? 'Hide token' : 'Show token'}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center text-[#A1A1AA] hover:text-white cursor-pointer rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500]"
+                    >
+                      {showToken ? <EyeOff className="h-3.5 w-3.5" aria-hidden="true" /> : <Eye className="h-3.5 w-3.5" aria-hidden="true" />}
+                    </button>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleSaveToken}
+                    className={ctaSolidOrange}
+                  >
+                    <span>{tokenSaved ? 'Saved' : 'Apply Token'}</span>
+                  </button>
+                  {activeToken && (
+                    <button
+                      type="button"
+                      onClick={handleClearToken}
+                      aria-label="Clear Bearer token"
+                      className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg border border-white/[0.12] bg-[#141414] text-[#EF4444] hover:bg-[#EF4444]/10 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500]"
+                    >
+                      <Trash2 className="h-4 w-4" aria-hidden="true" />
+                    </button>
+                  )}
+                </div>
+
+                <label className="flex items-center gap-2 text-xs text-[#D4D4D8] cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={persistToken}
+                    onChange={(e) => setPersistToken(e.target.checked)}
+                    className="h-4 w-4 accent-[#FF5500]"
+                  />
+                  <span>Persist token across browser restarts (otherwise session-only)</span>
+                </label>
               </div>
 
+              {/* Endpoint Health Probe */}
+              <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-xl border border-white/[0.08] bg-black/50 text-xs">
+                <div className="space-y-0.5">
+                  <div className="text-white font-semibold">
+                    Daemon Endpoint: <code className="text-[#FF8C42]">{daemonBase}</code>
+                  </div>
+                  <div className="text-[11px] text-[#A1A1AA] font-mono-code">
+                    {healthStatus === 'idle' && 'Click Test Connection to verify loopback reachability and Bearer auth.'}
+                    {healthStatus === 'checking' && 'Probing local acr-core daemon...'}
+                    {healthStatus === 'online' && `Connected (${healthLatency ?? 0}ms) — authenticated & ready`}
+                    {healthStatus === 'unauthorized' && 'HTTP 401 Unauthorized — enter valid ACR_API_TOKEN above'}
+                    {healthStatus === 'offline' && 'Daemon offline — start acrd -bind 127.0.0.1 -port 20443'}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleCheckHealth}
+                  className="min-h-[44px] px-4 rounded-lg border border-white/[0.14] bg-[#141414] text-xs font-semibold text-white hover:border-[#FF5500]/50 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500]"
+                >
+                  Test Connection
+                </button>
+              </div>
+
+              {/* Start Daemon One-Liner */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="font-semibold text-slate-200">Terminal Quickstart One-Liner</span>
+                  <span className="font-semibold text-white">Start Local acr-core Daemon</span>
                   <button
-                    onClick={() => copyToClipboard('npx @acr-js/bridge tunnel --ephemeral', 'tunnel-cmd')}
-                    className="flex items-center gap-1 text-[11px] text-amber-400 hover:text-amber-300 cursor-pointer"
+                    type="button"
+                    onClick={() => copyToClipboard(`acrd -bind 127.0.0.1 -port ${corePort}`, 'acrd-cmd')}
+                    className="flex min-h-[36px] items-center gap-1 px-2 text-[11px] text-[#FF8C42] hover:text-white cursor-pointer rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500]"
                   >
-                    {copiedKey === 'tunnel-cmd' ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-                    <span>{copiedKey === 'tunnel-cmd' ? 'Copied' : 'Copy Command'}</span>
+                    {copiedKey === 'acrd-cmd' ? <Check className="h-3.5 w-3.5 text-[#10B981]" aria-hidden="true" /> : <Copy className="h-3.5 w-3.5" aria-hidden="true" />}
+                    <span>{copiedKey === 'acrd-cmd' ? 'Copied' : 'Copy Command'}</span>
                   </button>
                 </div>
-                <pre className="p-3 rounded-xl bg-black/70 border border-white/[0.08] text-[11px] font-mono-code text-amber-300 overflow-x-auto">
-                  npx @acr-js/bridge tunnel --ephemeral
+                <pre className="p-3 rounded-xl bg-black/80 border border-white/[0.08] text-[11px] font-mono-code text-[#FF8C42] overflow-x-auto">
+                  {`acrd -bind 127.0.0.1 -port ${corePort}`}
                 </pre>
               </div>
 
-              <div className="space-y-1 text-[11px] text-slate-400 bg-white/[0.02] p-3 rounded-xl border border-white/[0.06]">
-                <div className="text-slate-300 font-semibold mb-1">Tunnel Lifecycle & Security:</div>
-                <div>• Outbound WebSocket to <code className="text-cyan-300 font-mono-code">{CLOUD_WSS_TUNNEL}</code></div>
-                <div>• Auto-terminates after 15 minutes of zero traffic</div>
-                <div>• Ed25519 tokenized capability handshake</div>
-              </div>
+              {onLaunchLocalApp && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    onLaunchLocalApp();
+                  }}
+                  className={`w-full ${ctaSolidOrange}`}
+                >
+                  <span>Open Local Room Workspace</span>
+                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                </button>
+              )}
             </div>
           )}
         </div>
 
         {/* Footer Bar */}
-        <div className="flex items-center justify-between px-6 py-3.5 border-t border-white/[0.08] bg-black/50 text-[11px] text-slate-400">
+        <div className="flex items-center justify-between px-6 py-3.5 border-t border-white/[0.08] bg-black/60 text-[11px] text-[#A1A1AA]">
           <div className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-cyan-400" />
-            <span>Agentic Chat Rooms (ACR) Protocol</span>
+            <span className="h-2 w-2 rounded-full bg-[#FF5500]" />
+            <span>Agentic Chat Rooms (ACR) • Local Workstation Client</span>
           </div>
           <button
+            type="button"
             onClick={onClose}
-            className="px-3.5 py-1 rounded-lg border border-white/[0.1] bg-white/[0.05] hover:bg-white/[0.1] text-slate-200 transition-colors cursor-pointer"
+            className="min-h-[44px] px-4 py-1.5 rounded-lg border border-white/[0.12] bg-[#141414] hover:bg-[#1F1F1F] text-white transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500]"
           >
             Close
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

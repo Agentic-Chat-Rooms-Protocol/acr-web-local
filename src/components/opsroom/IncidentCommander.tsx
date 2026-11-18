@@ -115,7 +115,7 @@ export const IncidentCommander: React.FC<IncidentCommanderProps> = ({
               value={customPrompt}
               onChange={(e) => setCustomPrompt(e.target.value)}
               placeholder="e.g. AWS US-East-1 S3 503 error spike triggering downstream order ingestion halt..."
-              className="flex-1 px-4 py-2.5 rounded-xl bg-slate-900/70 border border-white/15 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400"
+              className="flex-1 px-4 py-2.5 rounded-xl bg-[#0D0D11] border border-white/15 text-xs text-white placeholder-[#A1A1AA] focus:border-[#FF5500] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500]"
             />
           </div>
         </div>
@@ -136,10 +136,10 @@ export const IncidentCommander: React.FC<IncidentCommanderProps> = ({
         <button
           onClick={handleTrigger}
           disabled={isRunning}
-          className="w-full sm:w-auto px-6 py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 bg-gradient-to-r from-amber-400 via-orange-400 to-red-400 text-slate-950 hover:shadow-lg hover:shadow-amber-500/25 transition-all cursor-pointer active:scale-98 disabled:opacity-50 shrink-0"
+          className="min-h-[44px] w-full sm:w-auto px-6 py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 bg-[#FF5500] hover:bg-[#FF8C42] text-black transition-all cursor-pointer active:scale-98 disabled:opacity-50 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500] focus-visible:ring-offset-2 focus-visible:ring-offset-black"
         >
           <Play className="w-3.5 h-3.5 fill-current" />
-          <span>{isRunning ? 'Deliberation Active...' : 'Simulate Autonomous Incident Response'}</span>
+          <span>{isRunning ? 'Deliberation Active...' : 'Simulate Coordinated Incident Response'}</span>
         </button>
       </div>
     </section>

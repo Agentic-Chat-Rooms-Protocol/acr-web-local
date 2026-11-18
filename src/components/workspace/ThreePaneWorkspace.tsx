@@ -97,7 +97,7 @@ const SAMPLE_ACTIVE_MILESTONE: ProcessMilestone = {
     {
       id: 'step-2-2',
       stepNumber: '2.2',
-      title: 'Prepare ActionProposal for GitHub Pull Request #104',
+      title: 'Prepare ActionProposal for GitHub Pull Request 104',
       agentDid: 'did:key:agent-vcs-03',
       status: 'PARKED',
       latencyMs: 12,
@@ -141,7 +141,7 @@ export const ThreePaneWorkspace: React.FC<ThreePaneWorkspaceProps> = ({
           return {
             ...m,
             status: 'COMPLETED',
-            summary: `Gate authorized and signed by operator. PR #104 merged to target. BLAKE3: ${draft.blake3Hash.slice(0, 16)}...`,
+            summary: `Gate authorized and signed by operator. PR 104 merged to target. BLAKE3: ${draft.blake3Hash.slice(0, 16)}...`,
             steps: m.steps.map((s) =>
               s.id === 'step-2-2'
                 ? {
@@ -237,9 +237,9 @@ export const ThreePaneWorkspace: React.FC<ThreePaneWorkspaceProps> = ({
               role="tab"
               aria-selected={mobileTab === tab}
               onClick={() => setMobileTab(tab)}
-              className={`flex-1 py-2.5 text-center font-medium transition-colors focus:outline-none ${
+              className={`flex-1 py-2.5 text-center font-medium transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500] ${
                 mobileTab === tab
-                  ? 'bg-neutral-800 text-sky-300 border-b-2 border-sky-400 font-bold'
+                  ? 'bg-neutral-800 text-[#FF8C42] border-b-2 border-[#FF5500] font-bold'
                   : 'text-neutral-300 hover:text-white'
               }`}
             >
@@ -359,7 +359,7 @@ export const ThreePaneWorkspace: React.FC<ThreePaneWorkspaceProps> = ({
               <button
                 type="button"
                 onClick={() => setCenterMode('STREAM')}
-                className={`px-3 py-1.5 rounded transition-colors focus:outline-none ${
+                className={`px-3 py-1.5 rounded transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500] ${
                   centerMode === 'STREAM'
                     ? 'bg-neutral-750 text-white font-bold border border-neutral-600'
                     : 'bg-neutral-850 text-neutral-300 hover:text-white'
@@ -370,7 +370,7 @@ export const ThreePaneWorkspace: React.FC<ThreePaneWorkspaceProps> = ({
               <button
                 type="button"
                 onClick={() => setCenterMode('BATTLE')}
-                className={`px-3 py-1.5 rounded transition-colors focus:outline-none ${
+                className={`px-3 py-1.5 rounded transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500] ${
                   centerMode === 'BATTLE'
                     ? 'bg-neutral-750 text-white font-bold border border-neutral-600'
                     : 'bg-neutral-850 text-neutral-300 hover:text-white'
@@ -403,13 +403,13 @@ export const ThreePaneWorkspace: React.FC<ThreePaneWorkspaceProps> = ({
                 onChange={(e) => setDirectiveInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleDispatch()}
                 placeholder="Type operator directive or slash command (/vote, /approve, /veto, /gate)..."
-                className="flex-1 px-3 py-2 bg-neutral-950 border border-neutral-700 rounded text-xs font-mono text-white placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                className="flex-1 px-3 py-2 bg-[#000000] border border-neutral-700 rounded text-xs font-mono text-white placeholder-neutral-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500]"
                 aria-label="Operator Directive Input"
               />
               <button
                 type="button"
                 onClick={handleDispatch}
-                className="px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white font-mono text-xs font-bold rounded transition-colors focus:outline-none focus:ring-2 focus:ring-sky-400 whitespace-nowrap"
+                className="px-4 py-2 bg-[#FF5500] hover:bg-[#FF8C42] text-black font-mono text-xs font-bold rounded transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500] whitespace-nowrap"
               >
                 [DISPATCH]
               </button>
@@ -418,7 +418,7 @@ export const ThreePaneWorkspace: React.FC<ThreePaneWorkspaceProps> = ({
               <button
                 type="button"
                 onClick={() => setDirectiveInput('/approve proposal-104')}
-                className="hover:text-emerald-300 focus:outline-none"
+                className="hover:text-[#10B981] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500] rounded px-1"
               >
                 [/approve]
               </button>
@@ -426,7 +426,7 @@ export const ThreePaneWorkspace: React.FC<ThreePaneWorkspaceProps> = ({
               <button
                 type="button"
                 onClick={() => setDirectiveInput('/veto proposal-104 --rationale="safety"')}
-                className="hover:text-rose-300 focus:outline-none"
+                className="hover:text-[#EF4444] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500] rounded px-1"
               >
                 [/veto]
               </button>
@@ -434,7 +434,7 @@ export const ThreePaneWorkspace: React.FC<ThreePaneWorkspaceProps> = ({
               <button
                 type="button"
                 onClick={() => setDirectiveInput('/vote DISSENT --rationale="alternative needed"')}
-                className="hover:text-amber-300 focus:outline-none"
+                className="hover:text-[#FF8C42] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500] rounded px-1"
               >
                 [/vote]
               </button>

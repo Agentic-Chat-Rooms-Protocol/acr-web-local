@@ -120,10 +120,10 @@ export const AtlasVisualizer: React.FC = () => {
             aria-controls="arch-panel-atlas2"
             tabIndex={selectedArch === 'atlas2' ? 0 : -1}
             onClick={() => { sound.playTick(); setSelectedArch('atlas2'); }}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 ${
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500] ${
               selectedArch === 'atlas2'
-                ? 'bg-gradient-to-r from-cyan-400 to-indigo-500 text-slate-950 shadow-lg shadow-cyan-500/25'
-                : 'text-slate-400 hover:text-white hover:bg-white/5'
+                ? 'bg-[#FF5500] text-black shadow-lg'
+                : 'text-[#A1A1AA] hover:text-white hover:bg-white/5'
             }`}
           >
             ACR Atlas 2.0 (The Evolution)
@@ -213,7 +213,7 @@ export const AtlasVisualizer: React.FC = () => {
                     </p>
                   </div>
                   {isSelected && (
-                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-cyan-400 to-indigo-400" />
+                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-[#FF5500] to-[#FF8C42]" />
                   )}
                 </button>
               );
@@ -226,7 +226,7 @@ export const AtlasVisualizer: React.FC = () => {
             id={`phase-panel-${activePhaseIndex}`}
             aria-labelledby={`phase-tab-${activePhaseIndex}`}
             tabIndex={0}
-            className="p-5 rounded-2xl bg-gradient-to-r from-cyan-950/30 via-slate-900/70 to-indigo-950/30 border border-cyan-500/30 text-xs text-slate-300 mb-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/50"
+            className="p-5 rounded-2xl bg-[#0D0D11] border border-[#FF5500]/35 text-xs text-[#D4D4D8] mb-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500]"
           >
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
               <div className="flex items-center gap-2">

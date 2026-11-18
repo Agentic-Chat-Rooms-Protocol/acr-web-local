@@ -134,8 +134,8 @@ export const BATTLECARD_ITEMS = [
   },
   {
     feature: 'Huddle & Voice Collaboration',
-    agentforce: 'Passive AI note-taker summarizing human speech after calls; no autonomous cross-agent deliberation.',
-    opsroom: 'Autonomous Multi-Agent Synthetic Huddle Fabric with live frequency waveforms & instant board-level executive brief synthesis.',
+    agentforce: 'Passive AI note-taker summarizing human speech after calls; no multi-agent cross-checking.',
+    opsroom: 'Coordinated Multi-Agent Synthetic Huddle Fabric with live frequency waveforms & instant board-level executive brief synthesis.',
     winner: 'ACR OpsRoom',
   },
   {

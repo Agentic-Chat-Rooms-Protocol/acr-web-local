@@ -52,48 +52,49 @@ export const PluginConfigModal: React.FC<PluginConfigModalProps> = ({
       role="dialog"
       aria-modal="true"
       aria-labelledby="plugin-config-title"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#000000]/80 backdrop-blur-md animate-in fade-in motion-reduce:animate-none"
     >
-      <div className="relative w-full max-w-lg rounded-2xl border border-indigo-500/40 bg-[#090b16] p-6 shadow-2xl space-y-4 font-mono-code text-xs max-h-[90vh] flex flex-col">
+      <div className="relative w-full max-w-lg rounded-2xl border border-[#FF5500]/35 bg-[#0D0D11] p-6 shadow-2xl space-y-4 font-mono-code text-xs max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-white/[0.08] pb-3 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-indigo-500/10 border border-indigo-500/30 text-indigo-400">
+            <div className="p-2.5 rounded-xl bg-[#FF5500]/15 border border-[#FF5500]/35 text-[#FF8C42]">
               <Sliders className="h-5 w-5" />
             </div>
             <div>
               <h3 id="plugin-config-title" className="text-sm font-bold text-white font-sans flex items-center gap-2">
                 <span>{plugin.name}</span>
-                <span className="text-indigo-400 text-[10px] font-mono-code">v{plugin.version}</span>
+                <span className="text-[#FF8C42] text-[10px] font-mono-code">v{plugin.version}</span>
               </h3>
-              <p className="text-[10px] text-slate-400 font-sans">
-                Installed on <strong className="text-cyan-300">{agent.name}</strong>
+              <p className="text-[10px] text-[#A1A1AA] font-sans">
+                Installed on <strong className="text-[#FF8C42]">{agent.name}</strong>
               </p>
             </div>
           </div>
           <button
+            type="button"
             onClick={onClose}
             aria-label="Close configuration modal"
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+            className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-[#A1A1AA] hover:text-white hover:bg-white/10 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500]"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
 
         {/* Status / Anchor Banner */}
-        <div className="p-2.5 rounded-xl bg-black/50 border border-white/[0.06] flex items-center justify-between text-[10px]">
-          <span className="flex items-center gap-1 text-emerald-400">
+        <div className="p-2.5 rounded-xl bg-[#000000]/60 border border-white/[0.08] flex items-center justify-between text-[10px]">
+          <span className="flex items-center gap-1 text-[#10B981]">
             <Shield className="h-3.5 w-3.5" />
             <span>{plugin.trust_badge}</span>
           </span>
-          <span className="text-slate-500">Repository: {plugin.repository_source || 'acr-official'}</span>
+          <span className="text-[#A1A1AA]">Repository: {plugin.repository_source || 'acr-official'}</span>
         </div>
 
         {/* Scrollable Form */}
         <form onSubmit={handleSave} className="flex-1 overflow-y-auto space-y-4 pr-1">
           <div className="space-y-3">
             {(!plugin.config_schema || plugin.config_schema.length === 0) ? (
-              <div className="p-6 text-center text-slate-500">
+              <div className="p-6 text-center text-[#A1A1AA]">
                 No configurable parameters defined for this plugin.
               </div>
             ) : (
@@ -105,21 +106,21 @@ export const PluginConfigModal: React.FC<PluginConfigModalProps> = ({
                 return (
                   <div
                     key={field.key}
-                    className="p-3 rounded-xl border border-white/[0.06] bg-black/30 space-y-1.5"
+                    className="p-3 rounded-xl border border-white/[0.08] bg-[#000000]/40 space-y-1.5"
                   >
                     <div className="flex items-center justify-between">
                       <label
                         htmlFor={`config-field-${field.key}`}
-                        className="text-[11px] font-bold text-slate-200 font-sans"
+                        className="text-[11px] font-bold text-white font-sans"
                       >
                         {field.label}
                       </label>
-                      <span className="text-[9px] font-mono-code text-indigo-400">
+                      <span className="text-[9px] font-mono-code text-[#FF8C42]">
                         {field.key}
                       </span>
                     </div>
 
-                    <p className="text-[10px] text-slate-400 font-sans leading-relaxed">
+                    <p className="text-[10px] text-[#A1A1AA] font-sans leading-relaxed">
                       {field.description}
                     </p>
 
@@ -130,19 +131,19 @@ export const PluginConfigModal: React.FC<PluginConfigModalProps> = ({
                           type="button"
                           id={`config-field-${field.key}`}
                           onClick={() => handleChange(field.key, !val)}
-                          className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 ${
-                            val ? 'bg-cyan-500' : 'bg-slate-700'
+                          className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500] ${
+                            val ? 'bg-[#FF5500]' : 'bg-[#262626]'
                           }`}
                           role="switch"
                           aria-checked={Boolean(val)}
                         >
                           <span
-                            className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
+                            className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out motion-reduce:transition-none ${
                               val ? 'translate-x-4' : 'translate-x-0'
                             }`}
                           />
                         </button>
-                        <span className="text-[10px] font-semibold text-slate-300">
+                        <span className="text-[10px] font-semibold text-[#D4D4D8]">
                           {val ? 'Enabled' : 'Disabled'}
                         </span>
                       </div>
@@ -151,7 +152,7 @@ export const PluginConfigModal: React.FC<PluginConfigModalProps> = ({
                         id={`config-field-${field.key}`}
                         value={val}
                         onChange={(e) => handleChange(field.key, e.target.value)}
-                        className="w-full mt-1 rounded-lg border border-white/[0.1] bg-black/60 px-3 py-1.5 text-xs text-white focus:border-cyan-400 focus:outline-none"
+                        className="w-full mt-1 rounded-lg border border-white/[0.14] bg-[#000000] px-3 py-1.5 text-xs text-white focus:border-[#FF5500] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500]"
                       >
                         {field.options?.map((opt) => (
                           <option key={opt} value={opt}>
@@ -166,7 +167,7 @@ export const PluginConfigModal: React.FC<PluginConfigModalProps> = ({
                         step="any"
                         value={val}
                         onChange={(e) => handleChange(field.key, parseFloat(e.target.value))}
-                        className="w-full mt-1 rounded-lg border border-white/[0.1] bg-black/60 px-3 py-1.5 text-xs text-white focus:border-cyan-400 focus:outline-none"
+                        className="w-full mt-1 rounded-lg border border-white/[0.14] bg-[#000000] px-3 py-1.5 text-xs text-white focus:border-[#FF5500] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500]"
                       />
                     ) : (
                       <div className="relative mt-1">
@@ -175,13 +176,13 @@ export const PluginConfigModal: React.FC<PluginConfigModalProps> = ({
                           type={isSecret && !isRevealed ? 'password' : 'text'}
                           value={val}
                           onChange={(e) => handleChange(field.key, e.target.value)}
-                          className="w-full rounded-lg border border-white/[0.1] bg-black/60 px-3 py-1.5 pr-9 text-xs text-white focus:border-cyan-400 focus:outline-none font-mono-code"
+                          className="w-full rounded-lg border border-white/[0.14] bg-[#000000] px-3 py-1.5 pr-9 text-xs text-white focus:border-[#FF5500] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500] font-mono-code"
                         />
                         {isSecret && (
                           <button
                             type="button"
                             onClick={() => toggleSecret(field.key)}
-                            className="absolute right-2 top-2 text-slate-400 hover:text-white"
+                            className="absolute right-2 top-2 text-[#A1A1AA] hover:text-white cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500] rounded"
                             aria-label={isRevealed ? 'Mask secret' : 'Reveal secret'}
                           >
                             {isRevealed ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
@@ -200,7 +201,7 @@ export const PluginConfigModal: React.FC<PluginConfigModalProps> = ({
             <button
               type="button"
               onClick={handleReset}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-white/[0.1] text-slate-400 hover:text-white hover:bg-white/[0.04] transition-colors cursor-pointer"
+              className="min-h-[44px] flex items-center gap-1 px-3 py-1.5 rounded-lg border border-white/[0.14] text-[#D4D4D8] hover:text-white hover:bg-white/[0.04] transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500]"
             >
               <RotateCcw className="h-3 w-3" />
               <span>Reset Defaults</span>
@@ -210,14 +211,14 @@ export const PluginConfigModal: React.FC<PluginConfigModalProps> = ({
               <button
                 type="button"
                 onClick={onClose}
-                className="px-3 py-1.5 rounded-lg border border-white/[0.1] text-slate-400 hover:text-white hover:bg-white/[0.04] transition-colors cursor-pointer"
+                className="min-h-[44px] px-3 py-1.5 rounded-lg border border-white/[0.14] text-[#D4D4D8] hover:text-white hover:bg-white/[0.04] transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500]"
               >
                 Cancel
               </button>
 
               <button
                 type="submit"
-                className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-indigo-500 hover:bg-indigo-400 text-white font-bold transition-all shadow-[0_0_15px_rgba(99,102,241,0.3)] cursor-pointer"
+                className="min-h-[44px] flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-[#FF5500] hover:bg-[#FF8C42] text-black font-bold transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500] focus-visible:ring-offset-2 focus-visible:ring-offset-black"
               >
                 {savedSuccess ? (
                   <>

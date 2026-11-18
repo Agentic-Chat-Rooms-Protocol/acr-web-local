@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import {
   Hash,
   Send,
@@ -46,8 +46,10 @@ import { PluginRepositoriesModal } from './components/PluginRepositoriesModal';
 import { BlankSlateOnboarding } from './components/BlankSlateOnboarding';
 import { RootAdminProfileModal } from './components/RootAdminProfileModal';
 import { AgentProfileModal } from './components/AgentProfileModal';
-import { SlashCommandMenu, SLASH_COMMANDS, type SlashCommandDef } from './components/SlashCommandMenu';
+import { SlashCommandMenu } from './components/SlashCommandMenu';
+import { SLASH_COMMANDS, type SlashCommandDef } from './components/slashCommands';
 import { DirectiveTag } from './components/DirectiveTag';
+import { getDaemonBaseUrl } from '../utils/daemonAuth';
 import type { Agent, Escalation, FileAttachment, MarketplacePlugin } from '../types/protocol';
 
 interface AcrChatAppProps {
@@ -55,6 +57,7 @@ interface AcrChatAppProps {
 }
 
 export const AcrChatApp: React.FC<AcrChatAppProps> = ({ onBackToShowcase }) => {
+  const prefersReducedMotion = useReducedMotion();
   const {
     rooms,
     activeRoom,
@@ -218,7 +221,7 @@ export const AcrChatApp: React.FC<AcrChatAppProps> = ({ onBackToShowcase }) => {
         localRooms[0] || {
           id: 'local-deliberation',
           name: 'Local Deliberation',
-          description: 'Primary consensus floor for local autonomous agents connected via MCP.',
+          description: 'Primary consensus floor for local agents connected via MCP.',
           topic: 'Workstation Consensus • Zero-Trust DID/VC',
           is_private: false,
           participants: [],
@@ -234,10 +237,13 @@ export const AcrChatApp: React.FC<AcrChatAppProps> = ({ onBackToShowcase }) => {
     return messages.filter((m) => !m.room_id || m.room_id === displayedActiveRoom.id);
   }, [messages, displayedActiveRoom.id]);
 
-  const getAgentBuddyStatus = (did: string) => {
-    const rel = buddies.find((b) => b.to_did === did || b.from_did === did);
-    return rel?.status || null;
-  };
+  const getAgentBuddyStatus = useCallback(
+    (did: string) => {
+      const rel = buddies.find((b) => b.to_did === did || b.from_did === did);
+      return rel?.status || null;
+    },
+    [buddies]
+  );
 
   const localConnectedAgents = useMemo(() => {
     return agents.filter((a) => a.role !== 'human' && (a.org === 'Local MCP Node' || a.did.includes('local-agent')));
@@ -252,7 +258,7 @@ export const AcrChatApp: React.FC<AcrChatAppProps> = ({ onBackToShowcase }) => {
       if (buddyFilter === 'blocked') return status === 'blocked';
       return true;
     });
-  }, [workspaceMode, localConnectedAgents, agents, buddyFilter, buddies]);
+  }, [workspaceMode, localConnectedAgents, agents, buddyFilter, getAgentBuddyStatus]);
 
   const sortedAutonomousAgents = useMemo(() => {
     return [...autonomousAgents].sort((a, b) => a.name.localeCompare(b.name));
@@ -402,7 +408,7 @@ export const AcrChatApp: React.FC<AcrChatAppProps> = ({ onBackToShowcase }) => {
 
         case 'help':
           await sendMessage(
-            `[ACR ZERO-TRUST DIRECTIVES]\n• /ballots — Open consensus ballots drawer\n• /vote [approve|reject|dissent] — Cast ballot on active proposal\n• /propose [title] — Broadcast new consensus proposal\n• /dissent [reason] — Anchor formal dissent rationale\n• /audit — Inspect cryptographic state chain\n• /plugins — Manage federated MCP plugins & repos\n• /agent — Configure autonomous agent profile & process path\n• /status — Inspect node health and Ed25519 signatures\n• /clear — Clear input feed`,
+            `[ACR ZERO-TRUST DIRECTIVES]\n• /ballots — Open consensus ballots drawer\n• /vote [approve|reject|dissent] — Cast ballot on active proposal\n• /propose [title] — Broadcast new consensus proposal\n• /dissent [reason] — Anchor formal dissent rationale\n• /audit — Inspect cryptographic state chain\n• /plugins — Manage federated MCP plugins & repos\n• /agent — Configure local agent profile & process path\n• /status — Inspect node health and Ed25519 signatures\n• /clear — Clear input feed`,
             undefined,
             displayedActiveRoom.id
           );
@@ -522,15 +528,15 @@ export const AcrChatApp: React.FC<AcrChatAppProps> = ({ onBackToShowcase }) => {
     <div
       role="main"
       aria-label="Agentic Chat Room Application Floor"
-      className="flex h-screen w-full flex-col bg-[#05060b] text-slate-100 font-sans overflow-hidden select-none"
+      className="flex h-screen w-full flex-col bg-[#000000] text-slate-100 font-sans overflow-hidden select-none"
     >
       {/* Top Application Navigation Bar */}
-      <header className="flex h-14 shrink-0 items-center justify-between border-b border-white/[0.08] bg-[#07080e]/95 px-4 backdrop-blur-xl z-20">
+      <header className="flex h-14 shrink-0 items-center justify-between border-b border-white/[0.08] bg-[#0D0D11]/95 px-4 backdrop-blur-xl z-20">
         <div className="flex items-center gap-4">
           {onBackToShowcase && (
             <button
               onClick={onBackToShowcase}
-              className="flex items-center gap-1.5 rounded-lg border border-white/[0.08] bg-white/[0.03] px-2.5 py-1.5 text-xs text-slate-300 hover:border-cyan-500/40 hover:text-white transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none"
+              className="flex items-center gap-1.5 rounded-lg border border-white/[0.08] bg-white/[0.03] px-2.5 py-1.5 text-xs text-slate-300 hover:border-[#FF5500]/40 hover:text-white transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-[#FF5500] focus-visible:outline-none"
               title="Return to Marketing Showcase"
             >
               <ArrowLeft className="h-3.5 w-3.5" />
@@ -539,13 +545,13 @@ export const AcrChatApp: React.FC<AcrChatAppProps> = ({ onBackToShowcase }) => {
           )}
 
           <div className="flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-cyan-500/15 border border-cyan-500/30 text-cyan-400 shadow-[0_0_12px_rgba(6,182,212,0.25)]">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#FF5500]/15 border border-[#FF5500]/35 text-[#FF8C42]">
               <Radio className="h-4 w-4" />
             </div>
             <div className="flex items-center gap-1.5">
               <span className="text-sm font-bold tracking-tight text-white font-mono-code">ACR</span>
-              <span className="rounded bg-cyan-500/20 px-1.5 py-0.5 text-[9px] font-bold font-mono-code text-cyan-300 border border-cyan-500/30">
-                PROD v0.8.2
+              <span className="rounded bg-[#FF5500]/15 px-1.5 py-0.5 text-[9px] font-bold font-mono-code text-[#FF8C42] border border-[#FF5500]/35">
+                LOCAL v1.1.0
               </span>
             </div>
           </div>
@@ -661,7 +667,7 @@ export const AcrChatApp: React.FC<AcrChatAppProps> = ({ onBackToShowcase }) => {
       {/* Main App Body: 3-Column Layout (Intercom + AIM + Slack Grounding) */}
       <div className="flex flex-1 overflow-hidden">
         {/* Left Column: Deliberation Rooms & AIM Buddy List */}
-        <aside className="w-64 shrink-0 border-r border-white/[0.08] bg-[#07080e]/70 backdrop-blur-md flex flex-col justify-between">
+        <aside className="w-64 shrink-0 border-r border-white/[0.08] bg-[#0D0D11]/80 backdrop-blur-md flex flex-col justify-between">
           <div className="flex-1 overflow-y-auto p-3 space-y-5">
             {/* Rooms / Channels Section with Create Action (GAP-03) */}
             <div>
@@ -772,7 +778,7 @@ export const AcrChatApp: React.FC<AcrChatAppProps> = ({ onBackToShowcase }) => {
             <div>
               <div className="px-2 pb-2 text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
-                  <span>Autonomous Agents</span>
+                  <span>Local Agents</span>
                   {workspaceMode === 'local' && (
                     <button
                       type="button"
@@ -843,7 +849,7 @@ export const AcrChatApp: React.FC<AcrChatAppProps> = ({ onBackToShowcase }) => {
                               className="h-7 w-7 rounded-lg object-cover border border-white/[0.1]"
                             />
                             <span
-                              className={`absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full ring-2 ring-[#07080e] ${getStatusColor(
+                              className={`absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full ring-2 ring-[#0D0D11] ${getStatusColor(
                                 agent.status
                               )}`}
                             />
@@ -921,7 +927,7 @@ export const AcrChatApp: React.FC<AcrChatAppProps> = ({ onBackToShowcase }) => {
                           alt={rootAdminProfile.name}
                           className="h-7 w-7 rounded-lg object-cover border border-cyan-500/30"
                         />
-                        <span className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full ring-2 ring-[#07080e] bg-emerald-400" />
+                        <span className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full ring-2 ring-[#0D0D11] bg-emerald-400" />
                       </div>
                       <div className="min-w-0">
                         <div className="text-xs font-semibold text-cyan-300 truncate group-hover:text-cyan-200 flex items-center gap-1">
@@ -962,7 +968,7 @@ export const AcrChatApp: React.FC<AcrChatAppProps> = ({ onBackToShowcase }) => {
                             alt={agent.name}
                             className="h-7 w-7 rounded-lg object-cover border border-cyan-500/30"
                           />
-                          <span className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full ring-2 ring-[#07080e] bg-emerald-400" />
+                          <span className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full ring-2 ring-[#0D0D11] bg-emerald-400" />
                         </div>
                         <div className="min-w-0">
                           <div className="text-xs font-semibold text-cyan-300 truncate">
@@ -991,7 +997,7 @@ export const AcrChatApp: React.FC<AcrChatAppProps> = ({ onBackToShowcase }) => {
         </aside>
 
         {/* Center Column: Live Consensus Message Feed */}
-        <main className="flex-1 flex flex-col min-w-0 bg-[#05060b] relative">
+        <main className="flex-1 flex flex-col min-w-0 bg-[#050508] relative">
           {workspaceMode === 'local' && sortedAutonomousAgents.length === 0 ? (
             <BlankSlateOnboarding
               onSwitchToDemo={() => setWorkspaceMode('demo')}
@@ -1127,7 +1133,7 @@ export const AcrChatApp: React.FC<AcrChatAppProps> = ({ onBackToShowcase }) => {
           )}
 
           {/* Hyper-Premium Integrated Operator Directive Composer */}
-          <div className="p-4 border-t border-white/[0.08] bg-[#07080e]/95 backdrop-blur-md">
+          <div className="p-4 border-t border-white/[0.08] bg-[#0D0D11]/95 backdrop-blur-md">
             {/* Attachment Preview Chip */}
             {attachedFile && (
               <div className="mb-2 flex items-center gap-2 rounded-lg border border-cyan-500/30 bg-cyan-500/10 px-3 py-1.5 text-xs text-cyan-300 max-w-fit shadow-[0_0_15px_rgba(6,182,212,0.15)]">
@@ -1160,7 +1166,7 @@ export const AcrChatApp: React.FC<AcrChatAppProps> = ({ onBackToShowcase }) => {
               {/* Unified Glass Console Box */}
               <form
                 onSubmit={handleSend}
-                className="relative rounded-2xl border border-white/[0.12] bg-[#0a0b16]/85 backdrop-blur-2xl shadow-[0_16px_40px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.14),inset_0_-1px_0_rgba(6,182,212,0.1)] focus-within:border-cyan-500/60 focus-within:shadow-[0_16px_40px_rgba(0,0,0,0.7),0_0_24px_rgba(6,182,212,0.2),inset_0_1px_0_rgba(255,255,255,0.2)] transition-all duration-300 overflow-hidden"
+                className="relative rounded-2xl border border-white/[0.12] bg-[#141414]/90 backdrop-blur-2xl shadow-[0_16px_40px_rgba(0,0,0,0.6)] focus-within:border-[#FF5500]/60 transition-all duration-300 overflow-hidden"
               >
                 {/* Top Context & Quick Command Strip */}
                 <div className="flex items-center justify-between px-3.5 py-1.5 border-b border-white/[0.06] bg-black/40 text-[10px] font-mono-code select-none">
@@ -1245,7 +1251,7 @@ export const AcrChatApp: React.FC<AcrChatAppProps> = ({ onBackToShowcase }) => {
                       : `Dispatch operator directive or message into #${displayedActiveRoom.name}... (type / for command shortcuts)`
                   }
                   rows={2}
-                  className="w-full resize-none bg-transparent px-4 py-2.5 text-xs text-white placeholder:text-slate-500 focus:outline-none font-sans min-h-[48px] max-h-[160px] leading-relaxed"
+                  className="w-full resize-none bg-transparent px-4 py-2.5 text-xs text-white placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500] font-sans min-h-[48px] max-h-[160px] leading-relaxed"
                 />
 
               {/* Bottom Integrated Toolbar */}
@@ -1322,13 +1328,13 @@ export const AcrChatApp: React.FC<AcrChatAppProps> = ({ onBackToShowcase }) => {
                   {/* Hyper-Premium Docked Send Button */}
                   <motion.button
                     type="submit"
-                    whileHover={(!inputContent.trim() && !attachedFile) || isUploading ? {} : { scale: 1.04 }}
-                    whileTap={(!inputContent.trim() && !attachedFile) || isUploading ? {} : { scale: 0.96 }}
+                    whileHover={prefersReducedMotion || (!inputContent.trim() && !attachedFile) || isUploading ? {} : { scale: 1.04 }}
+                    whileTap={prefersReducedMotion || (!inputContent.trim() && !attachedFile) || isUploading ? {} : { scale: 0.96 }}
                     disabled={(!inputContent.trim() && !attachedFile) || isUploading}
                     aria-label="Send directive"
-                    className="group relative flex items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 via-teal-500 to-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-[0_0_20px_rgba(6,182,212,0.35),inset_0_1px_0_rgba(255,255,255,0.35)] transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed disabled:shadow-none cursor-pointer focus-visible:ring-2 focus-visible:ring-cyan-400 overflow-hidden"
+                    className="group relative flex items-center gap-2 rounded-xl bg-[#FF5500] hover:bg-[#FF8C42] px-4 py-2 text-xs font-bold text-black transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500] overflow-hidden"
                   >
-                    <span className="relative z-10 flex items-center gap-1.5 font-medium">
+                    <span className="relative z-10 flex items-center gap-1.5 font-bold">
                       <span>Dispatch</span>
                       <Send className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                     </span>
@@ -1344,7 +1350,7 @@ export const AcrChatApp: React.FC<AcrChatAppProps> = ({ onBackToShowcase }) => {
         </main>
 
         {/* Right Column: Governance Telemetry Panel */}
-        <aside className="w-80 shrink-0 border-l border-white/[0.08] bg-[#07080e]/70 backdrop-blur-md hidden xl:flex flex-col justify-between p-4 overflow-y-auto">
+        <aside className="w-80 shrink-0 border-l border-white/[0.08] bg-[#0D0D11]/80 backdrop-blur-md hidden xl:flex flex-col justify-between p-4 overflow-y-auto">
           <div className="space-y-6">
             {/* Header */}
             <div>
@@ -1473,8 +1479,8 @@ export const AcrChatApp: React.FC<AcrChatAppProps> = ({ onBackToShowcase }) => {
 
           {/* Daemon Status Footer */}
           <div className="pt-4 border-t border-white/[0.06] text-[10px] font-mono-code text-slate-500 flex items-center justify-between">
-            <span>Daemon: http://localhost:20443</span>
-            <button onClick={refreshAll} className="text-cyan-400 hover:underline cursor-pointer">
+            <span>Daemon: {getDaemonBaseUrl()}</span>
+            <button onClick={refreshAll} className="text-[#FF8C42] hover:underline cursor-pointer">
               Sync
             </button>
           </div>
@@ -1487,9 +1493,9 @@ export const AcrChatApp: React.FC<AcrChatAppProps> = ({ onBackToShowcase }) => {
           role="dialog"
           aria-modal="true"
           aria-labelledby="agent-modal-title"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in motion-reduce:animate-none"
         >
-          <div className="relative w-full max-w-xl rounded-2xl border border-cyan-500/30 bg-[#090b16] p-6 shadow-2xl space-y-4 font-mono-code text-xs max-h-[90vh] flex flex-col">
+          <div className="relative w-full max-w-xl rounded-2xl border border-[#FF5500]/35 bg-[#0D0D11] p-6 shadow-2xl space-y-4 font-mono-code text-xs max-h-[90vh] flex flex-col">
             {/* Header */}
             <div className="flex items-center justify-between border-b border-white/[0.08] pb-3 shrink-0">
               <div className="flex items-center gap-3">
@@ -1497,10 +1503,10 @@ export const AcrChatApp: React.FC<AcrChatAppProps> = ({ onBackToShowcase }) => {
                   <img
                     src={selectedAgent.avatar}
                     alt={selectedAgent.name}
-                    className="h-11 w-11 rounded-xl object-cover border border-cyan-500/40"
+                    className="h-11 w-11 rounded-xl object-cover border border-[#FF5500]/40"
                   />
                   <span
-                    className={`absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full ring-2 ring-[#090b16] ${getStatusColor(
+                    className={`absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full ring-2 ring-[#0D0D11] ${getStatusColor(
                       selectedAgent.status
                     )}`}
                   />
@@ -1806,7 +1812,7 @@ export const AcrChatApp: React.FC<AcrChatAppProps> = ({ onBackToShowcase }) => {
                       value={pluginSearchQuery}
                       onChange={(e) => setPluginSearchQuery(e.target.value)}
                       placeholder="Filter accessible marketplace plugins..."
-                      className="w-full pl-8 pr-3 py-1.5 rounded-xl border border-white/[0.08] bg-black/50 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-500/50"
+                      className="w-full pl-8 pr-3 py-1.5 rounded-xl border border-white/[0.08] bg-black/50 text-xs text-white placeholder:text-slate-500 focus:border-[#FF5500] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500]"
                     />
                   </div>
 
@@ -1970,7 +1976,7 @@ export const AcrChatApp: React.FC<AcrChatAppProps> = ({ onBackToShowcase }) => {
         onSyncRepositories={syncUpstreamRepos}
       />
 
-      {/* Autonomous Agent Identity & Process Path Modal */}
+      {/* Local Agent Identity & Process Path Modal */}
       <AgentProfileModal
         isOpen={!!editingAgentProfile}
         agent={editingAgentProfile}

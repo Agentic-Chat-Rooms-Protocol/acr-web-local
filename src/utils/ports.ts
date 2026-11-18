@@ -17,7 +17,7 @@ export const DEFAULT_PORT_MAPPINGS: ServicePortMapping[] = [
     id: 'acr-core',
     name: 'ACR Core Protocol Daemon',
     category: 'core',
-    description: 'Reference Go daemon providing embedded JetStream, W3C DID identity, PNA, and consensus bus.',
+    description: 'Reference Go daemon providing embedded NATS pub/sub, W3C DID identity, PNA, and consensus bus.',
     defaultPort: 20443,
     currentPort: 20443,
     protocol: 'http',
@@ -29,7 +29,7 @@ export const DEFAULT_PORT_MAPPINGS: ServicePortMapping[] = [
     id: 'acr-meta-mcp',
     name: 'Meta-MCP Forward Proxy & Control Plane',
     category: 'proxy',
-    description: 'Forward proxy aggregating third-party MCP servers, ToolHive sandboxing, and Auth Vault.',
+    description: 'Forward proxy aggregating third-party MCP servers, ToolHive Micro-Sandboxing, and Auth Vault.',
     defaultPort: 20445,
     currentPort: 20445,
     protocol: 'http',
@@ -39,9 +39,9 @@ export const DEFAULT_PORT_MAPPINGS: ServicePortMapping[] = [
   },
   {
     id: 'acr-bridge',
-    name: 'ACR MCP Bridge & Reverse Tunnel',
+    name: 'ACR MCP Bridge (Local Stdio / SSE)',
     category: 'proxy',
-    description: 'Local stdio and SSE reverse tunnel transport bridging external AI IDEs and agents.',
+    description: 'Local stdio and SSE transport bridging local AI IDEs and agents.',
     defaultPort: 20444,
     currentPort: 20444,
     protocol: 'http',
@@ -51,9 +51,9 @@ export const DEFAULT_PORT_MAPPINGS: ServicePortMapping[] = [
   },
   {
     id: 'nats-jetstream',
-    name: 'Internal NATS JetStream Bus',
+    name: 'Internal NATS Event Bus',
     category: 'broker',
-    description: 'High-throughput append-only message bus for agent deliberation logs and consensus voting.',
+    description: 'High-throughput append-only message bus for agent discussion logs and consensus voting.',
     defaultPort: 4222,
     currentPort: 4222,
     protocol: 'tcp',
@@ -64,7 +64,7 @@ export const DEFAULT_PORT_MAPPINGS: ServicePortMapping[] = [
     id: 'gitea',
     name: 'Local Ecosystem Gitea Server',
     category: 'git',
-    description: 'On-premise Git server hosting all 18 canonical repositories for local ecosystem sync.',
+    description: 'On-premise Git server hosting open-source protocol repositories for local ecosystem sync.',
     defaultPort: 3300,
     currentPort: 3300,
     protocol: 'http',
@@ -148,14 +148,27 @@ export async function checkPortHealth(mapping: ServicePortMapping): Promise<{ st
   }
 
   const startTime = performance.now();
-  const url = `http://localhost:${mapping.currentPort}${mapping.healthEndpoint}`;
+  const url = `http://127.0.0.1:${mapping.currentPort}${mapping.healthEndpoint}`;
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 1200);
+
+  let token = '';
+  if (typeof window !== 'undefined') {
+    try {
+      token =
+        window.sessionStorage.getItem('acr_api_token')?.trim() ||
+        window.localStorage.getItem('acr_api_token_persisted')?.trim() ||
+        '';
+    } catch {
+      token = '';
+    }
+  }
 
   try {
     const res = await fetch(url, {
       method: 'GET',
       mode: 'cors',
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       signal: controller.signal,
     });
     clearTimeout(timeoutId);
@@ -170,14 +183,17 @@ export async function checkPortHealth(mapping: ServicePortMapping): Promise<{ st
   }
 }
 
-export function generateEnvExport(mappings: ServicePortMapping[]): string {
+export function generateEnvExport(mappings: ServicePortMapping[], apiToken?: string): string {
   let out = '# ACR Ecosystem Dynamic Port Configuration\n';
   out += '# Generated automatically via ACR Advanced Settings & Port Studio\n\n';
   for (const m of mappings) {
     out += `${m.envVar}=${m.currentPort}\n`;
   }
-  out += `\nACR_DAEMON_URL=http://localhost:${mappings.find((m) => m.id === 'acr-core')?.currentPort || 20443}\n`;
-  out += `ACR_META_MCP_URL=http://localhost:${mappings.find((m) => m.id === 'acr-meta-mcp')?.currentPort || 20445}\n`;
+  out += `\nACR_DAEMON_URL=http://127.0.0.1:${mappings.find((m) => m.id === 'acr-core')?.currentPort || 20443}\n`;
+  out += `ACR_META_MCP_URL=http://127.0.0.1:${mappings.find((m) => m.id === 'acr-meta-mcp')?.currentPort || 20445}\n`;
+  if (apiToken && apiToken.trim()) {
+    out += `ACR_API_TOKEN=${apiToken.trim()}\n`;
+  }
   return out;
 }
 
@@ -186,24 +202,28 @@ export function generateJsonExport(mappings: ServicePortMapping[]): string {
   for (const m of mappings) {
     obj[m.id] = m.currentPort;
   }
-  return JSON.stringify({ version: '1.0.0', ports: obj }, null, 2);
+  return JSON.stringify({ version: '1.1.0', ports: obj }, null, 2);
 }
 
-export function generateMcpClientConfig(mappings: ServicePortMapping[]): string {
+export function generateMcpClientConfig(mappings: ServicePortMapping[], apiToken?: string): string {
   const metaPort = mappings.find((m) => m.id === 'acr-meta-mcp')?.currentPort || 20445;
   const corePort = mappings.find((m) => m.id === 'acr-core')?.currentPort || 20443;
+  const env: Record<string, string> = {
+    ACR_DAEMON_URL: `http://127.0.0.1:${corePort}`,
+  };
+  if (apiToken && apiToken.trim()) {
+    env.ACR_API_TOKEN = apiToken.trim();
+  }
   return JSON.stringify(
     {
       mcpServers: {
         'acr-meta-mcp': {
-          url: `http://localhost:${metaPort}/mcp`,
+          url: `http://127.0.0.1:${metaPort}/mcp`,
         },
         'acr-core': {
-          command: 'acr-mcp-server',
-          args: [],
-          env: {
-            ACR_DAEMON_URL: `http://localhost:${corePort}`,
-          },
+          command: 'npx',
+          args: ['-y', '@acr-js/mcp-server'],
+          env,
         },
       },
     },

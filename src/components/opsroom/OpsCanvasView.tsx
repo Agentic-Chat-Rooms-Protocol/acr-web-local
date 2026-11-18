@@ -97,7 +97,7 @@ export const OpsCanvasView: React.FC<OpsCanvasViewProps> = ({
                 <div className="flex items-center gap-2.5 min-w-0">
                   <span className={`w-2 h-2 rounded-full shrink-0 ${
                     item.status === 'verified' ? 'bg-emerald-400 shadow-sm shadow-emerald-400' :
-                    item.status === 'in_progress' ? 'bg-amber-400 animate-pulse' : 'bg-slate-600'
+                    item.status === 'in_progress' ? 'bg-amber-400 animate-pulse motion-reduce:animate-none' : 'bg-slate-600'
                   }`} />
                   <span className="text-slate-200 font-medium truncate">{item.title}</span>
                 </div>
@@ -154,7 +154,7 @@ export const OpsCanvasView: React.FC<OpsCanvasViewProps> = ({
                     )}
                     <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase ${
                       step.status === 'completed' ? 'bg-emerald-500/20 text-emerald-300' :
-                      step.status === 'running' ? 'bg-cyan-500/20 text-cyan-300 animate-pulse' :
+                      step.status === 'running' ? 'bg-[#FF5500]/20 text-[#FF8C42] animate-pulse motion-reduce:animate-none' :
                       'bg-slate-800 text-slate-400'
                     }`}>
                       {step.status}

@@ -62,35 +62,36 @@ export const ProposalVotingCard: React.FC<ProposalVotingCardProps> = ({
   };
 
   return (
-    <div className="rounded-xl border border-white/[0.08] bg-[#07080e]/85 backdrop-blur-xl p-4 shadow-xl space-y-3 transition-all hover:border-cyan-500/30">
+    <div className="rounded-xl border border-white/[0.08] bg-[#0D0D11]/90 backdrop-blur-xl p-4 shadow-xl space-y-3 transition-all hover:border-[#FF5500]/35">
       {/* Header */}
       <div className="flex items-start justify-between gap-3">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <span className="flex items-center gap-1 rounded bg-cyan-500/10 px-2 py-0.5 text-[10px] font-mono-code font-bold text-cyan-400 border border-cyan-500/20">
+            <span className="flex items-center gap-1 rounded bg-[#FF5500]/15 px-2 py-0.5 text-[10px] font-mono-code font-bold text-[#FF8C42] border border-[#FF5500]/30">
               <Vote className="h-3 w-3" />
               {proposal.id}
             </span>
             <span
               className={`rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider ${
                 isOpen
-                  ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
+                  ? 'bg-[#10B981]/10 text-[#10B981] border border-[#10B981]/30'
                   : proposal.status === 'passed'
-                    ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/30'
-                    : 'bg-rose-500/10 text-rose-400 border border-rose-500/30'
+                    ? 'bg-[#FF5500]/10 text-[#FF8C42] border border-[#FF5500]/30'
+                    : 'bg-[#EF4444]/10 text-[#EF4444] border border-[#EF4444]/30'
               }`}
             >
               {proposal.status}
             </span>
           </div>
           <h4 className="text-xs font-bold text-white tracking-tight">{proposal.title}</h4>
-          <p className="text-[11px] text-slate-400 leading-relaxed">{proposal.description}</p>
+          <p className="text-[11px] text-[#A1A1AA] leading-relaxed">{proposal.description}</p>
         </div>
 
         {isOpen && (
           <button
+            type="button"
             onClick={() => onClose(proposal.id)}
-            className="shrink-0 flex items-center gap-1 rounded-md border border-white/[0.08] bg-white/[0.04] px-2 py-1 text-[10px] font-mono-code text-slate-400 hover:text-white hover:bg-white/[0.08] transition-colors"
+            className="shrink-0 flex items-center gap-1 rounded-md border border-white/[0.08] bg-white/[0.04] px-2 py-1 text-[10px] font-mono-code text-[#A1A1AA] hover:text-white hover:bg-white/[0.08] transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500]"
             title="Tally consensus and finalize ballot"
           >
             <Lock className="h-2.5 w-2.5" />
@@ -189,7 +190,7 @@ export const ProposalVotingCard: React.FC<ProposalVotingCardProps> = ({
                 onChange={(e) => setDissentRationale(e.target.value)}
                 placeholder="Explain architectural, security, or capability invariants breached by this proposal..."
                 rows={2}
-                className="w-full rounded-md border border-white/[0.1] bg-black/60 px-2.5 py-1.5 text-xs text-white placeholder:text-slate-500 focus:border-amber-400 focus:outline-none"
+                className="w-full rounded-md border border-white/[0.14] bg-[#000000] px-2.5 py-1.5 text-xs text-white placeholder:text-[#A1A1AA] focus:border-[#FF5500] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500]"
               />
               <div className="flex items-center justify-end gap-2">
                 <button

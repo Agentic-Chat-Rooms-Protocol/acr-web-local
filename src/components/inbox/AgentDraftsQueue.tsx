@@ -171,7 +171,7 @@ export const AgentDraftsQueue: React.FC<AgentDraftsQueueProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="px-2 py-1 text-xs font-mono rounded bg-neutral-800 hover:bg-neutral-700 text-neutral-300 border border-neutral-600 focus:outline-none focus:ring-2 focus:ring-sky-500"
+            className="px-2 py-1 text-xs font-mono rounded bg-neutral-800 hover:bg-neutral-700 text-neutral-300 border border-neutral-600 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500]"
             aria-label="Close review queue drawer"
           >
             [CLOSE]
@@ -192,7 +192,7 @@ export const AgentDraftsQueue: React.FC<AgentDraftsQueueProps> = ({
             role="tab"
             aria-selected={activeFilter === filter}
             onClick={() => setActiveFilter(filter)}
-            className={`px-2 py-1 rounded text-xs font-mono transition-colors whitespace-nowrap focus:outline-none focus:ring-1 focus:ring-sky-500 ${
+            className={`px-2 py-1 rounded text-xs font-mono transition-colors whitespace-nowrap cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500] ${
               activeFilter === filter
                 ? 'bg-neutral-750 text-white font-semibold border border-neutral-600'
                 : 'text-neutral-300 hover:text-white hover:bg-neutral-850'
@@ -252,7 +252,7 @@ export const AgentDraftsQueue: React.FC<AgentDraftsQueueProps> = ({
                     onClick={() =>
                       setExpandedDiffId(expandedDiffId === draft.id ? null : draft.id)
                     }
-                    className="text-xs font-mono text-sky-400 hover:text-sky-300 hover:underline focus:outline-none"
+                    className="text-xs font-mono text-[#FF8C42] hover:text-[#FFB07A] hover:underline cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500] rounded"
                   >
                     {expandedDiffId === draft.id ? '[HIDE DIFF]' : '[INSPECT DIFF]'}
                   </button>
@@ -269,14 +269,14 @@ export const AgentDraftsQueue: React.FC<AgentDraftsQueueProps> = ({
                   <button
                     type="button"
                     onClick={() => handleVeto(draft)}
-                    className="px-3 py-1 text-xs font-mono font-semibold rounded bg-rose-950 hover:bg-rose-900 text-rose-300 border border-rose-700 transition-colors focus:outline-none focus:ring-2 focus:ring-rose-500"
+                    className="px-3 py-1 text-xs font-mono font-semibold rounded bg-rose-950 hover:bg-rose-900 text-rose-300 border border-rose-700 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500]"
                   >
                     [VETO REJECT]
                   </button>
                   <button
                     type="button"
                     onClick={() => handleApprove(draft)}
-                    className="px-3 py-1 text-xs font-mono font-semibold rounded bg-emerald-950 hover:bg-emerald-900 text-emerald-300 border border-emerald-700 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    className="px-3 py-1 text-xs font-mono font-semibold rounded bg-emerald-950 hover:bg-emerald-900 text-emerald-300 border border-emerald-700 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500]"
                   >
                     [APPROVE & SIGN]
                   </button>

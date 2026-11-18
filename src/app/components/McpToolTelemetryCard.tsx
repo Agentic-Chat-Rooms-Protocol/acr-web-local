@@ -32,38 +32,38 @@ export const McpToolTelemetryCard: React.FC<McpToolTelemetryCardProps> = ({ tool
   const isSuccess = toolCall.status === 'completed';
 
   return (
-    <div className="my-2.5 overflow-hidden rounded-xl border border-cyan-500/25 bg-[#090b14]/90 backdrop-blur-md transition-all hover:border-cyan-500/40 shadow-[0_4px_20px_rgba(0,0,0,0.35)]">
+    <div className="my-2.5 overflow-hidden rounded-xl border border-[#FF5500]/25 bg-[#0D0D11]/95 backdrop-blur-md transition-all hover:border-[#FF5500]/45 shadow-[0_4px_20px_rgba(0,0,0,0.35)]">
       {/* Top Telemetry Bar */}
       <div
         onClick={() => setExpanded(!expanded)}
-        className="flex items-center justify-between gap-3 px-3.5 py-2.5 bg-cyan-950/20 border-b border-cyan-500/15 cursor-pointer select-none"
+        className="flex items-center justify-between gap-3 px-3.5 py-2.5 bg-[#FF5500]/10 border-b border-[#FF5500]/20 cursor-pointer select-none"
       >
         <div className="flex items-center gap-2 min-w-0">
-          <div className="flex h-5 w-5 items-center justify-center rounded bg-cyan-500/15 text-cyan-400 shrink-0">
+          <div className="flex h-5 w-5 items-center justify-center rounded bg-[#FF5500]/15 text-[#FF8C42] shrink-0">
             <Terminal className="h-3 w-3" />
           </div>
-          <span className="font-mono-code text-[11px] font-semibold text-cyan-300 truncate">
+          <span className="font-mono-code text-[11px] font-semibold text-[#FF8C42] truncate">
             {toolCall.tool_name}
           </span>
-          <span className="rounded bg-black/40 px-1.5 py-0.5 text-[9px] font-mono-code text-slate-400 border border-white/[0.06]">
+          <span className="rounded bg-[#000000]/60 px-1.5 py-0.5 text-[9px] font-mono-code text-[#A1A1AA] border border-white/[0.08]">
             MCP TOOL
           </span>
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
           {/* Latency Metric */}
-          <span className="rounded-full bg-cyan-500/10 px-2 py-0.5 font-mono-code text-[10px] tabular-nums text-cyan-400 border border-cyan-500/20">
+          <span className="rounded-full bg-[#FF5500]/10 px-2 py-0.5 font-mono-code text-[10px] tabular-nums text-[#FF8C42] border border-[#FF5500]/25">
             {toolCall.latency_ms.toFixed(2)}ms
           </span>
 
           {/* Status Indicator */}
           {isSuccess ? (
-            <span className="flex items-center gap-1 text-[10px] font-medium text-emerald-400 font-mono-code">
+            <span className="flex items-center gap-1 text-[10px] font-medium text-[#10B981] font-mono-code">
               <CheckCircle2 className="h-3.5 w-3.5" />
               <span>PASS</span>
             </span>
           ) : (
-            <span className="flex items-center gap-1 text-[10px] font-medium text-rose-400 font-mono-code">
+            <span className="flex items-center gap-1 text-[10px] font-medium text-[#EF4444] font-mono-code">
               <AlertCircle className="h-3.5 w-3.5" />
               <span>{toolCall.status.toUpperCase()}</span>
             </span>
@@ -72,7 +72,8 @@ export const McpToolTelemetryCard: React.FC<McpToolTelemetryCardProps> = ({ tool
           {/* Expand/Collapse Caret */}
           <button
             type="button"
-            className="p-0.5 text-slate-400 hover:text-white transition-colors"
+            aria-label={expanded ? 'Collapse telemetry' : 'Expand telemetry'}
+            className="p-0.5 text-[#A1A1AA] hover:text-white transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500] rounded"
           >
             {expanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
           </button>
@@ -80,25 +81,27 @@ export const McpToolTelemetryCard: React.FC<McpToolTelemetryCardProps> = ({ tool
       </div>
 
       {/* Summary Output Line */}
-      <div className="px-3.5 py-2 text-xs font-mono-code text-slate-300 bg-black/30 flex items-center justify-between">
+      <div className="px-3.5 py-2 text-xs font-mono-code text-[#D4D4D8] bg-[#000000]/50 flex items-center justify-between">
         <span className="truncate">{toolCall.output || 'Invariant verified'}</span>
         <button
+          type="button"
           onClick={handleCopy}
           title="Copy tool telemetry"
-          className="ml-2 text-slate-500 hover:text-slate-300 transition-colors p-1"
+          aria-label="Copy tool telemetry"
+          className="ml-2 text-[#A1A1AA] hover:text-white transition-colors p-1 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500] rounded"
         >
-          {copied ? <Check className="h-3 w-3 text-emerald-400" /> : <Copy className="h-3 w-3" />}
+          {copied ? <Check className="h-3 w-3 text-[#10B981]" /> : <Copy className="h-3 w-3" />}
         </button>
       </div>
 
       {/* Collapsible Details Panel */}
       {expanded && (
-        <div className="p-3.5 bg-black/60 border-t border-white/[0.06] space-y-2 text-[11px] font-mono-code">
+        <div className="p-3.5 bg-[#000000]/70 border-t border-white/[0.06] space-y-2 text-[11px] font-mono-code">
           <div>
-            <div className="text-[9px] uppercase tracking-wider text-slate-500 mb-1 font-semibold">
+            <div className="text-[9px] uppercase tracking-wider text-[#A1A1AA] mb-1 font-semibold">
               Arguments Payload
             </div>
-            <pre className="p-2 rounded bg-black/60 border border-white/[0.06] text-cyan-200/90 overflow-x-auto text-[10px]">
+            <pre className="p-2 rounded bg-[#141414] border border-white/[0.08] text-[#D4D4D8] overflow-x-auto text-[10px]">
               {typeof toolCall.arguments === 'string'
                 ? toolCall.arguments
                 : JSON.stringify(toolCall.arguments, null, 2) || 'None'}
@@ -106,10 +109,10 @@ export const McpToolTelemetryCard: React.FC<McpToolTelemetryCardProps> = ({ tool
           </div>
 
           <div>
-            <div className="text-[9px] uppercase tracking-wider text-slate-500 mb-1 font-semibold">
+            <div className="text-[9px] uppercase tracking-wider text-[#A1A1AA] mb-1 font-semibold">
               Verification Proof
             </div>
-            <pre className="p-2 rounded bg-black/60 border border-white/[0.06] text-emerald-300/90 overflow-x-auto text-[10px]">
+            <pre className="p-2 rounded bg-[#141414] border border-white/[0.08] text-[#10B981] overflow-x-auto text-[10px]">
               {toolCall.output || 'State invariant holds with zero leaks.'}
             </pre>
           </div>

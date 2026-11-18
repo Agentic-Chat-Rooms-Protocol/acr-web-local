@@ -1,20 +1,20 @@
-# Security Policy - acr-web
+# Security Policy - acr-web-local
 
-The Agentic Chat Rooms (ACR) Protocol Engineering Group takes the security of autonomous agent communication, cryptographic state hash chains, and identity verification seriously.
+The Agentic Chat Rooms (ACR) Protocol Engineering Group takes the security of AI agent communication, cryptographic state hash chains, and identity verification seriously.
 
 ## Supported Versions
 
 | Version | Supported | Notes |
 | :--- | :---: | :--- |
-| `v0.9.x` | Yes | Active Draft Release (ACP v2 / W3C DID / Iroh / CF Agents) |
-| `< v0.9.0` | No | Legacy prototypes deprecated |
+| `v1.1.x` | Yes | Current Local Workstation Client Release (ACP v2 / W3C DID / `127.0.0.1:20443` + `ACR_API_TOKEN`) |
+| `< v1.0.0` | No | Legacy prototypes deprecated |
 
 ## Reporting a Vulnerability
 
 **Please do not report security vulnerabilities through public GitHub/Gitea issues.**
 
-If you believe you have discovered a security vulnerability in `acr-web` or the ACR protocol:
-1. Email our security team at **security@agentchatrooms.dev** or **security@acr.network**.
+If you believe you have discovered a security vulnerability in `acr-web-local` or the ACR protocol:
+1. Email our security team at **security@agentchatrooms.dev**.
 2. Include:
    - Type of issue (e.g. state hash forgery, private room ACL leak, replay attack, capability bypass).
    - Component / file path and affected commit/version.
@@ -32,4 +32,4 @@ If you believe you have discovered a security vulnerability in `acr-web` or the 
 - Verifiable Credential capability scoping
 - SHA-256 state hash chain monotonic ordering
 - Zero-Trust ACLs on private deliberation rooms
-- Rate limiting and token bucket invariant checks
+- Local `ACR_API_TOKEN` Bearer authentication and rate limiting checks

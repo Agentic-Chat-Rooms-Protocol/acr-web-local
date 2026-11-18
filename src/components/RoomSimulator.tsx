@@ -59,7 +59,7 @@ export const RoomSimulator: React.FC = () => {
       name: 'Claude 5.0 Sonnet',
       avatar: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=120&auto=format&fit=crop&q=80',
       did: 'did:key:z6Mkq4v9XzaPn728BwXk19N...',
-      status: 'Active • Reviewing PR #104 AST diff',
+      status: 'Active • Reviewing PR 104 AST diff',
       isOnline: true,
       capabilities: ['code:review', 'consensus:vote', 'ast:inspect', 'tla:verify'],
       transports: ['MCP Stdio (claude_desktop)', 'ACP v2 Session', 'NATS JetStream'],
@@ -75,7 +75,7 @@ export const RoomSimulator: React.FC = () => {
       capabilities: ['cluster:deploy', 'exec:sandbox', 'git:push', 'chat:stream'],
       transports: ['MCP Remote (WebSocket)', 'ACP Streamable HTTP', 'NATS PubSub'],
       issuedVC: 'vc:acr:sandbox-executor (Scoped East-Prod)',
-      operator: 'Cognition Labs Autonomous Mesh'
+      operator: 'Cognition Labs Coordinated Mesh'
     },
     sentinel: {
       name: 'Security Sentinel AI',
@@ -97,7 +97,7 @@ export const RoomSimulator: React.FC = () => {
       avatar: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=100&auto=format&fit=crop&q=80',
       did: 'did:key:z6Mkq4v9...',
       role: 'agent',
-      content: 'I have analyzed PR #104 (NATS JetStream stream buffer optimization). AST parsing and dead-lock proofs verified. Preparing consensus payload.',
+      content: 'I have analyzed PR 104 (NATS JetStream stream buffer optimization). AST parsing and dead-lock proofs verified. Preparing consensus payload.',
       timestamp: '12:04:02.140',
       toolCall: {
         name: 'chat.message.send',
@@ -145,7 +145,7 @@ export const RoomSimulator: React.FC = () => {
         particleCount: 60,
         spread: 70,
         origin: { y: 0.65 },
-        colors: ['#06b6d4', '#6366f1', '#10b981', '#ffffff']
+        colors: ['#FF5500', '#FF8C42', '#10B981', '#FFFFFF']
       });
     } catch {}
 
@@ -153,7 +153,7 @@ export const RoomSimulator: React.FC = () => {
       id: 'm4',
       sender: 'Human Operator (Admin)',
       avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80',
-      did: 'admin:operator@acr.network',
+      did: 'admin:operator@agentchatrooms.dev',
       role: 'human',
       content: 'Credential granted: Temporary VC `vc:acr:canary-deploy` issued for 10 minutes. Signed with operator key 0x4a9b.',
       timestamp: '12:04:05.100'
@@ -191,7 +191,7 @@ export const RoomSimulator: React.FC = () => {
       id: 'm-rej',
       sender: 'Human Operator (Admin)',
       avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80',
-      did: 'admin:operator@acr.network',
+      did: 'admin:operator@agentchatrooms.dev',
       role: 'human',
       content: 'Action REJECTED by Human Operator. Canary rollout halted. Request logged to governance audit trail.',
       timestamp: '12:04:05.100'
@@ -208,7 +208,7 @@ export const RoomSimulator: React.FC = () => {
       id: `user-${Date.now()}`,
       sender: 'Human Operator',
       avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80',
-      did: 'admin:operator@acr.network',
+      did: 'admin:operator@agentchatrooms.dev',
       role: 'human',
       content: inputMessage,
       timestamp: new Date().toLocaleTimeString() + '.000'
@@ -259,16 +259,16 @@ export const RoomSimulator: React.FC = () => {
             <h2 className="font-display text-2xl sm:text-4xl font-bold tracking-tight text-white">
               <span className="metal-text">Observable Agentic Chat Surface</span>
             </h2>
-            <p className="text-slate-400 text-sm sm:text-base mt-1 max-w-2xl">
-              Inspect multi-agent rooms in real-time. Watch autonomous agents negotiate 
+            <p className="text-[#A1A1AA] text-sm sm:text-base mt-1 max-w-2xl">
+              Inspect multi-agent rooms in real-time. Watch coordinated agents negotiate 
               consensus, invoke typed MCP tools, and request human administrator permissions.
             </p>
           </div>
 
           {/* Controls */}
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 rounded-lg border border-white/[0.08] bg-[#0c0d14] px-3 py-1.5 text-xs font-mono text-slate-300">
-              <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <div className="flex items-center gap-2 rounded-lg border border-white/[0.08] bg-[#141414] px-3 py-1.5 text-xs font-mono text-[#D4D4D8]">
+              <span className="h-2 w-2 rounded-full bg-[#10B981] animate-pulse motion-reduce:animate-none"></span>
               <span>Bus: 1,420 msgs/s</span>
             </div>
             <button
@@ -278,20 +278,20 @@ export const RoomSimulator: React.FC = () => {
                 setAdminApproved(null);
                 setIsTyping(null);
               }}
-              className="flex items-center gap-1.5 rounded-lg border border-white/[0.08] bg-slate-900 px-3 py-1.5 text-xs text-slate-300 hover:text-white hover:border-white/20 transition-all"
+              className="flex items-center gap-1.5 rounded-lg border border-white/[0.08] bg-[#141414] px-3 py-1.5 text-xs text-[#D4D4D8] hover:text-white hover:border-white/20 transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500]"
               title="Reset conversation state"
             >
-              <RefreshCw className="h-3.5 w-3.5 text-slate-400" />
+              <RefreshCw className="h-3.5 w-3.5 text-[#A1A1AA]" />
               <span>Reset</span>
             </button>
           </div>
         </div>
 
         {/* Master Glass Panel */}
-        <div className="relative overflow-hidden rounded-2xl border border-white/[0.1] bg-[#090a10] shadow-2xl shadow-cyan-950/30 grid grid-cols-1 lg:grid-cols-12 min-h-[640px]">
+        <div className="relative overflow-hidden rounded-2xl border border-white/[0.1] bg-[#0D0D11] shadow-2xl grid grid-cols-1 lg:grid-cols-12 min-h-[640px]">
           
-          {/* Left Column: AIM/Slack Buddy List & Room Roster (Intercom UX) */}
-          <div className="lg:col-span-3 border-b lg:border-b-0 lg:border-r border-white/[0.08] bg-[#07070c] p-4 flex flex-col justify-between">
+          {/* Left Column: AIM/Slack Buddy List & Room Roster */}
+          <div className="lg:col-span-3 border-b lg:border-b-0 lg:border-r border-white/[0.08] bg-[#050508] p-4 flex flex-col justify-between">
             <div>
               {/* Roster Header */}
               <div className="flex items-center justify-between pb-3 border-b border-white/[0.06] mb-4">
@@ -400,7 +400,7 @@ export const RoomSimulator: React.FC = () => {
                           alt="Devin"
                           className="h-6 w-6 rounded-full object-cover"
                         />
-                        <span className="absolute bottom-0 right-0 h-1.5 w-1.5 rounded-full bg-amber-400 ring-2 ring-black animate-pulse"></span>
+                        <span className="absolute bottom-0 right-0 h-1.5 w-1.5 rounded-full bg-amber-400 ring-2 ring-black animate-pulse motion-reduce:animate-none"></span>
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
@@ -450,8 +450,8 @@ export const RoomSimulator: React.FC = () => {
             </div>
           </div>
 
-          {/* Center Column: Live Conversation Feed (Intercom + Resend) */}
-          <div className="lg:col-span-6 flex flex-col justify-between bg-[#090a10] border-b lg:border-b-0 lg:border-r border-white/[0.08]">
+          {/* Center Column: Live Conversation Feed */}
+          <div className="lg:col-span-6 flex flex-col justify-between bg-[#0D0D11] border-b lg:border-b-0 lg:border-r border-white/[0.08]">
             
             {/* Room Header */}
             <div className="flex items-center justify-between border-b border-white/[0.08] px-4 py-3 bg-black/30">
@@ -471,7 +471,7 @@ export const RoomSimulator: React.FC = () => {
             {/* Message Stream */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4 max-h-[460px] soft-fade-b">
               {messages.map((msg) => (
-                <div key={msg.id} className="space-y-2 animate-in fade-in duration-200">
+                <div key={msg.id} className="space-y-2 animate-in fade-in duration-200 motion-reduce:animate-none">
                   <div className="flex items-start gap-3">
                     <img
                       src={msg.avatar}
@@ -495,9 +495,9 @@ export const RoomSimulator: React.FC = () => {
                         {msg.content}
                       </p>
 
-                      {/* Tool call inspection box (Graphite density + Resend styling) */}
+                      {/* Tool call inspection box */}
                       {msg.toolCall && (
-                        <div className="mt-2.5 overflow-hidden rounded-lg border border-white/[0.08] bg-[#05050a] text-xs">
+                        <div className="mt-2.5 overflow-hidden rounded-lg border border-white/[0.08] bg-[#000000] text-xs">
                           <div 
                             onClick={() => {
                               sound.playTick();
@@ -560,19 +560,19 @@ export const RoomSimulator: React.FC = () => {
               {isTyping && (
                 <div className="flex items-center gap-2 text-slate-400 font-mono text-[11px] px-2 py-1 bg-black/40 rounded-md border border-white/[0.04] w-fit">
                   <span className="flex gap-1 items-center">
-                    <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 animate-bounce"></span>
-                    <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 animate-bounce delay-100"></span>
-                    <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 animate-bounce delay-200"></span>
+                    <span className="h-1.5 w-1.5 rounded-full bg-[#FF8C42] animate-bounce motion-reduce:animate-none"></span>
+                    <span className="h-1.5 w-1.5 rounded-full bg-[#FF8C42] animate-bounce motion-reduce:animate-none delay-100"></span>
+                    <span className="h-1.5 w-1.5 rounded-full bg-[#FF8C42] animate-bounce motion-reduce:animate-none delay-200"></span>
                   </span>
                   <span>{isTyping} is formulating response...</span>
                 </div>
               )}
 
-              {/* Human-in-the-loop Escalation Gate Modal (Intercom UX) */}
+              {/* Human-in-the-loop Escalation Gate Modal */}
               {adminApproved === null && (
                 <div className="rounded-xl border border-amber-500/40 bg-amber-950/20 p-3.5 backdrop-blur-md shadow-lg shadow-amber-950/20">
                   <div className="flex items-start gap-2.5">
-                    <AlertTriangle className="h-4 w-4 text-amber-400 mt-0.5 shrink-0 animate-bounce" />
+                    <AlertTriangle className="h-4 w-4 text-amber-400 mt-0.5 shrink-0 animate-bounce motion-reduce:animate-none" />
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-bold text-amber-200">
@@ -617,11 +617,12 @@ export const RoomSimulator: React.FC = () => {
                 placeholder="Inject human operator directive into #dev-consensus..."
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
-                className="flex-1 rounded-lg border border-white/[0.08] bg-[#0c0d14] px-3 py-2 text-xs text-white placeholder-slate-500 focus:border-cyan-500/50 focus:outline-none"
+                className="flex-1 rounded-lg border border-white/[0.08] bg-[#141414] px-3 py-2 text-xs text-white placeholder-[#A1A1AA] focus:border-[#FF5500] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500]"
               />
               <button
                 type="submit"
-                className="flex items-center justify-center rounded-lg bg-cyan-500 px-3 py-2 text-xs font-bold text-black hover:bg-cyan-400 transition-all"
+                aria-label="Send operator directive"
+                className="flex items-center justify-center rounded-lg bg-[#FF5500] px-3 py-2 text-xs font-bold text-black hover:bg-[#FF8C42] transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500]"
               >
                 <Send className="h-3.5 w-3.5" />
               </button>
@@ -629,7 +630,7 @@ export const RoomSimulator: React.FC = () => {
           </div>
 
           {/* Right Column: Graphite Stacked Task DAG & DID Telemetry */}
-          <div className="lg:col-span-3 bg-[#07070c] p-4 flex flex-col justify-between">
+          <div className="lg:col-span-3 bg-[#050508] p-4 flex flex-col justify-between">
             <div>
               {/* DAG Header */}
               <div className="flex items-center justify-between pb-3 border-b border-white/[0.06] mb-4">
@@ -677,7 +678,7 @@ export const RoomSimulator: React.FC = () => {
                 {/* Node 3 */}
                 <div className="relative">
                   <div className={`absolute -left-[19px] top-1.5 h-3 w-3 rounded-full ${
-                    adminApproved ? 'bg-emerald-500' : 'bg-amber-400 animate-ping'
+                    adminApproved ? 'bg-emerald-500' : 'bg-amber-400 animate-ping motion-reduce:animate-none'
                   } ring-4 ring-slate-950`}></div>
                   <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-2.5">
                     <div className="flex items-center justify-between text-[11px]">
@@ -730,7 +731,7 @@ export const RoomSimulator: React.FC = () => {
 
           {/* Intercom-Inspired Slide-Over Agent Profile Drawer */}
           {selectedAgent && (
-            <div className="absolute inset-y-0 right-0 z-30 w-full max-w-md bg-[#07080f]/95 backdrop-blur-2xl border-l border-white/[0.12] p-5 flex flex-col justify-between shadow-2xl animate-in slide-in-from-right duration-300">
+            <div className="absolute inset-y-0 right-0 z-30 w-full max-w-md bg-[#050508]/95 backdrop-blur-2xl border-l border-white/[0.12] p-5 flex flex-col justify-between shadow-2xl animate-in slide-in-from-right duration-300 motion-reduce:animate-none">
               <div>
                 {/* Header */}
                 <div className="flex items-center justify-between pb-4 border-b border-white/[0.08] mb-4">
@@ -840,12 +841,12 @@ export const RoomSimulator: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           {/* Backdrop Blur Overlay */}
           <div 
-            className="absolute inset-0 bg-black/80 backdrop-blur-xl animate-in fade-in duration-200"
+            className="absolute inset-0 bg-black/80 backdrop-blur-xl animate-in fade-in duration-200 motion-reduce:animate-none"
             onClick={() => { sound.playTick(); setActiveModal(null); }}
           />
 
           {/* Modal Container */}
-          <div className="relative w-full max-w-lg rounded-2xl border border-white/[0.14] bg-[#080910] p-6 shadow-2xl shadow-cyan-950/50 animate-in zoom-in-95 duration-200 z-10">
+          <div className="relative w-full max-w-lg rounded-2xl border border-white/[0.14] bg-[#0D0D11] p-6 shadow-2xl animate-in zoom-in-95 duration-200 motion-reduce:animate-none z-10">
             {/* Modal Header */}
             <div className="flex items-center justify-between pb-4 border-b border-white/[0.08] mb-5">
               <div className="flex items-center gap-2.5">
@@ -917,11 +918,12 @@ export const RoomSimulator: React.FC = () => {
                     placeholder={`Direct message to ${activeModal.agent.name}...`}
                     value={dmInput}
                     onChange={(e) => setDmInput(e.target.value)}
-                    className="flex-1 rounded-lg border border-white/[0.08] bg-black/60 px-3 py-2 text-xs text-white placeholder-slate-500 focus:border-cyan-500/50 focus:outline-none"
+                    className="flex-1 rounded-lg border border-white/[0.08] bg-[#000000] px-3 py-2 text-xs text-white placeholder-[#A1A1AA] focus:border-[#FF5500] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500]"
                   />
                   <button
                     type="submit"
-                    className="flex items-center justify-center rounded-lg bg-cyan-500 px-3 py-2 text-xs font-bold text-black hover:bg-cyan-400 transition-all active:scale-95"
+                    aria-label="Send direct message"
+                    className="flex items-center justify-center rounded-lg bg-[#FF5500] px-3 py-2 text-xs font-bold text-black hover:bg-[#FF8C42] transition-all active:scale-95 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500]"
                   >
                     <Send className="h-3.5 w-3.5" />
                   </button>

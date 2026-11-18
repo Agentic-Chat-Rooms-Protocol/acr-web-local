@@ -172,9 +172,9 @@ export const ConsensusBallotBox: React.FC<ConsensusBallotBoxProps> = ({
             incidentStatus === 'resolved'
               ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 cursor-default'
               : isExecuting
-              ? 'bg-cyan-500/30 text-cyan-200 border border-cyan-400 animate-pulse'
+              ? 'bg-[#FF5500]/20 text-[#FF8C42] border border-[#FF5500] animate-pulse motion-reduce:animate-none'
               : isQuorumMet 
-              ? 'bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 text-slate-950 hover:shadow-cyan-500/25 active:scale-98'
+              ? 'bg-[#FF5500] hover:bg-[#FF8C42] text-black active:scale-98'
               : 'bg-slate-800 text-slate-500 cursor-not-allowed border border-white/5'
           }`}
         >
@@ -185,12 +185,12 @@ export const ConsensusBallotBox: React.FC<ConsensusBallotBoxProps> = ({
             </>
           ) : incidentStatus === 'verifying' ? (
             <>
-              <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+              <Loader2 className="w-4 h-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />
               <span>Verifying Telemetry &amp; Action Items...</span>
             </>
           ) : isExecuting ? (
             <>
-              <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+              <Loader2 className="w-4 h-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />
               <span>Executing Inside ToolHive Sandbox...</span>
             </>
           ) : (

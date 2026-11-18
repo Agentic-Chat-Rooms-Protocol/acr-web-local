@@ -13,7 +13,14 @@ import type {
   RootAdminProfile,
 } from '../types/protocol';
 
-const DAEMON_BASE = 'http://localhost:20443';
+import {
+  getDaemonBaseUrl,
+  getDaemonAuthHeaders,
+  daemonFetch,
+  DAEMON_TOKEN_CHANGED_EVENT,
+  DAEMON_PORTS_CHANGED_EVENT,
+} from '../utils/daemonAuth';
+
 const OPERATOR_DID = 'did:key:z6Mka881...operator';
 
 export const DEFAULT_ROOT_ADMIN: RootAdminProfile = {
@@ -39,7 +46,7 @@ export const DEFAULT_LOCAL_ROOMS: Room[] = [
   {
     id: 'local-deliberation',
     name: 'Local Deliberation',
-    description: 'Primary consensus floor for local autonomous agents connected via MCP.',
+    description: 'Primary consensus floor for local AI agents connected via MCP.',
     topic: 'Workstation Consensus • Zero-Trust DID/VC',
     is_private: false,
     participants: [],
@@ -61,10 +68,10 @@ const getInitialLocalRooms = (): Room[] => {
 
 export const DEFAULT_UPSTREAM_REPOSITORIES: UpstreamRepository[] = [
   {
-    id: 'repo-gitea-official',
+    id: 'repo-github-official',
     name: 'acr-official',
-    url: 'http://localhost:3300/ACR/acr-marketplace.git',
-    provider: 'gitea',
+    url: 'https://github.com/Agentic-Chat-Rooms-Protocol/acr-marketplace.git',
+    provider: 'github',
     branch: 'main',
     status: 'synced',
     plugin_count: 5,
@@ -74,7 +81,7 @@ export const DEFAULT_UPSTREAM_REPOSITORIES: UpstreamRepository[] = [
   {
     id: 'repo-github-community',
     name: 'acr-community-hub',
-    url: 'https://github.com/agent-chat-rooms/community-plugins.git',
+    url: 'https://github.com/Agentic-Chat-Rooms-Protocol/acr-plugin-sdk.git',
     provider: 'github',
     branch: 'main',
     status: 'synced',
@@ -90,7 +97,7 @@ export const ALL_MARKETPLACE_PLUGINS: MarketplacePlugin[] = [
     name: 'acr-consensus-tools',
     version: '1.0.0',
     author: 'consensus-lead.acr',
-    description: 'Autonomous multi-agent consensus, proposal creation, and dissent recording tools (GAP-08)',
+    description: 'Multi-agent consensus, 67% Consensus Gate voting, and dissent recording tools (GAP-08)',
     category: 'governance',
     trust_badge: 'ANS-ANCHORED (Block #0004)',
     verified: true,
@@ -104,10 +111,10 @@ export const ALL_MARKETPLACE_PLUGINS: MarketplacePlugin[] = [
     config_schema: [
       {
         key: 'quorum_threshold',
-        label: 'Quorum Threshold',
+        label: 'Approval Threshold',
         type: 'number',
         defaultValue: 0.67,
-        description: 'Fraction of total votes required to validate consensus quorum (0.50 - 1.00)',
+        description: 'Fraction of total votes required to pass the 67% Consensus Gate (0.50 - 1.00)',
         required: true,
       },
       {
@@ -363,7 +370,7 @@ export function enrichAgentWithPlugins(agent: Agent): Agent {
 
 export const useAcrProtocol = (defaultRoomId = 'consensus-main') => {
   const [rooms, setRooms] = useState<Room[]>([]);
-  const [activeRoomId, setActiveRoomId] = useState<string>(defaultRoomId);
+  const [activeRoomId, setActiveRoomIdState] = useState<string>(defaultRoomId);
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
   const [messages, setMessages] = useState<Message[]>([]);
   const [agents, setAgents] = useState<Agent[]>([]);
@@ -372,6 +379,7 @@ export const useAcrProtocol = (defaultRoomId = 'consensus-main') => {
   const [buddies, setBuddies] = useState<BuddyRelation[]>([]);
   const [proposals, setProposals] = useState<Proposal[]>([]);
   const [isConnected, setIsConnected] = useState<boolean>(false);
+  const [authRequired, setAuthRequired] = useState<boolean>(false);
   const [latencyMs, setLatencyMs] = useState<number>(0.38);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [workspaceMode, setWorkspaceMode] = useState<'demo' | 'local'>('demo');
@@ -379,7 +387,7 @@ export const useAcrProtocol = (defaultRoomId = 'consensus-main') => {
   // Local Machine Isolated Rooms, Telemetry & Root Administrator State
   const [rootAdminProfile, setRootAdminProfile] = useState<RootAdminProfile>(getInitialRootAdmin);
   const [localRooms, setLocalRooms] = useState<Room[]>(getInitialLocalRooms);
-  const [activeLocalRoomId, setActiveLocalRoomId] = useState<string>(() => {
+  const [activeLocalRoomId, setActiveLocalRoomIdState] = useState<string>(() => {
     const initial = getInitialLocalRooms();
     return initial[0]?.id || 'local-deliberation';
   });
@@ -388,20 +396,55 @@ export const useAcrProtocol = (defaultRoomId = 'consensus-main') => {
 
   const effectiveActiveRoomId = workspaceMode === 'local' ? activeLocalRoomId : activeRoomId;
   const activeRoomRef = useRef(effectiveActiveRoomId);
-  activeRoomRef.current = effectiveActiveRoomId;
+  const rootAdminProfileRef = useRef(rootAdminProfile);
+
+  useEffect(() => {
+    activeRoomRef.current = effectiveActiveRoomId;
+  }, [effectiveActiveRoomId]);
+
+  useEffect(() => {
+    rootAdminProfileRef.current = rootAdminProfile;
+  }, [rootAdminProfile]);
+
+  const setActiveRoomId = useCallback((roomId: string) => {
+    setActiveRoomIdState(roomId);
+    setMessages([]);
+    setUnreadCounts((prev) => ({
+      ...prev,
+      [roomId]: 0,
+    }));
+  }, []);
+
+  const setActiveLocalRoomId = useCallback((roomId: string) => {
+    setActiveLocalRoomIdState(roomId);
+    setMessages([]);
+    setUnreadCounts((prev) => ({
+      ...prev,
+      [roomId]: 0,
+    }));
+  }, []);
 
   // Initial Fetch & Periodic Sync
   const refreshAll = useCallback(async () => {
     const start = performance.now();
+    const daemonBase = getDaemonBaseUrl();
     try {
       const [roomsRes, agentsRes, escRes, auditRes, buddyRes, propRes] = await Promise.all([
-        fetch(`${DAEMON_BASE}/api/v1/rooms`),
-        fetch(`${DAEMON_BASE}/api/v1/agents`),
-        fetch(`${DAEMON_BASE}/api/v1/escalations`),
-        fetch(`${DAEMON_BASE}/api/v1/audit`),
-        fetch(`${DAEMON_BASE}/api/v1/buddies?did=${encodeURIComponent(OPERATOR_DID)}`),
-        fetch(`${DAEMON_BASE}/api/v1/proposals?room_id=${encodeURIComponent(activeRoomRef.current)}`),
+        daemonFetch(`${daemonBase}/api/v1/rooms`),
+        daemonFetch(`${daemonBase}/api/v1/agents`),
+        daemonFetch(`${daemonBase}/api/v1/escalations`),
+        daemonFetch(`${daemonBase}/api/v1/audit`),
+        daemonFetch(`${daemonBase}/api/v1/buddies?did=${encodeURIComponent(OPERATOR_DID)}`),
+        daemonFetch(`${daemonBase}/api/v1/proposals?room_id=${encodeURIComponent(activeRoomRef.current)}`),
       ]);
+
+      if ([roomsRes, agentsRes, escRes, auditRes, buddyRes, propRes].some((r) => r.status === 401)) {
+        setAuthRequired(true);
+        setIsConnected(false);
+        return;
+      }
+
+      setAuthRequired(false);
 
       if (roomsRes.ok) {
         const data = await roomsRes.json();
@@ -424,14 +467,16 @@ export const useAcrProtocol = (defaultRoomId = 'consensus-main') => {
           if (savedLocal) localRegistered = JSON.parse(savedLocal);
         } catch {}
 
+        const adminProfile = rootAdminProfileRef.current;
+
         setAgents((prev) => {
           const baseMap = new Map<string, Agent>();
 
           rawAgents.forEach((incoming) => {
-            if (incoming.role === 'human' && rootAdminProfile.isConfigured) {
-              incoming.name = rootAdminProfile.name;
-              incoming.org = rootAdminProfile.title;
-              incoming.avatar = rootAdminProfile.avatar;
+            if (incoming.role === 'human' && adminProfile.isConfigured) {
+              incoming.name = adminProfile.name;
+              incoming.org = adminProfile.title;
+              incoming.avatar = adminProfile.avatar;
             }
             if (overrides[incoming.did]) {
               Object.assign(incoming, overrides[incoming.did]);
@@ -489,7 +534,11 @@ export const useAcrProtocol = (defaultRoomId = 'consensus-main') => {
   // Fetch messages for active room
   const fetchMessages = useCallback(async (roomId: string) => {
     try {
-      const res = await fetch(`${DAEMON_BASE}/api/v1/rooms/${roomId}/messages`);
+      const res = await daemonFetch(`${getDaemonBaseUrl()}/api/v1/rooms/${roomId}/messages`);
+      if (res.status === 401) {
+        setAuthRequired(true);
+        return;
+      }
       if (res.ok) {
         const data = await res.json();
         setMessages(Array.isArray(data) ? data : []);
@@ -502,7 +551,11 @@ export const useAcrProtocol = (defaultRoomId = 'consensus-main') => {
   // Fetch proposals for active room
   const fetchProposals = useCallback(async (roomId: string) => {
     try {
-      const res = await fetch(`${DAEMON_BASE}/api/v1/proposals?room_id=${roomId}`);
+      const res = await daemonFetch(`${getDaemonBaseUrl()}/api/v1/proposals?room_id=${roomId}`);
+      if (res.status === 401) {
+        setAuthRequired(true);
+        return;
+      }
       if (res.ok) {
         const data = await res.json();
         setProposals(Array.isArray(data) ? data : []);
@@ -513,146 +566,219 @@ export const useAcrProtocol = (defaultRoomId = 'consensus-main') => {
   }, []);
 
   useEffect(() => {
-    refreshAll();
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (!cancelled) {
+        void refreshAll();
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [refreshAll]);
 
-  // Re-fetch messages & proposals when active room changes and reset its unread count
+  // Re-fetch messages & proposals when active room changes
   useEffect(() => {
-    if (activeRoomId) {
-      setUnreadCounts((prev) => ({
-        ...prev,
-        [activeRoomId]: 0,
-      }));
-      setMessages([]);
-      fetchMessages(activeRoomId);
-      fetchProposals(activeRoomId);
-    }
+    if (!activeRoomId) return;
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (!cancelled) {
+        void fetchMessages(activeRoomId);
+        void fetchProposals(activeRoomId);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [activeRoomId, fetchMessages, fetchProposals]);
 
   useEffect(() => {
-    if (activeLocalRoomId) {
-      setUnreadCounts((prev) => ({
-        ...prev,
-        [activeLocalRoomId]: 0,
-      }));
-      setMessages([]);
-      fetchMessages(activeLocalRoomId);
-      fetchProposals(activeLocalRoomId);
-    }
+    if (!activeLocalRoomId) return;
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (!cancelled) {
+        void fetchMessages(activeLocalRoomId);
+        void fetchProposals(activeLocalRoomId);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [activeLocalRoomId, fetchMessages, fetchProposals]);
 
-  // Connect to SSE Stream
+  // Connect to authenticated SSE Stream (supports ACR_API_TOKEN Bearer header)
   useEffect(() => {
-    let sse: EventSource | null = null;
+    let cancelled = false;
+    let controller: AbortController | null = null;
     let reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
 
-    const connect = () => {
-      try {
-        sse = new EventSource(`${DAEMON_BASE}/api/v1/stream`);
-
-        sse.addEventListener('connected', () => {
-          setIsConnected(true);
-        });
-
-        sse.addEventListener('message', (event: MessageEvent) => {
-          try {
-            const envelope = JSON.parse(event.data);
-            const msg = envelope.data as Message;
-            if (msg && msg.room_id === activeRoomRef.current) {
-              setMessages((prev) => {
-                if (prev.some((m) => m.id === msg.id)) return prev;
-                return [...prev, msg];
-              });
+    const handleSseEvent = (eventType: string, rawData: string) => {
+      if (eventType === 'connected') {
+        setIsConnected(true);
+        setAuthRequired(false);
+        return;
+      }
+      if (eventType === 'message') {
+        try {
+          const envelope = JSON.parse(rawData);
+          const msg = envelope.data as Message;
+          if (msg && msg.room_id === activeRoomRef.current) {
+            setMessages((prev) => {
+              if (prev.some((m) => m.id === msg.id)) return prev;
+              return [...prev, msg];
+            });
+          }
+          if (msg && msg.room_id) {
+            if (msg.room_id !== activeRoomRef.current) {
+              setUnreadCounts((prev) => ({
+                ...prev,
+                [msg.room_id]: (prev[msg.room_id] || 0) + 1,
+              }));
             }
-            if (msg && msg.room_id) {
-              if (msg.room_id !== activeRoomRef.current) {
-                setUnreadCounts((prev) => ({
-                  ...prev,
-                  [msg.room_id]: (prev[msg.room_id] || 0) + 1,
-                }));
+            setRooms((prev) =>
+              prev.map((r) =>
+                r.id === msg.room_id
+                  ? { ...r, message_count: r.message_count + 1 }
+                  : r
+              )
+            );
+          }
+        } catch {
+          // ignore malformed payload
+        }
+        return;
+      }
+      if (eventType === 'agent_update') {
+        try {
+          const envelope = JSON.parse(rawData);
+          const updated = envelope.data as Agent;
+          if (updated && updated.did) {
+            setAgents((prev) => {
+              const exists = prev.some((a) => a.did === updated.did);
+              if (exists) {
+                return prev.map((a) =>
+                  a.did === updated.did ? { ...a, ...updated } : a
+                );
               }
-              setRooms((prev) =>
-                prev.map((r) =>
-                  r.id === msg.room_id
-                    ? { ...r, message_count: r.message_count + 1 }
-                    : r
-                )
-              );
-            }
-          } catch {
-            // ignore
+              return [...prev, updated];
+            });
           }
+        } catch {
+          // ignore
+        }
+        return;
+      }
+      if (eventType === 'escalation') {
+        try {
+          const envelope = JSON.parse(rawData);
+          const esc = envelope.data as Escalation;
+          if (esc && esc.id) {
+            setEscalations((prev) => [
+              esc,
+              ...prev.filter((e) => e.id !== esc.id),
+            ]);
+          }
+        } catch {
+          // ignore
+        }
+        return;
+      }
+      if (eventType === 'audit') {
+        try {
+          const envelope = JSON.parse(rawData);
+          const block = envelope.data as AuditEntry;
+          if (block && block.state_hash) {
+            setAuditLogs((prev) => {
+              if (prev.some((a) => a.state_hash === block.state_hash)) return prev;
+              return [...prev, block];
+            });
+          }
+        } catch {
+          // ignore
+        }
+      }
+    };
+
+    const connect = async () => {
+      if (cancelled) return;
+      controller?.abort();
+      controller = new AbortController();
+
+      try {
+        const res = await fetch(`${getDaemonBaseUrl()}/api/v1/stream`, {
+          method: 'GET',
+          headers: getDaemonAuthHeaders({ Accept: 'text/event-stream' }),
+          signal: controller.signal,
         });
 
-        sse.addEventListener('agent_update', (event: MessageEvent) => {
-          try {
-            const envelope = JSON.parse(event.data);
-            const updated = envelope.data as Agent;
-            if (updated && updated.did) {
-              setAgents((prev) => {
-                const exists = prev.some((a) => a.did === updated.did);
-                if (exists) {
-                  return prev.map((a) =>
-                    a.did === updated.did ? { ...a, ...updated } : a
-                  );
-                }
-                return [...prev, updated];
-              });
-            }
-          } catch {
-            // ignore
-          }
-        });
-
-        sse.addEventListener('escalation', (event: MessageEvent) => {
-          try {
-            const envelope = JSON.parse(event.data);
-            const esc = envelope.data as Escalation;
-            if (esc && esc.id) {
-              setEscalations((prev) => [
-                esc,
-                ...prev.filter((e) => e.id !== esc.id),
-              ]);
-            }
-          } catch {
-            // ignore
-          }
-        });
-
-        sse.addEventListener('audit', (event: MessageEvent) => {
-          try {
-            const envelope = JSON.parse(event.data);
-            const block = envelope.data as AuditEntry;
-            if (block && block.state_hash) {
-              setAuditLogs((prev) => {
-                if (prev.some((a) => a.state_hash === block.state_hash))
-                  return prev;
-                return [...prev, block];
-              });
-            }
-          } catch {
-            // ignore
-          }
-        });
-
-        sse.onerror = () => {
+        if (res.status === 401) {
+          setAuthRequired(true);
           setIsConnected(false);
-          sse?.close();
-          reconnectTimeout = setTimeout(connect, 3000);
-        };
+          return;
+        }
+        if (!res.ok || !res.body) {
+          throw new Error(`SSE HTTP ${res.status}`);
+        }
+
+        setAuthRequired(false);
+        setIsConnected(true);
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        let currentEvent = 'message';
+        let dataLines: string[] = [];
+
+        while (!cancelled) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split(/\r?\n/);
+          buffer = lines.pop() ?? '';
+
+          for (const line of lines) {
+            if (line === '') {
+              if (dataLines.length > 0) {
+                handleSseEvent(currentEvent, dataLines.join('\n'));
+              }
+              currentEvent = 'message';
+              dataLines = [];
+            } else if (line.startsWith('event:')) {
+              currentEvent = line.slice(6).trim() || 'message';
+            } else if (line.startsWith('data:')) {
+              dataLines.push(line.slice(5).trimStart());
+            }
+          }
+        }
       } catch {
-        setIsConnected(false);
+        if (!cancelled) {
+          setIsConnected(false);
+        }
+      }
+
+      if (!cancelled) {
         reconnectTimeout = setTimeout(connect, 3000);
       }
     };
 
+    const handleConfigRefresh = () => {
+      if (reconnectTimeout) clearTimeout(reconnectTimeout);
+      refreshAll();
+      connect();
+    };
+
     connect();
+    window.addEventListener(DAEMON_TOKEN_CHANGED_EVENT, handleConfigRefresh);
+    window.addEventListener(DAEMON_PORTS_CHANGED_EVENT, handleConfigRefresh);
 
     return () => {
-      sse?.close();
+      cancelled = true;
+      controller?.abort();
       if (reconnectTimeout) clearTimeout(reconnectTimeout);
+      window.removeEventListener(DAEMON_TOKEN_CHANGED_EVENT, handleConfigRefresh);
+      window.removeEventListener(DAEMON_PORTS_CHANGED_EVENT, handleConfigRefresh);
     };
-  }, []);
+  }, [refreshAll]);
 
   // Poll fallback every 6 seconds
   useEffect(() => {
@@ -672,8 +798,8 @@ export const useAcrProtocol = (defaultRoomId = 'consensus-main') => {
     const effectiveRoomId = targetRoomId || activeRoomId;
 
     try {
-      const res = await fetch(
-        `${DAEMON_BASE}/api/v1/rooms/${effectiveRoomId}/messages`,
+      const res = await daemonFetch(
+        `${getDaemonBaseUrl()}/api/v1/rooms/${effectiveRoomId}/messages`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -727,7 +853,7 @@ export const useAcrProtocol = (defaultRoomId = 'consensus-main') => {
     try {
       const formData = new FormData();
       formData.append('file', file);
-      const res = await fetch(`${DAEMON_BASE}/api/v1/files/upload`, {
+      const res = await daemonFetch(`${getDaemonBaseUrl()}/api/v1/files/upload`, {
         method: 'POST',
         body: formData,
       });
@@ -744,8 +870,8 @@ export const useAcrProtocol = (defaultRoomId = 'consensus-main') => {
   // Resolve escalation gate
   const resolveEscalation = async (escalationId: string, approve: boolean) => {
     try {
-      const res = await fetch(
-        `${DAEMON_BASE}/api/v1/escalations/${escalationId}/resolve`,
+      const res = await daemonFetch(
+        `${getDaemonBaseUrl()}/api/v1/escalations/${escalationId}/resolve`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -788,7 +914,7 @@ export const useAcrProtocol = (defaultRoomId = 'consensus-main') => {
     isPrivate = false
   ) => {
     try {
-      const res = await fetch(`${DAEMON_BASE}/api/v1/rooms?creator_did=${encodeURIComponent(OPERATOR_DID)}`, {
+      const res = await daemonFetch(`${getDaemonBaseUrl()}/api/v1/rooms?creator_did=${encodeURIComponent(OPERATOR_DID)}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -812,7 +938,7 @@ export const useAcrProtocol = (defaultRoomId = 'consensus-main') => {
   // Buddy Actions (GAP-02)
   const requestBuddy = async (toDid: string) => {
     try {
-      const res = await fetch(`${DAEMON_BASE}/api/v1/buddies/request`, {
+      const res = await daemonFetch(`${getDaemonBaseUrl()}/api/v1/buddies/request`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ from_did: OPERATOR_DID, to_did: toDid }),
@@ -825,7 +951,7 @@ export const useAcrProtocol = (defaultRoomId = 'consensus-main') => {
 
   const acceptBuddy = async (toDid: string) => {
     try {
-      const res = await fetch(`${DAEMON_BASE}/api/v1/buddies/accept`, {
+      const res = await daemonFetch(`${getDaemonBaseUrl()}/api/v1/buddies/accept`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ from_did: OPERATOR_DID, to_did: toDid }),
@@ -838,7 +964,7 @@ export const useAcrProtocol = (defaultRoomId = 'consensus-main') => {
 
   const blockBuddy = async (toDid: string) => {
     try {
-      const res = await fetch(`${DAEMON_BASE}/api/v1/buddies/block`, {
+      const res = await daemonFetch(`${getDaemonBaseUrl()}/api/v1/buddies/block`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ from_did: OPERATOR_DID, to_did: toDid }),
@@ -856,7 +982,7 @@ export const useAcrProtocol = (defaultRoomId = 'consensus-main') => {
     options = ['APPROVE', 'REJECT', 'DISSENT']
   ) => {
     try {
-      const res = await fetch(`${DAEMON_BASE}/api/v1/proposals`, {
+      const res = await daemonFetch(`${getDaemonBaseUrl()}/api/v1/proposals`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -889,8 +1015,8 @@ export const useAcrProtocol = (defaultRoomId = 'consensus-main') => {
     }
 
     try {
-      const res = await fetch(
-        `${DAEMON_BASE}/api/v1/proposals/${proposalId}/vote`,
+      const res = await daemonFetch(
+        `${getDaemonBaseUrl()}/api/v1/proposals/${proposalId}/vote`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -916,7 +1042,7 @@ export const useAcrProtocol = (defaultRoomId = 'consensus-main') => {
     message: string;
   }> => {
     try {
-      const res = await fetch(`${DAEMON_BASE}/api/v1/audit/chain`);
+      const res = await daemonFetch(`${getDaemonBaseUrl()}/api/v1/audit/chain`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       const trail: AuditEntry[] = data.trail || [];
@@ -951,8 +1077,8 @@ export const useAcrProtocol = (defaultRoomId = 'consensus-main') => {
 
   const closeProposal = async (proposalId: string) => {
     try {
-      const res = await fetch(
-        `${DAEMON_BASE}/api/v1/proposals/${proposalId}/close`,
+      const res = await daemonFetch(
+        `${getDaemonBaseUrl()}/api/v1/proposals/${proposalId}/close`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -975,7 +1101,7 @@ export const useAcrProtocol = (defaultRoomId = 'consensus-main') => {
         : activeRoomId === 'security-audits'
           ? 'Security Audits'
           : activeRoomId,
-    description: 'Autonomous agent deliberation floor',
+    description: 'Local agent agreement floor',
     topic: 'W3C DID/VC • TLA+ Verified Merges',
     is_private: false,
     participants: [],
@@ -1096,7 +1222,7 @@ export const useAcrProtocol = (defaultRoomId = 'consensus-main') => {
 
       // Post update to daemon
       try {
-        await fetch(`${DAEMON_BASE}/api/v1/agents`, {
+        await daemonFetch(`${getDaemonBaseUrl()}/api/v1/agents`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -1127,7 +1253,7 @@ export const useAcrProtocol = (defaultRoomId = 'consensus-main') => {
       } catch {}
 
       try {
-        await fetch(`${DAEMON_BASE}/api/v1/agents`, {
+        await daemonFetch(`${getDaemonBaseUrl()}/api/v1/agents`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -1156,9 +1282,9 @@ export const useAcrProtocol = (defaultRoomId = 'consensus-main') => {
         role: 'agent',
         status: 'online',
         org: newAgent.org || 'Local MCP Node',
-        process_path: newAgent.process_path || 'claude mcp add acr http://127.0.0.1:20443/mcp',
+        process_path: newAgent.process_path || 'claude mcp add acr -- npx -y @acr-js/mcp-server',
         tags: newAgent.tags || ['mcp-local', 'code-review'],
-        description: newAgent.description || 'Local autonomous agent connected via MCP protocol.',
+        description: newAgent.description || 'Local AI agent connected via MCP protocol.',
         capabilities: newAgent.capabilities || ['ast.diff', 'tools.execute', 'consensus.vote'],
         verified: true,
         last_seen: new Date().toISOString(),
@@ -1182,7 +1308,7 @@ export const useAcrProtocol = (defaultRoomId = 'consensus-main') => {
       } catch {}
 
       try {
-        await fetch(`${DAEMON_BASE}/api/v1/agents`, {
+        await daemonFetch(`${getDaemonBaseUrl()}/api/v1/agents`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -1209,7 +1335,7 @@ export const useAcrProtocol = (defaultRoomId = 'consensus-main') => {
       const newRoom: Room = {
         id: `room-local-${Date.now()}`,
         name: name.trim(),
-        description: description.trim() || 'Workstation consensus floor for local autonomous agents.',
+        description: description.trim() || 'Workstation consensus floor for local AI agents.',
         topic: topic.trim() || 'Workstation Consensus • Zero-Trust DID/VC',
         is_private: isPrivate,
         participants: [rootAdminProfile.did],
@@ -1226,7 +1352,7 @@ export const useAcrProtocol = (defaultRoomId = 'consensus-main') => {
       setActiveLocalRoomId(newRoom.id);
       return newRoom;
     },
-    [rootAdminProfile.did]
+    [rootAdminProfile.did, setActiveLocalRoomId]
   );
 
   const deleteLocalRoom = useCallback((id: string) => {
@@ -1238,7 +1364,7 @@ export const useAcrProtocol = (defaultRoomId = 'consensus-main') => {
       } catch {}
       return updated;
     });
-    setActiveLocalRoomId((prevId) => {
+    setActiveLocalRoomIdState((prevId) => {
       if (prevId === id) {
         return 'local-deliberation';
       }
@@ -1342,6 +1468,7 @@ export const useAcrProtocol = (defaultRoomId = 'consensus-main') => {
     buddies,
     proposals,
     isConnected,
+    authRequired,
     latencyMs,
     isLoading,
     sendMessage,

@@ -1,11 +1,10 @@
 import React, { useRef, useEffect } from 'react';
-import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import { Canvas, useFrame } from '@react-three/fiber';
 import { Float, Points, PointMaterial } from '@react-three/drei';
 import * as THREE from 'three';
 
-// 1. Awwwards-Grade Scroll-Linked Spatial Rig with Smooth Damping
-const CameraRig: React.FC = () => {
-  const { camera, pointer } = useThree();
+// 1. Scroll-Linked Spatial Rig with Smooth Damping
+const CameraRig: React.FC<{ prefersReducedMotion: boolean }> = ({ prefersReducedMotion }) => {
   const scrollYRef = useRef(0);
   const scrollVelocityRef = useRef(0);
   const lastScrollY = useRef(0);
@@ -22,11 +21,17 @@ const CameraRig: React.FC = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  useFrame((_state, _delta) => {
+  useFrame((state) => {
+    const { camera, pointer } = state;
+    if (prefersReducedMotion) {
+      camera.position.set(0, 0, 5.6);
+      camera.lookAt(0, 0, -1.0);
+      return;
+    }
+
     // Decay scroll velocity
     scrollVelocityRef.current = THREE.MathUtils.lerp(scrollVelocityRef.current, 0, 0.05);
 
-    // Cinematic camera lerp (Apple Keynote / Awwwards standard)
     const targetX = pointer.x * 0.26;
     const targetY = pointer.y * 0.18 - scrollYRef.current * 1.35;
     const targetZ = 5.6 + scrollYRef.current * 1.4;
@@ -40,8 +45,8 @@ const CameraRig: React.FC = () => {
   return null;
 };
 
-// 2. Beyond-Fortune-500 3D Spatial Model (Defined Specular Contours, Zero Wire Clutter)
-const SpatialNexus: React.FC = () => {
+// 2. 3D Spatial Core (Obsidian & Zyphra Orange)
+const SpatialNexus: React.FC<{ prefersReducedMotion: boolean }> = ({ prefersReducedMotion }) => {
   const knotRef = useRef<THREE.Mesh>(null!);
   const haloRef = useRef<THREE.Mesh>(null!);
   const orbit1Ref = useRef<THREE.Group>(null!);
@@ -49,10 +54,11 @@ const SpatialNexus: React.FC = () => {
   const beacon1Ref = useRef<THREE.Mesh>(null!);
   const beacon2Ref = useRef<THREE.Mesh>(null!);
   const lightRef = useRef<THREE.PointLight>(null!);
-  const { pointer } = useThree();
 
   useFrame((state) => {
-    const t = state.clock.getElapsedTime();
+    if (prefersReducedMotion) return;
+    const { clock, pointer } = state;
+    const t = clock.getElapsedTime();
 
     // Harmonic rotation of the defined 3D model
     if (knotRef.current) {
@@ -96,41 +102,45 @@ const SpatialNexus: React.FC = () => {
   return (
     <group position={[0, -0.15, -2.4]}>
       {/* Front Dynamic Cursor Key Light */}
-      <pointLight ref={lightRef} position={[0, 0, 4.2]} intensity={9} color="#38bdf8" distance={13} />
-      
-      {/* Rear Silhouette Rim Light — Adds Crisp Architectural Definition Without Wireframes */}
-      <directionalLight position={[0, 4, -4.5]} intensity={9} color="#38bdf8" />
-      <directionalLight position={[-4, -3, -3]} intensity={5} color="#818cf8" />
+      <pointLight ref={lightRef} position={[0, 0, 4.2]} intensity={9} color="#FF5500" distance={13} />
+
+      {/* Rear Silhouette Rim Light */}
+      <directionalLight position={[0, 4, -4.5]} intensity={9} color="#FF5500" />
+      <directionalLight position={[-4, -3, -3]} intensity={5} color="#FF8C42" />
 
       {/* Atmospheric Secondary Fill Lights */}
-      <pointLight position={[-6, 4, -2]} intensity={5.5} color="#6366f1" distance={15} />
-      <pointLight position={[6, -4, -2]} intensity={4.5} color="#10b981" distance={15} />
+      <pointLight position={[-6, 4, -2]} intensity={5.5} color="#E04800" distance={15} />
+      <pointLight position={[6, -4, -2]} intensity={4.5} color="#10B981" distance={15} />
 
       {/* Floating 3D Core Model */}
-      <Float speed={0.95} rotationIntensity={0.2} floatIntensity={0.32}>
-        {/* Defined Solid Obsidian/Cyan Physical Torus Knot */}
+      <Float
+        speed={prefersReducedMotion ? 0 : 0.95}
+        rotationIntensity={prefersReducedMotion ? 0 : 0.2}
+        floatIntensity={prefersReducedMotion ? 0 : 0.32}
+      >
+        {/* Defined Solid Obsidian/Solar Physical Torus Knot */}
         <mesh ref={knotRef} scale={1.22}>
           <torusKnotGeometry args={[1.3, 0.32, 160, 32, 2, 3]} />
           <meshPhysicalMaterial
-            color="#041421"
-            emissive="#02659e"
-            emissiveIntensity={0.22}
-            roughness={0.12}
+            color="#0D0D11"
+            emissive="#FF5500"
+            emissiveIntensity={0.18}
+            roughness={0.14}
             metalness={0.92}
             clearcoat={1.0}
-            clearcoatRoughness={0.06}
+            clearcoatRoughness={0.08}
             transparent
-            opacity={0.42}
+            opacity={0.44}
           />
         </mesh>
 
-        {/* Delicate Translucent Silhouette Halo (Provides Edge Definition) */}
+        {/* Delicate Translucent Silhouette Halo */}
         <mesh ref={haloRef} scale={1.226}>
           <torusKnotGeometry args={[1.3, 0.32, 90, 24, 2, 3]} />
           <meshPhysicalMaterial
-            color="#38bdf8"
-            emissive="#38bdf8"
-            emissiveIntensity={0.35}
+            color="#FF8C42"
+            emissive="#FF5500"
+            emissiveIntensity={0.32}
             roughness={0.3}
             metalness={0.2}
             transparent
@@ -140,17 +150,17 @@ const SpatialNexus: React.FC = () => {
         </mesh>
       </Float>
 
-      {/* Inner Subdued Core Pulsar (Soft Cyan Light Anchor) */}
+      {/* Inner Subdued Core Pulsar */}
       <mesh scale={0.62}>
         <sphereGeometry args={[1, 32, 32]} />
         <meshStandardMaterial
-          color="#0369a1"
-          emissive="#0284c7"
-          emissiveIntensity={0.4}
-          roughness={0.1}
+          color="#141414"
+          emissive="#FF5500"
+          emissiveIntensity={0.35}
+          roughness={0.12}
           metalness={0.95}
           transparent
-          opacity={0.18}
+          opacity={0.2}
         />
       </mesh>
 
@@ -158,11 +168,11 @@ const SpatialNexus: React.FC = () => {
       <group ref={orbit1Ref}>
         <mesh scale={3.15}>
           <torusGeometry args={[1, 0.004, 16, 140]} />
-          <meshBasicMaterial color="#38bdf8" transparent opacity={0.18} />
+          <meshBasicMaterial color="#FF5500" transparent opacity={0.18} />
         </mesh>
         <mesh ref={beacon1Ref}>
           <sphereGeometry args={[0.042, 16, 16]} />
-          <meshBasicMaterial color="#38bdf8" transparent opacity={0.8} />
+          <meshBasicMaterial color="#FF8C42" transparent opacity={0.8} />
         </mesh>
       </group>
 
@@ -170,11 +180,11 @@ const SpatialNexus: React.FC = () => {
       <group ref={orbit2Ref}>
         <mesh scale={3.65}>
           <torusGeometry args={[1, 0.0035, 16, 140]} />
-          <meshBasicMaterial color="#818cf8" transparent opacity={0.14} />
+          <meshBasicMaterial color="#FF8C42" transparent opacity={0.14} />
         </mesh>
         <mesh ref={beacon2Ref}>
           <sphereGeometry args={[0.035, 16, 16]} />
-          <meshBasicMaterial color="#a5b4fc" transparent opacity={0.7} />
+          <meshBasicMaterial color="#FFA066" transparent opacity={0.7} />
         </mesh>
       </group>
     </group>
@@ -182,9 +192,9 @@ const SpatialNexus: React.FC = () => {
 };
 
 // 3. Gentle Ambient Star Dust (Subtle Spatial Motes)
-const SpatialDust: React.FC = () => {
+const SpatialDust: React.FC<{ prefersReducedMotion: boolean }> = ({ prefersReducedMotion }) => {
   const pointsRef = useRef<THREE.Points>(null!);
-  
+
   const [positions] = React.useState(() => {
     const count = 100;
     const coords = new Float32Array(count * 3);
@@ -197,6 +207,7 @@ const SpatialDust: React.FC = () => {
   });
 
   useFrame((_state, delta) => {
+    if (prefersReducedMotion) return;
     if (pointsRef.current) {
       pointsRef.current.rotation.y += delta * 0.008;
       pointsRef.current.rotation.x += delta * 0.004;
@@ -207,7 +218,7 @@ const SpatialDust: React.FC = () => {
     <Points ref={pointsRef} positions={positions} stride={3} frustumCulled={false}>
       <PointMaterial
         transparent
-        color="#7dd3fc"
+        color="#FFB07A"
         size={0.026}
         sizeAttenuation
         depthWrite={false}
@@ -232,12 +243,25 @@ const isWebGLAvailable = () => {
 
 export const ThreeBackground: React.FC = () => {
   const [hasWebGL, setHasWebGL] = React.useState<boolean>(() => isWebGLAvailable());
+  const [prefersReducedMotion, setPrefersReducedMotion] = React.useState<boolean>(() =>
+    typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+      ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      : false
+  );
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return;
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const onChange = (e: MediaQueryListEvent) => setPrefersReducedMotion(e.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
 
   return (
-    <div className="fixed inset-0 pointer-events-none z-0 select-none overflow-hidden bg-[#030305]">
-      {/* Resend Top Horizon Glow */}
-      <div className="absolute -top-[190px] left-1/2 -translate-x-1/2 w-[900px] h-[480px] bg-gradient-to-b from-cyan-500/14 via-indigo-500/06 to-transparent rounded-full blur-[130px] opacity-75" />
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[55%] h-[1px] bg-gradient-to-r from-transparent via-cyan-400/35 to-transparent" />
+    <div className="fixed inset-0 pointer-events-none z-0 select-none overflow-hidden bg-[#000000]">
+      {/* Top Horizon Glow */}
+      <div className="absolute -top-[190px] left-1/2 -translate-x-1/2 w-[900px] h-[480px] bg-gradient-to-b from-[#FF5500]/15 via-[#FF8C42]/5 to-transparent rounded-full blur-[130px] opacity-75" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[55%] h-[1px] bg-gradient-to-r from-transparent via-[#FF8C42]/35 to-transparent" />
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[22%] h-[1.5px] bg-gradient-to-r from-transparent via-white/50 to-transparent blur-[1px]" />
 
       {/* R3F 3D Canvas with Atmospheric Fog & Defined Spatial Model */}
@@ -254,36 +278,36 @@ export const ThreeBackground: React.FC = () => {
               }, false);
             }}
           >
-            <fog attach="fog" args={['#030305', 3.8, 10.5]} />
+            <fog attach="fog" args={['#000000', 3.8, 10.5]} />
             <ambientLight intensity={0.35} />
-            <CameraRig />
-            <SpatialNexus />
-            <SpatialDust />
+            <CameraRig prefersReducedMotion={prefersReducedMotion} />
+            <SpatialNexus prefersReducedMotion={prefersReducedMotion} />
+            <SpatialDust prefersReducedMotion={prefersReducedMotion} />
           </Canvas>
         </div>
       )}
 
       {/* Optical Contrast Shield directly behind foreground typography */}
-      <div 
+      <div
         className="absolute inset-0 pointer-events-none"
         style={{
-          background: 'radial-gradient(ellipse 720px 440px at 50% 28%, rgba(3, 3, 5, 0.65) 0%, transparent 100%)'
+          background: 'radial-gradient(ellipse 720px 440px at 50% 28%, rgba(0, 0, 0, 0.72) 0%, transparent 100%)'
         }}
       />
 
       {/* Ambient Color Wells */}
-      <div className="absolute top-[40%] -left-[260px] w-[550px] h-[550px] rounded-full bg-cyan-950/15 blur-[180px]" />
-      <div className="absolute top-[70%] -right-[260px] w-[600px] h-[600px] rounded-full bg-indigo-950/20 blur-[200px]" />
+      <div className="absolute top-[40%] -left-[260px] w-[550px] h-[550px] rounded-full bg-[#FF5500]/10 blur-[180px]" />
+      <div className="absolute top-[70%] -right-[260px] w-[600px] h-[600px] rounded-full bg-[#FF8C42]/10 blur-[200px]" />
       <div className="absolute -bottom-[160px] left-1/4 w-[750px] h-[450px] rounded-full bg-emerald-950/10 blur-[200px]" />
 
       {/* Tactile Micro-Grain Noise */}
       <div className="absolute inset-0 bg-grain opacity-35 mix-blend-overlay" />
 
-      {/* Deep Space Radial Vignette */}
-      <div 
+      {/* Deep Void Radial Vignette */}
+      <div
         className="absolute inset-0 pointer-events-none"
         style={{
-          background: 'radial-gradient(ellipse at 50% 35%, transparent 50%, rgba(3, 3, 5, 0.92) 100%)'
+          background: 'radial-gradient(ellipse at 50% 35%, transparent 50%, rgba(0, 0, 0, 0.92) 100%)'
         }}
       />
     </div>

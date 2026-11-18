@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { Vote, ChevronLeft, ChevronRight, Play, Pause, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import type { Proposal } from '../../types/protocol';
 
@@ -12,23 +12,18 @@ export const GovernanceBallotCarousel: React.FC<GovernanceBallotCarouselProps> =
   openProposals,
   onSelectProposal,
 }) => {
+  const prefersReducedMotion = useReducedMotion();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAutoPlay, setIsAutoPlay] = useState(true);
   const [isHovered, setIsHovered] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const count = openProposals.length;
-
-  // Keep index within bounds if list shrinks
-  useEffect(() => {
-    if (currentIndex >= count && count > 0) {
-      setCurrentIndex(count - 1);
-    }
-  }, [count, currentIndex]);
+  const safeIndex = count > 0 ? Math.min(currentIndex, count - 1) : 0;
 
   // Auto-cycle timer
   useEffect(() => {
-    if (count <= 1 || !isAutoPlay || isHovered) {
+    if (count <= 1 || !isAutoPlay || isHovered || prefersReducedMotion) {
       if (timerRef.current) clearInterval(timerRef.current);
       return;
     }
@@ -40,7 +35,7 @@ export const GovernanceBallotCarousel: React.FC<GovernanceBallotCarouselProps> =
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [count, isAutoPlay, isHovered]);
+  }, [count, isAutoPlay, isHovered, prefersReducedMotion]);
 
   const handlePrev = () => {
     setCurrentIndex((prev) => (prev === 0 ? count - 1 : prev - 1));
@@ -52,16 +47,16 @@ export const GovernanceBallotCarousel: React.FC<GovernanceBallotCarouselProps> =
 
   if (count === 0) {
     return (
-      <div className="p-3.5 rounded-xl border border-white/[0.06] bg-black/20 text-center text-[10px] text-slate-500 font-mono-code">
+      <div className="p-3.5 rounded-xl border border-white/[0.06] bg-[#000000]/40 text-center text-[10px] text-[#A1A1AA] font-mono-code">
         No active consensus ballots
       </div>
     );
   }
 
-  const prop = openProposals[currentIndex] || openProposals[0];
+  const prop = openProposals[safeIndex] || openProposals[0];
   const voteEntries = prop.votes ? Object.entries(prop.votes) : [];
-  const approveVotes = voteEntries.filter(([_, choice]) => choice === 'APPROVE').length;
-  const dissentVotes = (prop.dissent_logs?.length || 0) + voteEntries.filter(([_, choice]) => choice === 'DISSENT').length;
+  const approveVotes = voteEntries.filter(([, choice]) => choice === 'APPROVE').length;
+  const dissentVotes = (prop.dissent_logs?.length || 0) + voteEntries.filter(([, choice]) => choice === 'DISSENT').length;
 
   return (
     <div
@@ -127,7 +122,7 @@ export const GovernanceBallotCarousel: React.FC<GovernanceBallotCarouselProps> =
           initial={{ opacity: 0, x: 15 }}
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: -15 }}
-          transition={{ duration: 0.22, ease: 'easeInOut' }}
+          transition={{ duration: prefersReducedMotion ? 0 : 0.22, ease: 'easeInOut' }}
           className="space-y-2"
         >
           <div>

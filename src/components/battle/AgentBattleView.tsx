@@ -170,7 +170,7 @@ export const AgentBattleView: React.FC<AgentBattleViewProps> = ({
           rows={2}
           value={selectedPrompt}
           onChange={(e) => setSelectedPrompt(e.target.value)}
-          className="w-full bg-neutral-900 border border-neutral-700 rounded p-2 text-xs font-mono text-white focus:outline-none focus:ring-2 focus:ring-sky-500 resize-none leading-relaxed"
+          className="w-full bg-[#000000] border border-neutral-700 rounded p-2 text-xs font-mono text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500] resize-none leading-relaxed"
           aria-label="Benchmark Directive Prompt"
         />
       </div>
@@ -235,9 +235,9 @@ export const AgentBattleView: React.FC<AgentBattleViewProps> = ({
               type="button"
               onClick={() => handleVote(candidateA.id)}
               disabled={Boolean(userVoted)}
-              className={`px-3 py-1.5 text-xs font-mono font-bold rounded transition-colors focus:outline-none focus:ring-2 focus:ring-sky-500 ${
+              className={`px-3 py-1.5 text-xs font-mono font-bold rounded transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500] ${
                 userVoted === candidateA.id
-                  ? 'bg-sky-600 text-white border border-sky-400'
+                  ? 'bg-[#FF5500] text-black border border-[#FF8C42]'
                   : userVoted
                   ? 'bg-neutral-800 text-neutral-500 border border-neutral-700 cursor-not-allowed'
                   : 'bg-neutral-800 hover:bg-neutral-700 text-white border border-neutral-600'
@@ -306,9 +306,9 @@ export const AgentBattleView: React.FC<AgentBattleViewProps> = ({
               type="button"
               onClick={() => handleVote(candidateB.id)}
               disabled={Boolean(userVoted)}
-              className={`px-3 py-1.5 text-xs font-mono font-bold rounded transition-colors focus:outline-none focus:ring-2 focus:ring-sky-500 ${
+              className={`px-3 py-1.5 text-xs font-mono font-bold rounded transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500] ${
                 userVoted === candidateB.id
-                  ? 'bg-amber-600 text-white border border-amber-400'
+                  ? 'bg-[#FF5500] text-black border border-[#FF8C42]'
                   : userVoted
                   ? 'bg-neutral-800 text-neutral-500 border border-neutral-700 cursor-not-allowed'
                   : 'bg-neutral-800 hover:bg-neutral-700 text-white border border-neutral-600'
@@ -328,14 +328,14 @@ export const AgentBattleView: React.FC<AgentBattleViewProps> = ({
             setUserVoted(null);
             onPrune?.(candidateB.id);
           }}
-          className="px-3 py-1.5 text-xs font-mono font-medium rounded bg-rose-950/80 hover:bg-rose-900 text-rose-300 border border-rose-700 transition-colors focus:outline-none focus:ring-2 focus:ring-rose-500"
+          className="px-3 py-1.5 text-xs font-mono font-medium rounded bg-rose-950/80 hover:bg-rose-900 text-rose-300 border border-rose-700 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500]"
         >
           [PRUNE DOMINATED CANDIDATE]
         </button>
         <button
           type="button"
           onClick={() => setUserVoted('tie')}
-          className="px-3 py-1.5 text-xs font-mono font-medium rounded bg-neutral-800 hover:bg-neutral-700 text-neutral-200 border border-neutral-600 transition-colors focus:outline-none focus:ring-2 focus:ring-sky-500"
+          className="px-3 py-1.5 text-xs font-mono font-medium rounded bg-neutral-800 hover:bg-neutral-700 text-neutral-200 border border-neutral-600 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500]"
         >
           [DECLARE TIE]
         </button>

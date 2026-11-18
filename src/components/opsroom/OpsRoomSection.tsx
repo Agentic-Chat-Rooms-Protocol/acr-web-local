@@ -38,6 +38,14 @@ interface OpsRoomSectionProps {
   onOpenDedicatedPage?: () => void;
 }
 
+const DEFAULT_SQUAD: AgentSquad = {
+  id: 'squad-core',
+  name: 'Core Incident Response Squad',
+  specialization: 'High-Availability Database & Infrastructure',
+  agents: DEFAULT_SQUAD_AGENTS,
+  consensusThreshold: 0.67,
+};
+
 export const OpsRoomSection: React.FC<OpsRoomSectionProps> = ({ 
   id = 'opsroom', 
   onOpenModal,
@@ -64,24 +72,16 @@ export const OpsRoomSection: React.FC<OpsRoomSectionProps> = ({
 
   const isExecutingRef = useRef(false);
 
-  const defaultSquad: AgentSquad = {
-    id: 'squad-core',
-    name: 'Core Incident Response Squad',
-    specialization: 'High-Availability Database & Infrastructure',
-    agents: DEFAULT_SQUAD_AGENTS,
-    consensusThreshold: 0.67,
-  };
-
   const [currentIncident, setCurrentIncident] = useState<OpsIncident>(() => {
     const inc = Atlas2Engine.createIncident(
       INCIDENT_PRESETS[0].title,
       INCIDENT_PRESETS[0].description,
-      defaultSquad
+      DEFAULT_SQUAD
     );
-    const huddle = HuddleManager.startHuddle(inc.id, defaultSquad.agents);
-    const scenario = getScenarioForPreset(INCIDENT_PRESETS[0], defaultSquad);
+    const huddle = HuddleManager.startHuddle(inc.id, DEFAULT_SQUAD.agents);
+    const scenario = getScenarioForPreset(INCIDENT_PRESETS[0], DEFAULT_SQUAD);
     for (const turnData of scenario.turns) {
-      const agent = defaultSquad.agents[turnData.agentRoleIndex] || defaultSquad.agents[0];
+      const agent = DEFAULT_SQUAD.agents[turnData.agentRoleIndex] || DEFAULT_SQUAD.agents[0];
       HuddleManager.addSpokenLine(huddle, agent, turnData.spokenLine);
     }
     inc.huddle = huddle;
@@ -96,12 +96,12 @@ export const OpsRoomSection: React.FC<OpsRoomSectionProps> = ({
   // Reset incident
   const handleReset = useCallback((overridePreset?: IncidentPreset) => {
     const targetPreset = overridePreset || selectedPreset;
-    const inc = Atlas2Engine.createIncident(targetPreset.title, targetPreset.description, defaultSquad);
+    const inc = Atlas2Engine.createIncident(targetPreset.title, targetPreset.description, DEFAULT_SQUAD);
     inc.severity = targetPreset.severity;
-    const huddle = HuddleManager.startHuddle(inc.id, defaultSquad.agents);
-    const scenario = getScenarioForPreset(targetPreset, defaultSquad);
+    const huddle = HuddleManager.startHuddle(inc.id, DEFAULT_SQUAD.agents);
+    const scenario = getScenarioForPreset(targetPreset, DEFAULT_SQUAD);
     for (const turnData of scenario.turns) {
-      const agent = defaultSquad.agents[turnData.agentRoleIndex] || defaultSquad.agents[0];
+      const agent = DEFAULT_SQUAD.agents[turnData.agentRoleIndex] || DEFAULT_SQUAD.agents[0];
       HuddleManager.addSpokenLine(huddle, agent, turnData.spokenLine);
     }
     inc.huddle = huddle;
@@ -113,17 +113,17 @@ export const OpsRoomSection: React.FC<OpsRoomSectionProps> = ({
     setIsExecuting(false);
   }, [selectedPreset]);
 
-  // Trigger Autonomous Incident Simulation
+  // Trigger Coordinated Incident Simulation
   const handleTriggerIncident = useCallback(async (customTitle?: string, customDesc?: string) => {
     setIsRunning(true);
     const title = customTitle || selectedPreset.title;
     const desc = customDesc || selectedPreset.description;
 
-    const inc = Atlas2Engine.createIncident(title, desc, defaultSquad);
+    const inc = Atlas2Engine.createIncident(title, desc, DEFAULT_SQUAD);
     inc.severity = selectedPreset.severity;
 
     // Start synthetic huddle
-    const huddle = HuddleManager.startHuddle(inc.id, defaultSquad.agents);
+    const huddle = HuddleManager.startHuddle(inc.id, DEFAULT_SQUAD.agents);
     inc.huddle = huddle;
     setCurrentIncident({ ...inc });
 
@@ -133,9 +133,9 @@ export const OpsRoomSection: React.FC<OpsRoomSectionProps> = ({
     await new Promise((r) => setTimeout(r, 400));
 
     // Dynamic scenario turns from simulation engine
-    const scenario = getScenarioForPreset(selectedPreset, defaultSquad, customTitle, customDesc);
+    const scenario = getScenarioForPreset(selectedPreset, DEFAULT_SQUAD, customTitle, customDesc);
     for (const turnData of scenario.turns) {
-      const agent = defaultSquad.agents[turnData.agentRoleIndex] || defaultSquad.agents[0];
+      const agent = DEFAULT_SQUAD.agents[turnData.agentRoleIndex] || DEFAULT_SQUAD.agents[0];
       Atlas2Engine.addDeliberationTurn(
         inc,
         agent,
@@ -160,15 +160,15 @@ export const OpsRoomSection: React.FC<OpsRoomSectionProps> = ({
     Atlas2Engine.simulateDryRun(plan);
 
     const ballots: ConsensusBallot[] = [
-      ByzantineConsensusEngine.signBallot(inc.id, defaultSquad.agents[0], 'approve', 0.98, 'DAG execution plan validated'),
-      ByzantineConsensusEngine.signBallot(inc.id, defaultSquad.agents[1], 'approve', 0.94, 'Telemetry thresholds satisfied'),
-      ByzantineConsensusEngine.signBallot(inc.id, defaultSquad.agents[2], 'approve', 0.96, 'Zero-trust containment verified'),
-      ByzantineConsensusEngine.signBallot(inc.id, defaultSquad.agents[3], 'approve', 0.91, 'Schema integrity preserved'),
-      ByzantineConsensusEngine.signBallot(inc.id, defaultSquad.agents[4], 'approve', 0.89, 'FinOps cost ceiling honored'),
+      ByzantineConsensusEngine.signBallot(inc.id, DEFAULT_SQUAD.agents[0], 'approve', 0.98, 'DAG execution plan validated'),
+      ByzantineConsensusEngine.signBallot(inc.id, DEFAULT_SQUAD.agents[1], 'approve', 0.94, 'Telemetry thresholds satisfied'),
+      ByzantineConsensusEngine.signBallot(inc.id, DEFAULT_SQUAD.agents[2], 'approve', 0.96, 'Zero-trust containment verified'),
+      ByzantineConsensusEngine.signBallot(inc.id, DEFAULT_SQUAD.agents[3], 'approve', 0.91, 'Schema integrity preserved'),
+      ByzantineConsensusEngine.signBallot(inc.id, DEFAULT_SQUAD.agents[4], 'approve', 0.89, 'FinOps cost ceiling honored'),
     ];
     inc.ballots = ballots;
 
-    const quorum = ByzantineConsensusEngine.evaluateQuorum(inc.id, defaultSquad, ballots);
+    const quorum = ByzantineConsensusEngine.evaluateQuorum(inc.id, DEFAULT_SQUAD, ballots);
     inc.quorum = quorum;
     inc.canvas.liveFields.activeQuorumRatio = quorum.weightedApprovalRatio;
     HuddleManager.synthesizeAndSyncToCanvas(huddle, inc.canvas);
@@ -182,52 +182,54 @@ export const OpsRoomSection: React.FC<OpsRoomSectionProps> = ({
   const handleExecutePlan = useCallback(async () => {
     if (!currentIncident.executionPlan || isExecutingRef.current) return;
 
+    const working = structuredClone(currentIncident);
     isExecutingRef.current = true;
     setIsExecuting(true);
     setHumanApproved(true);
     try {
-      Atlas2Engine.transitionPhase(currentIncident, 'executing');
-      setCurrentIncident({ ...currentIncident });
+      Atlas2Engine.transitionPhase(working, 'executing');
+      setCurrentIncident(structuredClone(working));
 
       const executor = new SandboxExecutor();
-      const result = await executor.executePlan(currentIncident.executionPlan, true);
+      const result = await executor.executePlan(working.executionPlan!, true);
 
       if (result.allSucceeded) {
-        Atlas2Engine.transitionPhase(currentIncident, 'verifying');
-        setCurrentIncident({ ...currentIncident });
+        Atlas2Engine.transitionPhase(working, 'verifying');
+        setCurrentIncident(structuredClone(working));
         await new Promise((r) => setTimeout(r, 400));
 
-        Atlas2Engine.transitionPhase(currentIncident, 'resolved');
-        currentIncident.resolvedAt = Date.now();
-        currentIncident.canvas.liveFields.trafficImpactPercent = 0;
-        currentIncident.canvas.liveFields.errorRateSpike = 0.01;
+        Atlas2Engine.transitionPhase(working, 'resolved');
+        working.resolvedAt = Date.now();
+        working.canvas.liveFields.trafficImpactPercent = 0;
+        working.canvas.liveFields.errorRateSpike = 0.01;
 
-        for (const item of currentIncident.canvas.actionItems) {
+        for (const item of working.canvas.actionItems) {
           item.status = 'verified';
         }
         sound.playSuccess();
       } else {
-        Atlas2Engine.transitionPhase(currentIncident, 'escalated_human');
+        Atlas2Engine.transitionPhase(working, 'escalated_human');
         sound.playAlert();
       }
     } catch (err) {
       console.error('Failed executing sandboxed mitigation plan:', err);
       try {
-        Atlas2Engine.transitionPhase(currentIncident, 'escalated_human');
+        Atlas2Engine.transitionPhase(working, 'escalated_human');
       } catch {}
     } finally {
       isExecutingRef.current = false;
       setIsExecuting(false);
-      setCurrentIncident({ ...currentIncident });
+      setCurrentIncident(structuredClone(working));
     }
   }, [currentIncident]);
 
   // Toggle single ballot decision
   const handleToggleBallotDecision = (ballotId: string) => {
-    const ballot = currentIncident.ballots.find((b) => b.ballotId === ballotId);
+    const working = structuredClone(currentIncident);
+    const ballot = working.ballots.find((b) => b.ballotId === ballotId);
     if (!ballot) return;
 
-    const agent = defaultSquad.agents.find((a) => a.id === ballot.agentId);
+    const agent = DEFAULT_SQUAD.agents.find((a) => a.id === ballot.agentId);
     const newDecision = ballot.decision === 'approve' ? 'reject' : 'approve';
     if (agent) {
       ByzantineConsensusEngine.reSignBallot(ballot, agent, newDecision);
@@ -236,13 +238,13 @@ export const OpsRoomSection: React.FC<OpsRoomSectionProps> = ({
     }
 
     const newQuorum = ByzantineConsensusEngine.evaluateQuorum(
-      currentIncident.id,
-      defaultSquad,
-      currentIncident.ballots
+      working.id,
+      DEFAULT_SQUAD,
+      working.ballots
     );
-    currentIncident.quorum = newQuorum;
-    currentIncident.canvas.liveFields.activeQuorumRatio = newQuorum.weightedApprovalRatio;
-    setCurrentIncident({ ...currentIncident });
+    working.quorum = newQuorum;
+    working.canvas.liveFields.activeQuorumRatio = newQuorum.weightedApprovalRatio;
+    setCurrentIncident(working);
   };
 
   // Export SOC2 Audit Certificate
@@ -264,13 +266,13 @@ export const OpsRoomSection: React.FC<OpsRoomSectionProps> = ({
   return (
     <section 
       id={id}
-      aria-label="ACR OpsRoom Autonomous War Room Showcase"
+      aria-label="ACR OpsRoom Coordinated War Room Showcase"
       className="relative py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto overflow-hidden"
     >
-      {/* Hyper-Premium Background Mesh with Slack Aubergine + Cyan Shimmer and CSS fallback */}
-      <div className="absolute inset-0 -z-10 rounded-[40px] overflow-hidden pointer-events-none opacity-45 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-purple-950/60 via-slate-950 to-[#030305]">
+      {/* Obsidian & Zyphra Orange Ambient Background Mesh */}
+      <div className="absolute inset-0 -z-10 rounded-[40px] overflow-hidden pointer-events-none opacity-45 bg-[#000000]">
         <MeshGradient
-          colors={['#4a154b', '#07080e', '#032d42', '#1b0a2a']}
+          colors={['#000000', '#0D0D11', '#141414', '#E04800']}
           speed={0.03}
           distortion={0.35}
           swirl={0.25}
@@ -279,24 +281,24 @@ export const OpsRoomSection: React.FC<OpsRoomSectionProps> = ({
       </div>
 
       {/* Decorative top slit light */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-[1px] bg-gradient-to-r from-transparent via-cyan-400/60 to-transparent" />
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/3 h-[2px] bg-gradient-to-r from-transparent via-amber-400/50 to-transparent blur-[1px]" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-[1px] bg-gradient-to-r from-transparent via-[#FF5500]/60 to-transparent" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/3 h-[2px] bg-gradient-to-r from-transparent via-[#FF8C42]/50 to-transparent blur-[1px]" />
 
-      {/* Hero Billboard Header (Elevating Salesforce Agentforce & Slack Aesthetic) */}
+      {/* Hero Billboard Header */}
       <div className="text-center max-w-4xl mx-auto mb-12">
         <div className="mb-4 inline-block">
           <SectionPill
             icon={Flame}
-            primary="ACR OpsRoom: Autonomous War Room"
+            primary="ACR OpsRoom: Coordinated War Room"
             secondary="Beyond Salesforce Agentforce & Slack AI"
           />
         </div>
 
         <h2 className="font-display text-3xl sm:text-5xl lg:text-[56px] font-extrabold text-white tracking-tight leading-[1.12] mb-5">
-          <span className="metal-text inline-block">Autonomous Ops Deliberation</span>
+          <span className="metal-text inline-block">Coordinated Ops Deliberation</span>
           <br />
-          <span className="text-gradient-cyan-indigo">
-            With 67% Byzantine Fault-Tolerant Consensus
+          <span className="text-gradient-zyphra-orange">
+            With 67% Consensus Gate Protection
           </span>
         </h2>
 
@@ -362,7 +364,7 @@ export const OpsRoomSection: React.FC<OpsRoomSectionProps> = ({
           {onOpenModal && (
             <button
               onClick={() => { sound.playApprovalChime(); onOpenModal(); }}
-              className="px-5 py-3 rounded-2xl font-bold text-xs flex items-center gap-2 bg-gradient-to-r from-cyan-400 via-indigo-500 to-purple-500 text-white shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40 transition-all cursor-pointer active:scale-98"
+              className="min-h-[44px] px-5 py-3 rounded-2xl font-bold text-xs flex items-center gap-2 bg-[#FF5500] hover:bg-[#FF8C42] text-black shadow-lg transition-all cursor-pointer active:scale-98 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500]"
             >
               <Maximize2 className="w-4 h-4" />
               <span>Fullscreen War Room Modal</span>
@@ -469,8 +471,11 @@ export const OpsRoomSection: React.FC<OpsRoomSectionProps> = ({
               huddle={currentIncident.huddle}
               onSynthesizeBrief={() => {
                 if (currentIncident.huddle) {
-                  HuddleManager.synthesizeAndSyncToCanvas(currentIncident.huddle, currentIncident.canvas);
-                  setCurrentIncident({ ...currentIncident });
+                  const updated = structuredClone(currentIncident);
+                  if (updated.huddle) {
+                    HuddleManager.synthesizeAndSyncToCanvas(updated.huddle, updated.canvas);
+                    setCurrentIncident(updated);
+                  }
                 }
               }}
             />

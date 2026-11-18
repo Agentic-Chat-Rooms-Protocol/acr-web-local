@@ -46,7 +46,7 @@ export class HuddleManager {
     const speakers = [...new Set(huddle.lines.map((l) => l.speakerName))];
     const keyQuotes = huddle.lines.slice(-3).map((l) => `"${l.text}" - ${l.speakerName}`);
 
-    const brief = `Autonomous squad deliberation completed with ${huddle.lines.length} spoken turns across ${speakers.join(', ')}. Key alignment: ${keyQuotes.join('; ')}. Mitigation plan verified via 2/3 Byzantine Quorum.`;
+    const brief = `Coordinated squad deliberation completed with ${huddle.lines.length} spoken turns across ${speakers.join(', ')}. Key alignment: ${keyQuotes.join('; ')}. Mitigation plan verified via 67% consensus gate.`;
 
     huddle.executiveBrief = brief;
     huddle.isStreaming = false;

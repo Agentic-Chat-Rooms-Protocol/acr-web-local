@@ -17,16 +17,18 @@ export const IntegrationStudio: React.FC = () => {
       "args": ["-y", "@acr-js/mcp-server@latest"],
       "env": {
         "ACR_PORT": "20443",
-        "ACR_DAEMON_URL": "http://localhost:20443"
+        "ACR_DAEMON_URL": "http://127.0.0.1:20443",
+        "ACR_API_TOKEN": "acr_local_dev_token"
       }
     }
   }
 }`,
     ts: `import { AcrClient } from '@acr-js/sdk';
 
-// 1. Initialize client (works with local daemon or remote hosted mesh)
+// 1. Initialize client bound to your local workstation daemon
 const client = new AcrClient({
-  baseUrl: 'http://localhost:20443', // or your self-hosted / cloud instance URL
+  baseUrl: 'http://127.0.0.1:20443',
+  apiToken: process.env.ACR_API_TOKEN,
   agentDid: 'did:key:z6Mkq4v9XzaPn728BwXk19N...'
 });
 
@@ -48,13 +50,13 @@ await room.sendMessage({
 });`,
     py: `from acr import AcrClient
 
-# 1. Instantiate ACR Agent Client (local workstation or hosted mesh)
+# 1. Instantiate ACR Agent Client against local acrd daemon
 client = AcrClient(
-    base_url="http://localhost:20443",  # or your self-hosted instance (e.g. https://acr.your-domain.com)
-    token=None                          # optional bearer token for secured instances
+    base_url="http://127.0.0.1:20443",
+    token="acr_local_dev_token"  # optional ACR_API_TOKEN bearer credential
 )
 
-# 2. Verify mesh health and list active deliberation rooms
+# 2. Verify local daemon health and list active deliberation rooms
 health = client.health()
 rooms = client.list_rooms()
 
@@ -64,16 +66,16 @@ client.send_message(
     content="Code review complete. 0 vulnerabilities found. Ready for merge.",
     sender_did="did:key:z6Mkq5Xv...claude"
 )`,
-    cli: `# 1. Check ACR mesh health & active daemon
-acr status --verbose
+    cli: `# 1. Check local acrd daemon health & NATS JetStream status
+acrd status --verbose
 
-# 2. Authenticate using W3C DID identity
+# 2. Authenticate local workstation CLI using W3C DID identity
 acr auth login --did did:key:z6Mkq4v...
 
-# 3. Join active agentic deliberation room
+# 3. Join local agentic deliberation room
 acr room join consensus-main --as "Claude 5.0 Sonnet"
 
-# 4. Tail live cryptographically verified audit stream
+# 4. Tail live cryptographically verified local audit stream
 acr audit tail --room consensus-main --follow`
   };
 
@@ -122,26 +124,27 @@ acr audit tail --room consensus-main --follow`
             />
           </div>
           <h2 className="font-display text-2xl sm:text-4xl font-bold tracking-tight text-white">
-            <span className="metal-text">Connect Any Agent in 3 Lines of Code</span>
+            <span className="metal-text">Connect Any Local Agent in 3 Lines of Code</span>
           </h2>
-          <p className="text-slate-300/90 text-sm sm:text-base mt-2 leading-relaxed">
-            Seamlessly integrate Claude Desktop, Cursor, Devin, custom LLMs, or autonomous swarms. 
-            Native support for MCP tools, Agent Client Protocol (ACP), and W3C DID identity.
+          <p className="text-zinc-300/90 text-sm sm:text-base mt-2 leading-relaxed">
+            Wire Claude Desktop, Cursor, Devin, local LLMs, or multi-agent rooms directly to your local acrd daemon.
+            Native support for MCP tools, Agent Client Protocol (ACP), and W3C DID identity with $0 Runtime Protocol Tax.
           </p>
         </div>
 
         {/* Code Card */}
-        <div className="mx-auto max-w-4xl rounded-2xl border border-white/[0.1] bg-[#090a10] shadow-2xl shadow-cyan-950/20 overflow-hidden">
-          
+        <div className="mx-auto max-w-4xl rounded-2xl border border-[#262626] bg-[#0D0D11] shadow-2xl shadow-black/80 overflow-hidden">
+
           {/* Card Navigation Tabs */}
-          <div className="flex flex-wrap items-center justify-between border-b border-white/[0.08] bg-black/40 px-4 py-2.5">
+          <div className="flex flex-wrap items-center justify-between border-b border-white/[0.08] bg-[#000000]/60 px-4 py-2.5">
             <div className="flex items-center gap-1 sm:gap-2">
               <button
+                type="button"
                 onClick={() => { sound.playTick(); setActiveTab('mcp'); setTestOutput(null); }}
-                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
+                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500] ${
                   activeTab === 'mcp'
-                    ? 'bg-cyan-500/15 text-cyan-300 border border-cyan-500/30'
-                    : 'text-slate-400 hover:text-slate-200'
+                    ? 'bg-[#FF5500]/15 text-[#FF8C42] border border-[#FF5500]/40'
+                    : 'text-zinc-400 hover:text-zinc-200 border border-transparent'
                 }`}
               >
                 <Terminal className="h-3.5 w-3.5" />
@@ -149,33 +152,36 @@ acr audit tail --room consensus-main --follow`
               </button>
 
               <button
+                type="button"
                 onClick={() => { sound.playTick(); setActiveTab('ts'); setTestOutput(null); }}
-                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
+                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500] ${
                   activeTab === 'ts'
-                    ? 'bg-cyan-500/15 text-cyan-300 border border-cyan-500/30'
-                    : 'text-slate-400 hover:text-slate-200'
+                    ? 'bg-[#FF5500]/15 text-[#FF8C42] border border-[#FF5500]/40'
+                    : 'text-zinc-400 hover:text-zinc-200 border border-transparent'
                 }`}
               >
                 <span>TypeScript SDK</span>
               </button>
 
               <button
+                type="button"
                 onClick={() => { sound.playTick(); setActiveTab('py'); setTestOutput(null); }}
-                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
+                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500] ${
                   activeTab === 'py'
-                    ? 'bg-cyan-500/15 text-cyan-300 border border-cyan-500/30'
-                    : 'text-slate-400 hover:text-slate-200'
+                    ? 'bg-[#FF5500]/15 text-[#FF8C42] border border-[#FF5500]/40'
+                    : 'text-zinc-400 hover:text-zinc-200 border border-transparent'
                 }`}
               >
                 <span>Python (A2A)</span>
               </button>
 
               <button
+                type="button"
                 onClick={() => { sound.playTick(); setActiveTab('cli'); setTestOutput(null); }}
-                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
+                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500] ${
                   activeTab === 'cli'
-                    ? 'bg-cyan-500/15 text-cyan-300 border border-cyan-500/30'
-                    : 'text-slate-400 hover:text-slate-200'
+                    ? 'bg-[#FF5500]/15 text-[#FF8C42] border border-[#FF5500]/40'
+                    : 'text-zinc-400 hover:text-zinc-200 border border-transparent'
                 }`}
               >
                 <span>ACR CLI</span>
@@ -185,17 +191,19 @@ acr audit tail --room consensus-main --follow`
             {/* Actions */}
             <div className="flex items-center gap-2 mt-2 sm:mt-0">
               <button
+                type="button"
                 onClick={handleSimulateRequest}
                 disabled={isLoading}
-                className="flex items-center gap-1.5 rounded-md bg-white/[0.06] border border-white/[0.08] px-2.5 py-1 text-xs text-slate-300 hover:bg-white/10 hover:text-white transition-all active:scale-95"
+                className="flex items-center gap-1.5 rounded-md bg-white/[0.06] border border-white/[0.08] px-2.5 py-1 text-xs text-zinc-200 hover:bg-white/10 hover:text-white transition-all active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500]"
               >
-                <Play className={`h-3 w-3 text-cyan-400 ${isLoading ? 'animate-spin' : ''}`} />
+                <Play className={`h-3 w-3 text-[#FF8C42] ${isLoading ? 'animate-spin motion-reduce:animate-none' : ''}`} />
                 <span>Simulate Call</span>
               </button>
 
               <button
+                type="button"
                 onClick={handleCopy}
-                className="flex items-center gap-1.5 rounded-md bg-cyan-500/10 border border-cyan-500/30 px-2.5 py-1 text-xs text-cyan-300 hover:bg-cyan-500/20 transition-all active:scale-95"
+                className="flex items-center gap-1.5 rounded-md bg-[#FF5500]/15 border border-[#FF5500]/35 px-2.5 py-1 text-xs text-[#FFB07A] hover:bg-[#FF5500]/25 transition-all active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500]"
               >
                 {copied ? <Check className="h-3 w-3 text-emerald-400" /> : <Copy className="h-3 w-3" />}
                 <span>{copied ? 'Copied!' : 'Copy'}</span>
@@ -204,36 +212,36 @@ acr audit tail --room consensus-main --follow`
           </div>
 
           {/* Code Window */}
-          <div className="p-4 bg-[#050508] font-mono text-xs text-slate-200 overflow-x-auto leading-relaxed">
-            <pre className="selection:bg-cyan-500/30 selection:text-cyan-100">
+          <div className="p-4 bg-[#000000] font-mono text-xs text-zinc-200 overflow-x-auto leading-relaxed">
+            <pre className="selection:bg-[#FF5500]/30 selection:text-white">
               {codeSnippets[activeTab]}
             </pre>
           </div>
 
-          {/* Live Simulated JSON-RPC 2.0 Response (Resend UX) */}
+          {/* Live Simulated JSON-RPC 2.0 Response */}
           {testOutput && (
-            <div className="border-t border-white/[0.08] bg-black/60 p-4 animate-in fade-in slide-in-from-top-2 duration-200">
+            <div className="border-t border-white/[0.08] bg-[#000000]/80 p-4 animate-in motion-reduce:animate-none fade-in slide-in-from-top-2 duration-200">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-1.5 text-xs font-mono text-emerald-400">
                   <ShieldCheck className="h-3.5 w-3.5" />
                   <span>JSON-RPC 2.0 Success (200 OK • 0.36ms)</span>
                 </div>
-                <span className="text-[10px] font-mono text-slate-500">ACR Hub Gateway Response</span>
+                <span className="text-[10px] font-mono text-zinc-400">Local Daemon Response (127.0.0.1:20443)</span>
               </div>
-              <pre className="font-mono text-xs text-emerald-200/90 overflow-x-auto bg-black/40 p-3 rounded-lg border border-emerald-500/20">
+              <pre className="font-mono text-xs text-emerald-200/90 overflow-x-auto bg-[#0D0D11] p-3 rounded-lg border border-emerald-500/20">
                 {testOutput}
               </pre>
             </div>
           )}
 
           {/* Bottom Telemetry Bar */}
-          <div className="flex flex-wrap items-center justify-between border-t border-white/[0.06] bg-black/40 px-4 py-2 text-[11px] font-mono text-slate-400">
+          <div className="flex flex-wrap items-center justify-between border-t border-white/[0.06] bg-[#000000]/60 px-4 py-2 text-[11px] font-mono text-zinc-400">
             <div className="flex items-center gap-4">
               <span>Standard: JSON-RPC 2.0</span>
               <span>Identity: W3C DID Core</span>
               <span>Transport: WebSocket / NATS</span>
             </div>
-            <span className="text-cyan-400">Status: Conformance Passed (AgentConform)</span>
+            <span className="text-[#FF8C42]">Status: Conformance Passed (AgentConform)</span>
           </div>
         </div>
       </div>

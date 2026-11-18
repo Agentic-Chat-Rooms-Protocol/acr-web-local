@@ -24,28 +24,28 @@ interface OpsRoomModalProps {
   onClose: () => void;
 }
 
+const DEFAULT_SQUAD: AgentSquad = {
+  id: 'squad-core',
+  name: 'Core Incident Response Squad',
+  specialization: 'High-Availability Database & Infrastructure',
+  agents: DEFAULT_SQUAD_AGENTS,
+  consensusThreshold: 0.67,
+};
+
 export const OpsRoomModal: React.FC<OpsRoomModalProps> = ({ isOpen, onClose }) => {
   const [selectedPreset, setSelectedPreset] = useState<IncidentPreset>(INCIDENT_PRESETS[0]);
   const isExecutingRef = useRef(false);
-
-  const defaultSquad: AgentSquad = {
-    id: 'squad-core',
-    name: 'Core Incident Response Squad',
-    specialization: 'High-Availability Database & Infrastructure',
-    agents: DEFAULT_SQUAD_AGENTS,
-    consensusThreshold: 0.67,
-  };
 
   const [currentIncident, setCurrentIncident] = useState<OpsIncident>(() => {
     const inc = Atlas2Engine.createIncident(
       INCIDENT_PRESETS[0].title,
       INCIDENT_PRESETS[0].description,
-      defaultSquad
+      DEFAULT_SQUAD
     );
-    const huddle = HuddleManager.startHuddle(inc.id, defaultSquad.agents);
-    const scenario = getScenarioForPreset(INCIDENT_PRESETS[0], defaultSquad);
+    const huddle = HuddleManager.startHuddle(inc.id, DEFAULT_SQUAD.agents);
+    const scenario = getScenarioForPreset(INCIDENT_PRESETS[0], DEFAULT_SQUAD);
     for (const turnData of scenario.turns) {
-      const agent = defaultSquad.agents[turnData.agentRoleIndex] || defaultSquad.agents[0];
+      const agent = DEFAULT_SQUAD.agents[turnData.agentRoleIndex] || DEFAULT_SQUAD.agents[0];
       HuddleManager.addSpokenLine(huddle, agent, turnData.spokenLine);
     }
     inc.huddle = huddle;
@@ -71,12 +71,12 @@ export const OpsRoomModal: React.FC<OpsRoomModalProps> = ({ isOpen, onClose }) =
   // Reset incident
   const handleReset = useCallback((overridePreset?: IncidentPreset) => {
     const targetPreset = overridePreset || selectedPreset;
-    const inc = Atlas2Engine.createIncident(targetPreset.title, targetPreset.description, defaultSquad);
+    const inc = Atlas2Engine.createIncident(targetPreset.title, targetPreset.description, DEFAULT_SQUAD);
     inc.severity = targetPreset.severity;
-    const huddle = HuddleManager.startHuddle(inc.id, defaultSquad.agents);
-    const scenario = getScenarioForPreset(targetPreset, defaultSquad);
+    const huddle = HuddleManager.startHuddle(inc.id, DEFAULT_SQUAD.agents);
+    const scenario = getScenarioForPreset(targetPreset, DEFAULT_SQUAD);
     for (const turnData of scenario.turns) {
-      const agent = defaultSquad.agents[turnData.agentRoleIndex] || defaultSquad.agents[0];
+      const agent = DEFAULT_SQUAD.agents[turnData.agentRoleIndex] || DEFAULT_SQUAD.agents[0];
       HuddleManager.addSpokenLine(huddle, agent, turnData.spokenLine);
     }
     inc.huddle = huddle;
@@ -88,17 +88,17 @@ export const OpsRoomModal: React.FC<OpsRoomModalProps> = ({ isOpen, onClose }) =
     setIsExecuting(false);
   }, [selectedPreset]);
 
-  // Trigger Autonomous Incident Simulation
+  // Trigger Coordinated Incident Simulation
   const handleTriggerIncident = useCallback(async (customTitle?: string, customDesc?: string) => {
     setIsRunning(true);
     const title = customTitle || selectedPreset.title;
     const desc = customDesc || selectedPreset.description;
 
-    const inc = Atlas2Engine.createIncident(title, desc, defaultSquad);
+    const inc = Atlas2Engine.createIncident(title, desc, DEFAULT_SQUAD);
     inc.severity = selectedPreset.severity;
 
     // Start synthetic huddle
-    const huddle = HuddleManager.startHuddle(inc.id, defaultSquad.agents);
+    const huddle = HuddleManager.startHuddle(inc.id, DEFAULT_SQUAD.agents);
     inc.huddle = huddle;
     setCurrentIncident({ ...inc });
 
@@ -108,9 +108,9 @@ export const OpsRoomModal: React.FC<OpsRoomModalProps> = ({ isOpen, onClose }) =
     await new Promise((r) => setTimeout(r, 400));
 
     // Dynamic scenario turns from simulation engine
-    const scenario = getScenarioForPreset(selectedPreset, defaultSquad, customTitle, customDesc);
+    const scenario = getScenarioForPreset(selectedPreset, DEFAULT_SQUAD, customTitle, customDesc);
     for (const turnData of scenario.turns) {
-      const agent = defaultSquad.agents[turnData.agentRoleIndex] || defaultSquad.agents[0];
+      const agent = DEFAULT_SQUAD.agents[turnData.agentRoleIndex] || DEFAULT_SQUAD.agents[0];
       Atlas2Engine.addDeliberationTurn(
         inc,
         agent,
@@ -135,15 +135,15 @@ export const OpsRoomModal: React.FC<OpsRoomModalProps> = ({ isOpen, onClose }) =
     Atlas2Engine.simulateDryRun(plan);
 
     const ballots: ConsensusBallot[] = [
-      ByzantineConsensusEngine.signBallot(inc.id, defaultSquad.agents[0], 'approve', 0.98, 'DAG execution plan validated'),
-      ByzantineConsensusEngine.signBallot(inc.id, defaultSquad.agents[1], 'approve', 0.94, 'Telemetry thresholds satisfied'),
-      ByzantineConsensusEngine.signBallot(inc.id, defaultSquad.agents[2], 'approve', 0.96, 'Zero-trust containment verified'),
-      ByzantineConsensusEngine.signBallot(inc.id, defaultSquad.agents[3], 'approve', 0.91, 'Schema integrity preserved'),
-      ByzantineConsensusEngine.signBallot(inc.id, defaultSquad.agents[4], 'approve', 0.89, 'FinOps cost ceiling honored'),
+      ByzantineConsensusEngine.signBallot(inc.id, DEFAULT_SQUAD.agents[0], 'approve', 0.98, 'DAG execution plan validated'),
+      ByzantineConsensusEngine.signBallot(inc.id, DEFAULT_SQUAD.agents[1], 'approve', 0.94, 'Telemetry thresholds satisfied'),
+      ByzantineConsensusEngine.signBallot(inc.id, DEFAULT_SQUAD.agents[2], 'approve', 0.96, 'Zero-trust containment verified'),
+      ByzantineConsensusEngine.signBallot(inc.id, DEFAULT_SQUAD.agents[3], 'approve', 0.91, 'Schema integrity preserved'),
+      ByzantineConsensusEngine.signBallot(inc.id, DEFAULT_SQUAD.agents[4], 'approve', 0.89, 'FinOps cost ceiling honored'),
     ];
     inc.ballots = ballots;
 
-    const quorum = ByzantineConsensusEngine.evaluateQuorum(inc.id, defaultSquad, ballots);
+    const quorum = ByzantineConsensusEngine.evaluateQuorum(inc.id, DEFAULT_SQUAD, ballots);
     inc.quorum = quorum;
     inc.canvas.liveFields.activeQuorumRatio = quorum.weightedApprovalRatio;
     HuddleManager.synthesizeAndSyncToCanvas(huddle, inc.canvas);
@@ -157,52 +157,54 @@ export const OpsRoomModal: React.FC<OpsRoomModalProps> = ({ isOpen, onClose }) =
   const handleExecutePlan = useCallback(async () => {
     if (!currentIncident.executionPlan || isExecutingRef.current) return;
 
+    const working = structuredClone(currentIncident);
     isExecutingRef.current = true;
     setIsExecuting(true);
     setHumanApproved(true);
     try {
-      Atlas2Engine.transitionPhase(currentIncident, 'executing');
-      setCurrentIncident({ ...currentIncident });
+      Atlas2Engine.transitionPhase(working, 'executing');
+      setCurrentIncident(structuredClone(working));
 
       const executor = new SandboxExecutor();
-      const result = await executor.executePlan(currentIncident.executionPlan, true);
+      const result = await executor.executePlan(working.executionPlan!, true);
 
       if (result.allSucceeded) {
-        Atlas2Engine.transitionPhase(currentIncident, 'verifying');
-        setCurrentIncident({ ...currentIncident });
+        Atlas2Engine.transitionPhase(working, 'verifying');
+        setCurrentIncident(structuredClone(working));
         await new Promise((r) => setTimeout(r, 400));
 
-        Atlas2Engine.transitionPhase(currentIncident, 'resolved');
-        currentIncident.resolvedAt = Date.now();
-        currentIncident.canvas.liveFields.trafficImpactPercent = 0;
-        currentIncident.canvas.liveFields.errorRateSpike = 0.01;
+        Atlas2Engine.transitionPhase(working, 'resolved');
+        working.resolvedAt = Date.now();
+        working.canvas.liveFields.trafficImpactPercent = 0;
+        working.canvas.liveFields.errorRateSpike = 0.01;
 
-        for (const item of currentIncident.canvas.actionItems) {
+        for (const item of working.canvas.actionItems) {
           item.status = 'verified';
         }
         sound.playSuccess();
       } else {
-        Atlas2Engine.transitionPhase(currentIncident, 'escalated_human');
+        Atlas2Engine.transitionPhase(working, 'escalated_human');
         sound.playAlert();
       }
     } catch (err) {
       console.error('Failed executing sandboxed mitigation plan:', err);
       try {
-        Atlas2Engine.transitionPhase(currentIncident, 'escalated_human');
+        Atlas2Engine.transitionPhase(working, 'escalated_human');
       } catch {}
     } finally {
       isExecutingRef.current = false;
       setIsExecuting(false);
-      setCurrentIncident({ ...currentIncident });
+      setCurrentIncident(structuredClone(working));
     }
   }, [currentIncident]);
 
   // Toggle single ballot decision with cryptographic re-signing
   const handleToggleBallotDecision = (ballotId: string) => {
-    const ballot = currentIncident.ballots.find((b) => b.ballotId === ballotId);
+    const working = structuredClone(currentIncident);
+    const ballot = working.ballots.find((b) => b.ballotId === ballotId);
     if (!ballot) return;
 
-    const agent = defaultSquad.agents.find((a) => a.id === ballot.agentId);
+    const agent = DEFAULT_SQUAD.agents.find((a) => a.id === ballot.agentId);
     const newDecision = ballot.decision === 'approve' ? 'reject' : 'approve';
     if (agent) {
       ByzantineConsensusEngine.reSignBallot(ballot, agent, newDecision);
@@ -211,13 +213,13 @@ export const OpsRoomModal: React.FC<OpsRoomModalProps> = ({ isOpen, onClose }) =
     }
 
     const newQuorum = ByzantineConsensusEngine.evaluateQuorum(
-      currentIncident.id,
-      defaultSquad,
-      currentIncident.ballots
+      working.id,
+      DEFAULT_SQUAD,
+      working.ballots
     );
-    currentIncident.quorum = newQuorum;
-    currentIncident.canvas.liveFields.activeQuorumRatio = newQuorum.weightedApprovalRatio;
-    setCurrentIncident({ ...currentIncident });
+    working.quorum = newQuorum;
+    working.canvas.liveFields.activeQuorumRatio = newQuorum.weightedApprovalRatio;
+    setCurrentIncident(working);
   };
 
   // Export SOC2 Audit Certificate
@@ -240,16 +242,16 @@ export const OpsRoomModal: React.FC<OpsRoomModalProps> = ({ isOpen, onClose }) =
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/85 backdrop-blur-2xl overflow-y-auto animate-fadeIn"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-[#000000]/85 backdrop-blur-2xl overflow-y-auto animate-fadeIn motion-reduce:animate-none"
       role="dialog"
       aria-modal="true"
       aria-labelledby="opsroom-modal-title"
     >
-      <div className="relative w-full max-w-7xl max-h-[92vh] overflow-y-auto bg-[#07080e] border border-cyan-500/30 rounded-3xl shadow-[0_0_80px_rgba(6,182,212,0.2)] p-6 sm:p-8 flex flex-col my-auto">
+      <div className="relative w-full max-w-7xl max-h-[92vh] overflow-y-auto bg-[#0D0D11] border border-[#FF5500]/35 rounded-3xl shadow-[0_0_80px_rgba(255,85,0,0.16)] p-6 sm:p-8 flex flex-col my-auto">
         {/* Modal Top Bar */}
         <div className="flex items-center justify-between pb-4 mb-6 border-b border-white/10 shrink-0">
           <div className="flex items-center gap-3">
-            <span className="p-2 rounded-2xl bg-gradient-to-tr from-cyan-500/20 to-purple-500/20 border border-cyan-500/30 text-cyan-300">
+            <span className="p-2 rounded-2xl bg-[#FF5500]/15 border border-[#FF5500]/35 text-[#FF8C42]">
               <Flame className="w-6 h-6" />
             </span>
             <div>
@@ -257,19 +259,20 @@ export const OpsRoomModal: React.FC<OpsRoomModalProps> = ({ isOpen, onClose }) =
                 <h2 id="opsroom-modal-title" className="text-lg sm:text-xl font-black text-white tracking-tight">
                   ACR OpsRoom Live War Room
                 </h2>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-cyan-950/60 text-cyan-300 border border-cyan-400/30">
-                  Atlas 2.0 • BFT Quorum
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-[#FF5500]/15 text-[#FF8C42] border border-[#FF5500]/35">
+                  Atlas 2.0 • 67% Consensus Gate
                 </span>
               </div>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Cryptographic incident deliberation, Byzantine quorum consensus, and ToolHive sandboxed execution.
+              <p className="text-xs text-[#A1A1AA] mt-0.5">
+                Signed incident deliberation, 67% consensus gate, and ToolHive Micro-Sandboxing execution.
               </p>
             </div>
           </div>
 
           <button
+            type="button"
             onClick={() => { sound.playTick(); onClose(); }}
-            className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white border border-white/10 transition-all cursor-pointer"
+            className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl bg-white/5 hover:bg-white/10 text-[#A1A1AA] hover:text-white border border-white/10 transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500]"
             aria-label="Close modal"
           >
             <X className="w-5 h-5" />
@@ -317,8 +320,11 @@ export const OpsRoomModal: React.FC<OpsRoomModalProps> = ({ isOpen, onClose }) =
             huddle={currentIncident.huddle}
             onSynthesizeBrief={() => {
               if (currentIncident.huddle) {
-                HuddleManager.synthesizeAndSyncToCanvas(currentIncident.huddle, currentIncident.canvas);
-                setCurrentIncident({ ...currentIncident });
+                const updated = structuredClone(currentIncident);
+                if (updated.huddle) {
+                  HuddleManager.synthesizeAndSyncToCanvas(updated.huddle, updated.canvas);
+                  setCurrentIncident(updated);
+                }
               }
             }}
           />

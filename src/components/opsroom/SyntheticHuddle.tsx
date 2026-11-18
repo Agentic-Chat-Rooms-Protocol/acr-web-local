@@ -37,7 +37,7 @@ export const SyntheticHuddle: React.FC<SyntheticHuddleProps> = ({
   onSynthesizeBrief,
 }) => {
   // Hardware Profile and Voice Engine State
-  const [hardwareProfile, setHardwareProfile] = useState<HardwareProfile>(() =>
+  const [hardwareProfile] = useState<HardwareProfile>(() =>
     VoiceModelLoadBalancer.detectHardwareProfile()
   );
   const [activeTier, setActiveTier] = useState<VoiceTier>(() => hardwareProfile.recommendedTier);
@@ -173,14 +173,13 @@ export const SyntheticHuddle: React.FC<SyntheticHuddleProps> = ({
   // Initialize voices on mount
   useEffect(() => {
     BrowserAudioFabric.initVoices();
-    const profile = VoiceModelLoadBalancer.detectHardwareProfile();
-    setHardwareProfile(profile);
   }, []);
 
   // Stop playback when huddle changes or unmounts
   useEffect(() => {
+    const sessionRef = playbackSessionRef;
     return () => {
-      playbackSessionRef.current++;
+      sessionRef.current++;
       BrowserAudioFabric.stop();
     };
   }, [huddle?.huddleId]);
@@ -350,7 +349,7 @@ export const SyntheticHuddle: React.FC<SyntheticHuddleProps> = ({
         }
       },
     });
-  }, [huddle?.executiveBrief, isPlayingBrief, activeTier, speechSpeed, isMuted, handleStop]);
+  }, [huddle, isPlayingBrief, activeTier, speechSpeed, isMuted, handleStop]);
 
   // Model download request initiated by user
   const requestTierSelection = (tier: VoiceTier) => {
@@ -412,14 +411,14 @@ export const SyntheticHuddle: React.FC<SyntheticHuddleProps> = ({
       <div className="flex flex-col lg:flex-row lg:items-center justify-between pb-4 mb-5 border-b border-white/[0.08] gap-3 relative z-10">
         <div>
           <div className="flex flex-wrap items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-purple-500/20 to-indigo-500/20 border border-purple-500/30 flex items-center justify-center text-purple-300 shadow-[0_0_15px_rgba(168,85,247,0.2)]">
+            <div className="w-8 h-8 rounded-xl bg-[#FF5500]/15 border border-[#FF5500]/35 flex items-center justify-center text-[#FF8C42]">
               <Mic className="w-4 h-4" aria-hidden="true" />
             </div>
             <h3 id="huddle-heading" className="text-base sm:text-lg font-bold text-white tracking-tight">
               Synthetic Multi-Agent Huddle Room
             </h3>
-            <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-purple-950/60 border border-purple-500/30 text-purple-300 font-mono flex items-center gap-1.5 shadow-[0_0_12px_rgba(168,85,247,0.2)]">
-              <Activity className="w-2.5 h-2.5 text-purple-400 animate-pulse" />
+            <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-[#FF5500]/15 border border-[#FF5500]/30 text-[#FF8C42] font-mono flex items-center gap-1.5">
+              <Activity className="w-2.5 h-2.5 text-[#FF8C42] animate-pulse motion-reduce:animate-none" />
               Live Audio Fabric
             </span>
 
@@ -443,7 +442,7 @@ export const SyntheticHuddle: React.FC<SyntheticHuddleProps> = ({
             </button>
           </div>
           <p className="text-xs text-slate-400 mt-1">
-            Beyond Slack AI Huddle notes: Autonomous agents debate hypotheses in real time with distinct vocal personas and live acoustic synthesis.
+            Beyond Slack AI Huddle notes: Coordinated agents debate hypotheses in real time with distinct vocal personas and live acoustic synthesis.
           </p>
         </div>
 
@@ -530,14 +529,14 @@ export const SyntheticHuddle: React.FC<SyntheticHuddleProps> = ({
 
       {/* Live Speaking Indicator Banner */}
       {activeLine && activeSpeakerPersona && (
-        <div className="mb-4 px-4 py-2.5 rounded-2xl bg-purple-950/30 border border-purple-500/30 flex items-center justify-between gap-3 text-xs animate-fadeIn">
+        <div className="mb-4 px-4 py-2.5 rounded-2xl bg-[#FF5500]/10 border border-[#FF5500]/30 flex items-center justify-between gap-3 text-xs animate-fadeIn motion-reduce:animate-none">
           <div className="flex items-center gap-2.5">
             <span className="relative flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-purple-500"></span>
+              <span className="animate-ping motion-reduce:animate-none absolute inline-flex h-full w-full rounded-full bg-[#FF8C42] opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#FF5500]"></span>
             </span>
             <span className="text-white font-bold">{activeLine.speakerName}</span>
-            <span className="text-[11px] text-purple-300 font-mono">
+            <span className="text-[11px] text-[#FF8C42] font-mono">
               ({activeSpeakerPersona.timbreProfile} • {activeSpeakerPersona.pitch} pitch • {activeSpeakerPersona.rate}x rate • {
                 activeSpeakerPersona.stereoPan === 0 ? 'Center Stage' : activeSpeakerPersona.stereoPan < 0 ? `${Math.abs(Math.round(activeSpeakerPersona.stereoPan * 100))}% Left` : `${Math.round(activeSpeakerPersona.stereoPan * 100)}% Right`
               })
@@ -549,7 +548,7 @@ export const SyntheticHuddle: React.FC<SyntheticHuddleProps> = ({
             {liveFrequencies.map((val, idx) => (
               <span
                 key={idx}
-                className="w-1 bg-gradient-to-t from-purple-500 to-cyan-400 rounded-t transition-all duration-75"
+                className="w-1 bg-gradient-to-t from-[#FF5500] to-[#FF8C42] rounded-t transition-all duration-75"
                 style={{ height: `${Math.max(15, val * 100)}%` }}
               />
             ))}
@@ -564,7 +563,7 @@ export const SyntheticHuddle: React.FC<SyntheticHuddleProps> = ({
         <div className="lg:col-span-2 space-y-3 max-h-[260px] overflow-y-auto pr-1">
           {!huddle || huddle.lines.length === 0 ? (
             <div className="text-center py-12 rounded-2xl border border-dashed border-white/10 bg-white/[0.01] text-xs text-slate-500 flex flex-col items-center justify-center gap-2">
-              <Mic className="w-6 h-6 text-slate-600 animate-pulse" />
+              <Mic className="w-6 h-6 text-slate-600 animate-pulse motion-reduce:animate-none" />
               <span>Huddle room in standby. Begins automatically upon incident detection.</span>
             </div>
           ) : (
@@ -700,7 +699,7 @@ export const SyntheticHuddle: React.FC<SyntheticHuddleProps> = ({
               setIsEngineModalOpen(false);
             }
           }}
-          className="fixed inset-0 z-[70] flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-md overflow-hidden animate-fadeIn"
+          className="fixed inset-0 z-[70] flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-md overflow-hidden animate-fadeIn motion-reduce:animate-none"
           aria-hidden={pendingDownloadTier !== null ? 'true' : undefined}
         >
           <div
@@ -838,7 +837,7 @@ export const SyntheticHuddle: React.FC<SyntheticHuddleProps> = ({
                               ? 'bg-cyan-500 text-slate-950 font-bold shadow-md shadow-cyan-500/25'
                               : isDownloaded
                               ? 'bg-white/10 hover:bg-white/20 text-white'
-                              : 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-md shadow-purple-500/20'
+                              : 'bg-[#FF5500] hover:bg-[#FF8C42] text-black font-bold'
                           }`}
                         >
                           {isSelected ? 'Active' : isDownloaded ? 'Select' : `Confirm & Download (${spec.downloadSizeMb}MB)`}
@@ -879,7 +878,7 @@ export const SyntheticHuddle: React.FC<SyntheticHuddleProps> = ({
               setPendingDownloadTier(null);
             }
           }}
-          className="fixed inset-0 z-[80] flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-md overflow-hidden animate-fadeIn"
+          className="fixed inset-0 z-[80] flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-md overflow-hidden animate-fadeIn motion-reduce:animate-none"
         >
           <div
             ref={downloadModalRef}
@@ -896,7 +895,7 @@ export const SyntheticHuddle: React.FC<SyntheticHuddleProps> = ({
             <div className="flex items-center justify-between p-6 pb-4 border-b border-white/10 shrink-0 bg-slate-950/95">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.2)]">
-                  <Download className="w-5 h-5 animate-bounce" aria-hidden="true" />
+                  <Download className="w-5 h-5 animate-bounce motion-reduce:animate-none" aria-hidden="true" />
                 </div>
                 <div>
                   <h2 id="confirm-download-title" className="text-base sm:text-lg font-bold text-white tracking-tight">
@@ -964,7 +963,7 @@ export const SyntheticHuddle: React.FC<SyntheticHuddleProps> = ({
                   </div>
                   <div className="w-full h-2.5 bg-slate-900 rounded-full overflow-hidden border border-white/10">
                     <div
-                      className="h-full bg-gradient-to-r from-cyan-500 to-purple-600 transition-all duration-150"
+                      className="h-full bg-gradient-to-r from-[#FF5500] to-[#FF8C42] transition-all duration-150"
                       style={{ width: `${downloadProgress.percent}%` }}
                     />
                   </div>
@@ -980,7 +979,7 @@ export const SyntheticHuddle: React.FC<SyntheticHuddleProps> = ({
                   sound.playTick();
                   setPendingDownloadTier(null);
                 }}
-                className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-xs font-semibold text-white transition-colors disabled:opacity-50 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
+                className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-xs font-semibold text-white transition-colors disabled:opacity-50 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500]"
               >
                 Cancel / Keep Universal Native
               </button>
@@ -988,11 +987,11 @@ export const SyntheticHuddle: React.FC<SyntheticHuddleProps> = ({
               <button
                 disabled={downloadProgress.isDownloading}
                 onClick={handleConfirmDownload}
-                className="px-5 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-xs font-bold text-white shadow-lg shadow-purple-500/20 transition-all flex items-center gap-2 disabled:opacity-50 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 active:scale-98"
+                className="px-5 py-2 rounded-xl bg-[#FF5500] hover:bg-[#FF8C42] text-xs font-bold text-black transition-all flex items-center gap-2 disabled:opacity-50 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500] active:scale-98"
               >
                 {downloadProgress.isDownloading ? (
                   <>
-                    <Activity className="w-3.5 h-3.5 animate-spin" />
+                    <Activity className="w-3.5 h-3.5 animate-spin motion-reduce:animate-none" />
                     <span>Downloading Model...</span>
                   </>
                 ) : (

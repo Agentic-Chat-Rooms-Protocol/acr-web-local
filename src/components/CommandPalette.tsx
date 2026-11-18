@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { Search, Hash, Shield, Terminal, ArrowRight, Zap, X, Bot, Activity, Radio, Flame } from 'lucide-react';
-
+import { useAccessibleModal } from '../hooks/useAccessibleModal';
 
 interface CommandPaletteProps {
   isOpen: boolean;
@@ -17,6 +18,18 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const handleClose = useCallback(() => {
+    setQuery('');
+    setSelectedIndex(0);
+    onClose();
+  }, [onClose]);
+
+  const modalRef = useAccessibleModal<HTMLDivElement>({
+    isOpen,
+    onClose: handleClose,
+    initialFocusRef: inputRef,
+  });
+
   const commands = [
     {
       id: 'jump-workspace',
@@ -29,16 +42,16 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     {
       id: 'jump-opsroom',
       category: 'OpsRoom',
-      title: 'ACR OpsRoom Autonomous War Room',
-      subtitle: 'Atlas 2.0 Dynamic DAG & 67% Byzantine Fault-Tolerant Consensus',
+      title: 'ACR OpsRoom Enterprise War Room',
+      subtitle: 'Atlas 2.0 Dynamic DAG & 67% Consensus Gate signed by W3C Ed25519 DIDs',
       icon: Flame,
-      badge: 'NEW Feature',
+      badge: 'War Room',
     },
     {
       id: 'simulate-incident',
       category: 'OpsRoom',
       title: 'Simulate War Room Incident Response',
-      subtitle: 'Trigger multi-agent incident deliberation, BFT quorum & sandbox execution',
+      subtitle: 'Trigger multi-agent incident deliberation, 67% Consensus Gate & ToolHive sandbox',
       icon: Flame,
       badge: 'Interactive',
     },
@@ -46,7 +59,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       id: 'view-battlecard',
       category: 'OpsRoom',
       title: 'Salesforce Agentforce vs OpsRoom Battlecard',
-      subtitle: 'Compare $2/conv incumbent against ACR 100% open-source protocol',
+      subtitle: 'Compare $2/conv incumbent against ACR $0 Runtime Protocol Tax',
       icon: Shield,
       badge: 'Comparison',
     },
@@ -54,7 +67,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       id: 'calc-roi',
       category: 'OpsRoom',
       title: 'Enterprise ROI Migration Calculator',
-      subtitle: 'Calculate your annual savings migrating from Salesforce Agentforce',
+      subtitle: 'Calculate your annual infrastructure savings migrating from Salesforce Agentforce',
       icon: Zap,
       badge: 'ROI / TCO',
     },
@@ -62,9 +75,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       id: 'launch-app',
       category: 'Application',
       title: 'Launch Live ACR Chat Application',
-      subtitle: 'Open full-screen Slack/AIM agent deliberation rooms & roster',
+      subtitle: 'Open full-screen local workstation deliberation rooms & roster',
       icon: Radio,
-      badge: 'Live Daemon',
+      badge: 'Local Daemon',
     },
     {
       id: 'jump-simulator',
@@ -94,15 +107,15 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       id: 'open-meta-mcp',
       category: 'Governance & Proxy',
       title: 'Open Meta-MCP Governance Studio',
-      subtitle: 'Manage downstream MCP servers, sandboxing, and 3-tier projected catalogs',
+      subtitle: 'Manage local downstream MCP servers, sandboxing, and 3-tier projected catalogs',
       icon: Shield,
       badge: 'Port 20445',
     },
     {
       id: 'open-settings',
       category: 'Network & Ports',
-      title: 'Advanced Settings & Port Mappings',
-      subtitle: 'Configure runtime port bindings, conflict checks, and .env/JSON exports',
+      title: 'Advanced Settings, Ports & ACR_API_TOKEN',
+      subtitle: 'Configure runtime port bindings, Bearer token auth, and .env/JSON exports',
       icon: Zap,
       badge: 'Shift+S',
     },
@@ -126,7 +139,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       id: 'agent-devin',
       category: 'Agent Roster',
       title: 'Inspect Devin (did:key:z6Mkp2...)',
-      subtitle: 'Autonomous coder agent with scoped bash execution VC',
+      subtitle: 'Local coder agent with scoped ToolHive execution VC',
       icon: Bot,
       badge: 'Active',
     },
@@ -138,14 +151,8 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     cmd.category.toLowerCase().includes(query.toLowerCase())
   );
 
-  useEffect(() => {
-    if (isOpen) {
-      setTimeout(() => inputRef.current?.focus(), 50);
-      setSelectedIndex(0);
-    } else {
-      setQuery('');
-    }
-  }, [isOpen]);
+  const safeSelectedIndex =
+    filteredCommands.length > 0 ? Math.min(selectedIndex, filteredCommands.length - 1) : 0;
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -156,7 +163,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       if (isCmdK || isCtrlShiftG) {
         e.preventDefault();
         if (isOpen) {
-          onClose();
+          handleClose();
         } else {
           onSelectAction('toggle-command');
         }
@@ -165,10 +172,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
 
       if (!isOpen) return;
 
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        onClose();
-      } else if (e.key === 'ArrowDown') {
+      if (e.key === 'ArrowDown') {
         e.preventDefault();
         setSelectedIndex((prev) => (prev + 1) % (filteredCommands.length || 1));
       } else if (e.key === 'ArrowUp') {
@@ -176,114 +180,124 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         setSelectedIndex((prev) => (prev - 1 + (filteredCommands.length || 1)) % (filteredCommands.length || 1));
       } else if (e.key === 'Enter') {
         e.preventDefault();
-        if (filteredCommands[selectedIndex]) {
-          onSelectAction(filteredCommands[selectedIndex].id);
-          onClose();
+        if (filteredCommands[safeSelectedIndex]) {
+          onSelectAction(filteredCommands[safeSelectedIndex].id);
+          handleClose();
         }
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, filteredCommands, selectedIndex, onClose, onSelectAction]);
+  }, [isOpen, filteredCommands, safeSelectedIndex, handleClose, onSelectAction]);
 
-  if (!isOpen) return null;
+  if (!isOpen || typeof document === 'undefined') return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-24 px-4 bg-black/75 backdrop-blur-md">
+  return createPortal(
+    <div
+      className="fixed inset-0 z-50 flex items-start justify-center pt-24 px-4 bg-[#000000]/80 backdrop-blur-md"
+      onClick={handleClose}
+    >
       <div
+        ref={modalRef}
         role="dialog"
         aria-modal="true"
         aria-label="Command Palette"
         data-testid="command-palette-dialog"
-        className="w-full max-w-2xl overflow-hidden rounded-xl border border-white/[0.12] bg-[#0c0d14] shadow-2xl shadow-cyan-950/40 animate-in fade-in zoom-in-95 duration-150"
+        className="w-full max-w-2xl overflow-hidden rounded-xl border border-[#262626] bg-[#0D0D11] shadow-2xl shadow-black/90 animate-in motion-reduce:animate-none fade-in zoom-in-95 duration-150"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Input bar */}
         <div className="relative flex items-center border-b border-white/[0.08] px-4 py-3">
-          <Search className="h-4 w-4 text-cyan-400 mr-3" />
+          <Search className="h-4 w-4 text-[#FF8C42] mr-3 shrink-0" />
           <input
             ref={inputRef}
             type="text"
+            aria-label="Filter protocol commands"
             placeholder="Type a command, jump to room, or query DID..."
             value={query}
             onChange={(e) => {
               setQuery(e.target.value);
               setSelectedIndex(0);
             }}
-            className="w-full bg-transparent text-sm text-white placeholder-slate-500 focus:outline-none"
+            className="w-full bg-transparent text-sm text-white placeholder-zinc-500 rounded px-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500]"
           />
           <button
-            onClick={onClose}
-            className="ml-2 rounded p-1 text-slate-500 hover:text-slate-300 transition-colors"
+            type="button"
+            onClick={handleClose}
+            aria-label="Close command palette"
+            className="ml-2 rounded p-1 text-zinc-400 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500]"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
 
         {/* Results list */}
-        <div className="max-h-80 overflow-y-auto p-2 divide-y divide-white/[0.04]">
+        <div className="max-h-80 overflow-y-auto p-2 space-y-1">
           {filteredCommands.length === 0 ? (
-            <div className="p-6 text-center text-xs text-slate-500">
+            <div className="p-6 text-center text-xs text-zinc-400">
               No matching protocol commands found for "{query}".
             </div>
           ) : (
             filteredCommands.map((cmd, idx) => {
               const Icon = cmd.icon;
-              const isSelected = idx === selectedIndex;
+              const isSelected = idx === safeSelectedIndex;
               return (
-                <div
+                <button
                   key={cmd.id}
+                  type="button"
                   onClick={() => {
                     onSelectAction(cmd.id);
-                    onClose();
+                    handleClose();
                   }}
                   onMouseEnter={() => setSelectedIndex(idx)}
-                  className={`group flex items-center justify-between rounded-lg px-3 py-2.5 cursor-pointer transition-all ${
-                    isSelected ? 'bg-cyan-500/10 border border-cyan-500/20' : 'hover:bg-white/[0.03]'
+                  className={`w-full text-left group flex items-center justify-between rounded-lg px-3 py-2.5 cursor-pointer transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500] ${
+                    isSelected
+                      ? 'bg-[#FF5500]/15 border border-[#FF5500]/35'
+                      : 'border border-transparent hover:bg-white/[0.04]'
                   }`}
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
                     <div
-                      className={`flex h-8 w-8 items-center justify-center rounded-md ${
+                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${
                         isSelected
-                          ? 'bg-cyan-500/20 text-cyan-300'
-                          : 'bg-white/[0.05] text-slate-400 group-hover:text-slate-200'
+                          ? 'bg-[#FF5500]/20 text-[#FF8C42]'
+                          : 'bg-white/[0.05] text-zinc-400 group-hover:text-zinc-200'
                       }`}
                     >
                       <Icon className="h-4 w-4" />
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-semibold text-white">
+                        <span className="text-xs font-semibold text-white truncate">
                           {cmd.title}
                         </span>
-                        <span className="text-[10px] font-mono text-slate-500">
+                        <span className="text-[10px] font-mono text-zinc-400 shrink-0">
                           [{cmd.category}]
                         </span>
                       </div>
-                      <p className="text-[11px] text-slate-400">
+                      <p className="text-[11px] text-zinc-400 truncate">
                         {cmd.subtitle}
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    <span className="rounded bg-white/[0.05] px-1.5 py-0.5 text-[10px] font-mono text-slate-400">
+                  <div className="flex items-center gap-2 shrink-0 ml-2">
+                    <span className="rounded bg-white/[0.05] px-1.5 py-0.5 text-[10px] font-mono text-zinc-300">
                       {cmd.badge}
                     </span>
                     {isSelected && (
-                      <ArrowRight className="h-3 w-3 text-cyan-400 animate-pulse" />
+                      <ArrowRight className="h-3 w-3 text-[#FF8C42] animate-pulse motion-reduce:animate-none" />
                     )}
                   </div>
-                </div>
+                </button>
               );
             })
           )}
         </div>
 
         {/* Footer shortcuts */}
-        <div className="flex items-center justify-between border-t border-white/[0.06] bg-black/40 px-4 py-2 text-[11px] font-mono text-slate-500">
+        <div className="flex items-center justify-between border-t border-white/[0.06] bg-[#000000]/60 px-4 py-2 text-[11px] font-mono text-zinc-400">
           <div className="flex items-center gap-3">
             <span>
               <kbd className="rounded border border-white/10 px-1 py-0.5 text-[9px]">↑↓</kbd> navigate
@@ -295,9 +309,10 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
               <kbd className="rounded border border-white/10 px-1 py-0.5 text-[9px]">esc</kbd> close
             </span>
           </div>
-          <span className="text-cyan-400/80">ACR Command Gateway</span>
+          <span className="text-[#FF8C42]">ACR Local Command Gateway</span>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
